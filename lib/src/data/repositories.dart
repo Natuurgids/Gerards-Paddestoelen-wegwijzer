@@ -1,7 +1,32 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 import 'app_database.dart';
 import 'identification_scoring.dart';
 import 'models.dart';
+
+class FieldDataRepository {
+  static const _assetPath = 'assets/data/field_data.json';
+
+  Future<List<SeasonRegionOption>> seasonRegions(String languageCode) async {
+    final raw = await rootBundle.loadString(_assetPath);
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final regions = decoded['season_regions'] as List<dynamic>? ?? const [];
+    return regions.map((rawRegion) {
+      final region = rawRegion as Map<String, dynamic>;
+      final labels = region['labels'] as Map<String, dynamic>? ?? const {};
+      final notes = region['notes'] as Map<String, dynamic>? ?? const {};
+      String localized(Map<String, dynamic> values) =>
+          (values[languageCode] ?? values['en'] ?? values['nl'] ?? '').toString();
+      return SeasonRegionOption(
+        code: region['code'] as String,
+        label: localized(labels),
+        note: localized(notes),
+      );
+    }).toList();
+  }
+}
 
 class SpeciesRepository {
   Future<Database> get _db => AppDatabase.instance.database;
@@ -34,7 +59,7 @@ class SpeciesRepository {
     if (rows.isEmpty) return null;
     final images = await db.query('species_image', where: 'species_id=?', whereArgs: [id], orderBy: 'sort_order');
     final measurements = await db.query('species_measurement', where: 'species_id=?', whereArgs: [id], orderBy: 'measurement_code');
-    final season = await db.query('species_season', where: 'species_id=?', whereArgs: [id], orderBy: 'month');
+    final season = await db.query('species_season', where: 'species_id=?', whereArgs: [id], orderBy: 'region_code, month');
     final row = rows.first;
     return SpeciesDetail(
       id: row['id'] as int,
@@ -93,61 +118,25 @@ class IdentificationRepository {
         (capDiameterCm != null ? 1 : 0) +
         (stemHeightCm != null ? 1 : 0) +
         (stemDiameterCm != null ? 1 : 0);
-
     if (fieldRequested == 0) return morphology;
 
     final db = await AppDatabase.instance.database;
     final evidenceRows = await db.rawQuery('''
       SELECT s.id,
-        CASE
-          WHEN ? IS NULL OR ? IS NULL THEN 0.0
-          ELSE COALESCE((
-            SELECT ss.likelihood / 3.0
-            FROM species_season ss
-            WHERE ss.species_id=s.id AND ss.month=? AND ss.region_code=?
-            LIMIT 1
-          ), 0.0)
-        END season_score,
-        CASE
-          WHEN ? IS NULL THEN 0.0
-          ELSE COALESCE((
-            SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
-            FROM species_measurement sm
-            WHERE sm.species_id=s.id AND sm.measurement_code='cap_diameter'
-            LIMIT 1
-          ), 0.0)
-        END cap_score,
-        CASE
-          WHEN ? IS NULL THEN 0.0
-          ELSE COALESCE((
-            SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
-            FROM species_measurement sm
-            WHERE sm.species_id=s.id AND sm.measurement_code='stem_height'
-            LIMIT 1
-          ), 0.0)
-        END stem_height_score,
-        CASE
-          WHEN ? IS NULL THEN 0.0
-          ELSE COALESCE((
-            SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
-            FROM species_measurement sm
-            WHERE sm.species_id=s.id AND sm.measurement_code='stem_diameter'
-            LIMIT 1
-          ), 0.0)
-        END stem_diameter_score
+        CASE WHEN ? IS NULL OR ? IS NULL THEN 0.0 ELSE COALESCE((
+          SELECT ss.likelihood / 3.0 FROM species_season ss
+          WHERE ss.species_id=s.id AND ss.month=? AND ss.region_code=? LIMIT 1), 0.0) END season_score,
+        CASE WHEN ? IS NULL THEN 0.0 ELSE COALESCE((
+          SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
+          FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='cap_diameter' LIMIT 1), 0.0) END cap_score,
+        CASE WHEN ? IS NULL THEN 0.0 ELSE COALESCE((
+          SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
+          FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_height' LIMIT 1), 0.0) END stem_height_score,
+        CASE WHEN ? IS NULL THEN 0.0 ELSE COALESCE((
+          SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
+          FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_diameter' LIMIT 1), 0.0) END stem_diameter_score
       FROM species s
-    ''', [
-      observationMonth,
-      seasonRegionCode,
-      observationMonth,
-      seasonRegionCode,
-      capDiameterCm,
-      capDiameterCm,
-      stemHeightCm,
-      stemHeightCm,
-      stemDiameterCm,
-      stemDiameterCm,
-    ]);
+    ''', [observationMonth, seasonRegionCode, observationMonth, seasonRegionCode, capDiameterCm, capDiameterCm, stemHeightCm, stemHeightCm, stemDiameterCm, stemDiameterCm]);
 
     final evidenceBySpecies = <int, ({double score, int matched})>{};
     for (final row in evidenceRows) {
@@ -167,20 +156,8 @@ class IdentificationRepository {
     final hasMorphology = selected.isNotEmpty;
     final combined = morphology.map((candidate) {
       final field = evidenceBySpecies[candidate.species.id] ?? (score: 0.0, matched: 0);
-      final breakdown = combineIdentificationScores(
-        morphologyScore: candidate.score,
-        fieldScore: field.score,
-        hasMorphology: hasMorphology,
-      );
-      return IdentificationCandidate(
-        species: candidate.species,
-        score: breakdown.combinedScore,
-        matched: candidate.matched,
-        requested: candidate.requested,
-        fieldScore: breakdown.fieldScore,
-        fieldMatched: field.matched,
-        fieldRequested: fieldRequested,
-      );
+      final breakdown = combineIdentificationScores(morphologyScore: candidate.score, fieldScore: field.score, hasMorphology: hasMorphology);
+      return IdentificationCandidate(species: candidate.species, score: breakdown.combinedScore, matched: candidate.matched, requested: candidate.requested, fieldScore: breakdown.fieldScore, fieldMatched: field.matched, fieldRequested: fieldRequested);
     }).where((candidate) => candidate.score > 0).toList();
 
     combined.sort((a, b) {
@@ -193,72 +170,40 @@ class IdentificationRepository {
     return combined;
   }
 
-  Future<List<IdentificationCandidate>> _morphologyCandidates(
-    String languageCode,
-    Map<int,int> selected,
-  ) async {
+  Future<List<IdentificationCandidate>> _morphologyCandidates(String languageCode, Map<int,int> selected) async {
     if (selected.isEmpty) {
       final species = await SpeciesRepository().search(languageCode);
       return species.take(50).map((s) => IdentificationCandidate(species:s, score:0, matched:0, requested:0)).toList();
     }
-
     final db = await AppDatabase.instance.database;
     final valueSql = List.filled(selected.length, '(?, ?)').join(', ');
     final args = <Object?>[];
-    for (final entry in selected.entries) {
-      args..add(entry.key)..add(entry.value);
-    }
+    for (final entry in selected.entries) { args..add(entry.key)..add(entry.value); }
     args.add(languageCode);
-
     final rows = await db.rawQuery('''
-      WITH selected(trait_id, option_id) AS (VALUES $valueSql),
-      scores AS (
+      WITH selected(trait_id, option_id) AS (VALUES $valueSql), scores AS (
         SELECT s.id species_id,
           SUM(CASE WHEN st.option_id = sel.option_id THEN COALESCE(st.weight, 1.0) ELSE 0 END) matched_weight,
           SUM(COALESCE(st.weight, 1.0)) total_weight,
           SUM(CASE WHEN st.option_id = sel.option_id THEN 1 ELSE 0 END) matched_count
-        FROM species s
-        CROSS JOIN selected sel
-        LEFT JOIN species_trait st
-          ON st.species_id = s.id AND st.trait_id = sel.trait_id
-        GROUP BY s.id
-      )
+        FROM species s CROSS JOIN selected sel
+        LEFT JOIN species_trait st ON st.species_id = s.id AND st.trait_id = sel.trait_id GROUP BY s.id)
       SELECT s.id, t.scientific_name, txt.common_name, txt.summary,
         (SELECT asset_path FROM species_image si WHERE si.species_id=s.id ORDER BY si.is_primary DESC, si.sort_order LIMIT 1) image_path,
-        scores.matched_weight / NULLIF(scores.total_weight, 0) score,
-        scores.matched_count
-      FROM scores
-      JOIN species s ON s.id=scores.species_id
-      JOIN taxon t ON t.id=s.taxon_id
+        scores.matched_weight / NULLIF(scores.total_weight, 0) score, scores.matched_count
+      FROM scores JOIN species s ON s.id=scores.species_id JOIN taxon t ON t.id=s.taxon_id
       JOIN species_text txt ON txt.species_id=s.id AND txt.language_code=?
       WHERE scores.matched_weight > 0
-      ORDER BY score DESC, scores.matched_count DESC, txt.common_name COLLATE NOCASE
-      LIMIT 50
+      ORDER BY score DESC, scores.matched_count DESC, txt.common_name COLLATE NOCASE LIMIT 50
     ''', args);
-
-    return rows.map((r) => IdentificationCandidate(
-      species: SpeciesSummary(
-        id:r['id'] as int,
-        scientificName:r['scientific_name'] as String,
-        commonName:r['common_name'] as String,
-        summary:r['summary'] as String?,
-        imagePath:r['image_path'] as String?,
-      ),
-      score:(r['score'] as num).toDouble(),
-      matched:(r['matched_count'] as num).toInt(),
-      requested:selected.length,
-    )).toList();
+    return rows.map((r) => IdentificationCandidate(species: SpeciesSummary(id:r['id'] as int, scientificName:r['scientific_name'] as String, commonName:r['common_name'] as String, summary:r['summary'] as String?, imagePath:r['image_path'] as String?), score:(r['score'] as num).toDouble(), matched:(r['matched_count'] as num).toInt(), requested:selected.length)).toList();
   }
 }
 
 class TrainingRepository {
   Future<List<LessonSummary>> lessons(String languageCode) async {
     final db = await AppDatabase.instance.database;
-    final rows = await db.rawQuery('''
-      SELECT l.id,l.difficulty,lt.title,lt.body,COALESCE(p.best_score,0) best_score,COALESCE(p.attempts,0) attempts
-      FROM lesson l JOIN lesson_text lt ON lt.lesson_id=l.id AND lt.language_code=?
-      LEFT JOIN training_progress p ON p.lesson_id=l.id ORDER BY l.sort_order
-    ''',[languageCode]);
+    final rows = await db.rawQuery('''SELECT l.id,l.difficulty,lt.title,lt.body,COALESCE(p.best_score,0) best_score,COALESCE(p.attempts,0) attempts FROM lesson l JOIN lesson_text lt ON lt.lesson_id=l.id AND lt.language_code=? LEFT JOIN training_progress p ON p.lesson_id=l.id ORDER BY l.sort_order''',[languageCode]);
     return rows.map((r)=>LessonSummary(id:r['id'] as int,title:r['title'] as String,body:r['body'] as String,difficulty:r['difficulty'] as int,bestScore:(r['best_score'] as num).toDouble(),attempts:r['attempts'] as int)).toList();
   }
 
