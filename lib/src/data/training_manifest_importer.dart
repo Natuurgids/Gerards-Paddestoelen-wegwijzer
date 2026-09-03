@@ -182,7 +182,8 @@ class TrainingManifestImporter {
   }
 
   static void _validateLabels(Object? value, String context) {
-    if (value is! Map<String, dynamic> || value.keys.toSet() != _languages) {
+    if (value is! Map<String, dynamic> ||
+        !_languages.every(value.containsKey)) {
       throw FormatException('$context must have nl, en and de labels');
     }
     for (final language in _languages) {
@@ -198,7 +199,8 @@ class TrainingManifestImporter {
     List<String> requiredFields,
     String context,
   ) {
-    if (value is! Map<String, dynamic> || value.keys.toSet() != _languages) {
+    if (value is! Map<String, dynamic> ||
+        !_languages.every(value.containsKey)) {
       throw FormatException('$context must have nl, en and de text');
     }
     for (final language in _languages) {
