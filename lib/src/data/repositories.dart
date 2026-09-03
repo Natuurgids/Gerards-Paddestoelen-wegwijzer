@@ -32,6 +32,8 @@ class SpeciesRepository {
     ''', [languageCode, id]);
     if (rows.isEmpty) return null;
     final images = await db.query('species_image', where: 'species_id=?', whereArgs: [id], orderBy: 'sort_order');
+    final measurements = await db.query('species_measurement', where: 'species_id=?', whereArgs: [id], orderBy: 'measurement_code');
+    final season = await db.query('species_season', where: 'species_id=?', whereArgs: [id], orderBy: 'month');
     final row = rows.first;
     return SpeciesDetail(
       id: row['id'] as int,
@@ -45,6 +47,8 @@ class SpeciesRepository {
       edibleStatus: row['edible_status'] as String,
       toxicityLevel: row['toxicity_level'] as String,
       images: images.map((m) => SpeciesImage(path: m['asset_path'] as String, angleCode: m['angle_code'] as String?, sortOrder: m['sort_order'] as int, photographer: m['photographer'] as String?, license: m['license'] as String?)).toList(),
+      measurements: measurements.map((m) => SpeciesMeasurement(code:m['measurement_code'] as String,minValue:(m['min_value'] as num?)?.toDouble(),maxValue:(m['max_value'] as num?)?.toDouble(),unit:m['unit'] as String)).toList(),
+      season: season.map((m) => SpeciesSeasonMonth(month:m['month'] as int,likelihood:m['likelihood'] as int)).toList(),
     );
   }
 
