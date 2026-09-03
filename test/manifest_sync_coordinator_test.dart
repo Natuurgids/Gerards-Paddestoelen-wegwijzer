@@ -17,30 +17,63 @@ void main() {
     await db.close();
   });
 
-  test('one failed manifest does not prevent later sync steps', () async {
+  test('failed dependency skips dependents but not independent steps', () async {
     final failures = await ManifestSyncCoordinator.run(db, [
       (
         name: 'catalogue',
         sync: (database) async {
-          await database.insert('sync_probe', {'name': 'catalogue'});
+          throw const FormatException('malformed test manifest');
         },
+        dependsOn: const [],
       ),
       (
         name: 'traits',
         sync: (database) async {
-          throw const FormatException('malformed test manifest');
+          await database.insert('sync_probe', {'name': 'traits'});
         },
+        dependsOn: const ['catalogue'],
       ),
       (
         name: 'field-data',
         sync: (database) async {
           await database.insert('sync_probe', {'name': 'field-data'});
         },
+        dependsOn: const ['catalogue'],
+      ),
+      (
+        name: 'training',
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'training'});
+        },
+        dependsOn: const [],
       ),
     ]);
 
-    expect(failures, ['traits']);
+    expect(failures, ['catalogue', 'traits', 'field-data']);
     final rows = await db.query('sync_probe', orderBy: 'name');
-    expect(rows.map((row) => row['name']), ['catalogue', 'field-data']);
+    expect(rows.map((row) => row['name']), ['training']);
+  });
+
+  test('unknown dependency is reported without running the step', () async {
+    final failures = await ManifestSyncCoordinator.run(db, [
+      (
+        name: 'field-data',
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'field-data'});
+        },
+        dependsOn: const ['catalogue'],
+      ),
+      (
+        name: 'training',
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'training'});
+        },
+        dependsOn: const [],
+      ),
+    ]);
+
+    expect(failures, ['field-data']);
+    final rows = await db.query('sync_probe', orderBy: 'name');
+    expect(rows.map((row) => row['name']), ['training']);
   });
 }
