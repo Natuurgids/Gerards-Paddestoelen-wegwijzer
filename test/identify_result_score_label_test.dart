@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:gerards_paddestoelen_wegwijzer/l10n/app_localizations.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/models.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/repositories.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/identify_screen.dart';
 
 void main() {
-  testWidgets('identification result labels percentage as match score',
-      (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
+  Widget localizedIdentifyApp(Locale locale) => MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: IdentifyScreen(
-          locale: const Locale('en'),
+          locale: locale,
           repository: _ResultIdentificationRepository(),
           fieldDataRepository: _EmptyFieldDataRepository(),
         ),
-      ),
-    );
+      );
+
+  testWidgets('identification result labels percentage as match score',
+      (tester) async {
+    await tester.pumpWidget(localizedIdentifyApp(const Locale('en')));
     await tester.pumpAndSettle();
 
     await _showResults(tester, 'Show candidates');
@@ -33,15 +37,7 @@ void main() {
 
   testWidgets('Dutch result uses localized match score wording',
       (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: IdentifyScreen(
-          locale: const Locale('nl'),
-          repository: _ResultIdentificationRepository(),
-          fieldDataRepository: _EmptyFieldDataRepository(),
-        ),
-      ),
-    );
+    await tester.pumpWidget(localizedIdentifyApp(const Locale('nl')));
     await tester.pumpAndSettle();
 
     await _showResults(tester, 'Toon kandidaten');
@@ -53,15 +49,7 @@ void main() {
 
   testWidgets('German result uses localized match score wording',
       (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: IdentifyScreen(
-          locale: const Locale('de'),
-          repository: _ResultIdentificationRepository(),
-          fieldDataRepository: _EmptyFieldDataRepository(),
-        ),
-      ),
-    );
+    await tester.pumpWidget(localizedIdentifyApp(const Locale('de')));
     await tester.pumpAndSettle();
 
     await _showResults(tester, 'Kandidaten anzeigen');
