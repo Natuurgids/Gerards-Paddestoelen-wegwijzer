@@ -17,7 +17,7 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         locale,
-        Scaffold(body: SafetyNotice(locale: locale)),
+        const Scaffold(body: SafetyNotice()),
       ),
     );
   }
