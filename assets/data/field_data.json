@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "species": [
+    {
+      "species_id": 1,
+      "measurements": [
+        {"code": "cap_diameter", "min": 10.0, "max": 20.0, "unit": "cm"},
+        {"code": "stem_height", "min": 10.0, "max": 25.0, "unit": "cm"}
+      ],
+      "season": [
+        {"month": 8, "likelihood": 2}, {"month": 9, "likelihood": 3},
+        {"month": 10, "likelihood": 3}, {"month": 11, "likelihood": 2}
+      ]
+    },
+    {
+      "species_id": 2,
+      "measurements": [
+        {"code": "cap_diameter", "min": 5.0, "max": 15.0, "unit": "cm"},
+        {"code": "stem_height", "min": 7.0, "max": 15.0, "unit": "cm"}
+      ],
+      "season": [
+        {"month": 7, "likelihood": 2}, {"month": 8, "likelihood": 3},
+        {"month": 9, "likelihood": 3}, {"month": 10, "likelihood": 3},
+        {"month": 11, "likelihood": 2}
+      ]
+    },
+    {
+      "species_id": 3,
+      "measurements": [
+        {"code": "cap_diameter", "min": 10.0, "max": 30.0, "unit": "cm"},
+        {"code": "stem_height", "min": 10.0, "max": 20.0, "unit": "cm"},
+        {"code": "stem_diameter", "min": 1.0, "max": 10.0, "unit": "cm"}
+      ],
+      "season": [
+        {"month": 6, "likelihood": 1}, {"month": 7, "likelihood": 2},
+        {"month": 8, "likelihood": 3}, {"month": 9, "likelihood": 3},
+        {"month": 10, "likelihood": 2}
+      ]
+    }
+  ]
+}
