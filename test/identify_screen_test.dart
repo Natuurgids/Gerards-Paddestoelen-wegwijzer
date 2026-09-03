@@ -93,7 +93,7 @@ void main() {
     expect(find.text('Observation month'), findsOneWidget);
 
     final button = find.widgetWithText(FilledButton, 'Show candidates');
-    await tester.ensureVisible(button);
+    await _dragUntilBuilt(tester, button);
     await tester.tap(button);
     await tester.pump();
 
