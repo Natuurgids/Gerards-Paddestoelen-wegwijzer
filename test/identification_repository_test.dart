@@ -62,7 +62,18 @@ void main() {
     expect(candidate.score, closeTo(1.0, 0.0001));
   });
 
-  test('known out-of-range measurement remains negative evidence', () async {
+  test('near-boundary measurement receives partial field credit', () async {
+    final candidates = await repository.identify('en', {1: 101}, capDiameterCm: 17);
+    expect(candidates, hasLength(1));
+    final candidate = candidates.first;
+    expect(candidate.species.id, 1);
+    expect(candidate.fieldRequested, 1);
+    expect(candidate.fieldMatched, 1);
+    expect(candidate.fieldScore, closeTo(0.5, 0.0001));
+    expect(candidate.score, closeTo(0.9, 0.0001));
+  });
+
+  test('known measurement beyond shoulder remains negative evidence', () async {
     final candidates = await repository.identify('en', {1: 101}, capDiameterCm: 18);
     expect(candidates, hasLength(1));
     final candidate = candidates.first;
