@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'app_database.dart';
+import 'identification_scoring.dart';
 import 'models.dart';
 
 class SpeciesRepository {
@@ -166,15 +167,17 @@ class IdentificationRepository {
     final hasMorphology = selected.isNotEmpty;
     final combined = morphology.map((candidate) {
       final field = evidenceBySpecies[candidate.species.id] ?? (score: 0.0, matched: 0);
-      final score = hasMorphology
-          ? (candidate.score * 0.8) + (field.score * 0.2)
-          : field.score;
+      final breakdown = combineIdentificationScores(
+        morphologyScore: candidate.score,
+        fieldScore: field.score,
+        hasMorphology: hasMorphology,
+      );
       return IdentificationCandidate(
         species: candidate.species,
-        score: score,
+        score: breakdown.combinedScore,
         matched: candidate.matched,
         requested: candidate.requested,
-        fieldScore: field.score,
+        fieldScore: breakdown.fieldScore,
         fieldMatched: field.matched,
         fieldRequested: fieldRequested,
       );
