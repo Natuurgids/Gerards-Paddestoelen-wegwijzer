@@ -18,7 +18,7 @@ class AppDatabase {
     final path = join(await getDatabasesPath(), 'mycology.sqlite');
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
         await db.execute('PRAGMA journal_mode = WAL');
@@ -54,10 +54,14 @@ class AppDatabase {
             species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
             month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
             likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
+            region_code TEXT,
             PRIMARY KEY(species_id, month)
           )''');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_species_measurement_lookup ON species_measurement(measurement_code, min_value, max_value, species_id)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_species_season_month ON species_season(month, likelihood, species_id)');
+        }
+        if (oldVersion >= 3 && oldVersion < 4) {
+          await db.execute('ALTER TABLE species_season ADD COLUMN region_code TEXT');
         }
       },
       onOpen: (db) async {
@@ -145,6 +149,7 @@ class AppDatabase {
       species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
       month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
       likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
+      region_code TEXT,
       PRIMARY KEY(species_id, month)
     )''',
     '''CREATE TABLE species_image (
