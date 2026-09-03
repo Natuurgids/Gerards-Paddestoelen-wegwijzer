@@ -67,6 +67,7 @@ void main() {
               'angle': 'top',
               'order': 0,
               'primary': true,
+              'placeholder': true,
             },
           ],
         },
@@ -83,4 +84,69 @@ void main() {
       hasLength(1),
     );
   });
+
+  test('real gallery images require photographer and licence metadata', () async {
+    final malformed = _gallery(placeholder: false);
+    final firstImage = ((malformed['species'] as List<dynamic>).first
+        as Map<String, dynamic>)['images'] as List<dynamic>;
+    (firstImage.first as Map<String, dynamic>).remove('license');
+
+    await expectLater(
+      ImageManifestImporter.syncDecoded(db, malformed),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
+  test('real gallery images persist attribution metadata', () async {
+    await ImageManifestImporter.syncDecoded(
+      db,
+      _gallery(placeholder: false),
+    );
+
+    final rows = await db.query(
+      'species_image',
+      where: 'species_id = ?',
+      whereArgs: [42],
+      orderBy: 'sort_order',
+    );
+    expect(rows, hasLength(5));
+    expect(rows.every((row) => row['photographer'] == 'Example photographer'),
+        isTrue);
+    expect(rows.every((row) => row['license'] == 'CC BY 4.0'), isTrue);
+  });
+
+  test('placeholder gallery images must not carry fake attribution', () async {
+    final malformed = _gallery(placeholder: true);
+    final firstImage = ((malformed['species'] as List<dynamic>).first
+        as Map<String, dynamic>)['images'] as List<dynamic>;
+    (firstImage.first as Map<String, dynamic>)['photographer'] = 'Unknown';
+
+    await expectLater(
+      ImageManifestImporter.syncDecoded(db, malformed),
+      throwsA(isA<FormatException>()),
+    );
+  });
+}
+
+Map<String, dynamic> _gallery({required bool placeholder}) {
+  const angles = ['top', 'underside', 'side', 'base', 'habitat'];
+  return {
+    'species': [
+      {
+        'speciesId': 42,
+        'images': [
+          for (var index = 0; index < angles.length; index++)
+            {
+              'path': 'assets/images/species/species_42/${index + 1}.jpg',
+              'angle': angles[index],
+              'order': index,
+              'primary': index == 0,
+              'placeholder': placeholder,
+              if (!placeholder) 'photographer': 'Example photographer',
+              if (!placeholder) 'license': 'CC BY 4.0',
+            },
+        ],
+      },
+    ],
+  };
 }
