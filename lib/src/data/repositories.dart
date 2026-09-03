@@ -48,7 +48,7 @@ class SpeciesRepository {
       toxicityLevel: row['toxicity_level'] as String,
       images: images.map((m) => SpeciesImage(path: m['asset_path'] as String, angleCode: m['angle_code'] as String?, sortOrder: m['sort_order'] as int, photographer: m['photographer'] as String?, license: m['license'] as String?)).toList(),
       measurements: measurements.map((m) => SpeciesMeasurement(code:m['measurement_code'] as String,minValue:(m['min_value'] as num?)?.toDouble(),maxValue:(m['max_value'] as num?)?.toDouble(),unit:m['unit'] as String)).toList(),
-      season: season.map((m) => SpeciesSeasonMonth(month:m['month'] as int,likelihood:m['likelihood'] as int)).toList(),
+      season: season.map((m) => SpeciesSeasonMonth(month:m['month'] as int,likelihood:m['likelihood'] as int,regionCode:m['region_code'] as String?)).toList(),
     );
   }
 
