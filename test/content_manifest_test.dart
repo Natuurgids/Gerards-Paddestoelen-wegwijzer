@@ -65,27 +65,55 @@ void main() {
     }
   });
 
-  test('seed species galleries declare five ordered image slots', () async {
+  test('species galleries declare five validated image slots', () async {
     final raw = await rootBundle.loadString('assets/data/species_images.json');
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     final species = decoded['species'] as List<dynamic>;
+    final allPaths = <String>{};
+    const requiredAngles = {'top', 'underside', 'side', 'base', 'habitat'};
 
     for (final rawSpecies in species) {
       final item = rawSpecies as Map<String, dynamic>;
       final images = item['images'] as List<dynamic>;
       expect(images.length, 5,
-          reason: 'Each seeded species should expose five gallery slots');
+          reason: 'Each species should expose five gallery slots');
       final orders = <int>{};
+      final angles = <String>{};
       var primaryCount = 0;
       for (final rawImage in images) {
         final image = rawImage as Map<String, dynamic>;
+        final path = (image['path'] as String).trim();
+        final angle = (image['angle'] as String).trim();
+
         expect(orders.add(image['order'] as int), isTrue,
             reason: 'Gallery sort orders must be unique per species');
-        expect(image['path'] as String, startsWith('assets/images/species/'));
+        expect(allPaths.add(path), isTrue,
+            reason: 'Gallery asset paths must be unique');
+        expect(path, startsWith('assets/images/species/'));
+        expect(requiredAngles, contains(angle),
+            reason: 'Gallery angle codes must use the supported vocabulary');
+        expect(angles.add(angle), isTrue,
+            reason: 'Each gallery angle should appear once per species');
+
+        final thumbnailPath = image['thumbnailPath'] as String?;
+        if (thumbnailPath != null) {
+          expect(thumbnailPath.trim(), isNotEmpty);
+          expect(thumbnailPath, startsWith('assets/images/'));
+        }
+        final photographer = image['photographer'] as String?;
+        if (photographer != null) {
+          expect(photographer.trim(), isNotEmpty);
+        }
+        final license = image['license'] as String?;
+        if (license != null) {
+          expect(license.trim(), isNotEmpty);
+        }
         if (image['primary'] == true) primaryCount++;
       }
+      expect(angles, requiredAngles,
+          reason: 'Each species gallery must cover all five standard angles');
       expect(primaryCount, 1,
-          reason: 'Each seeded species should have exactly one primary image');
+          reason: 'Each species should have exactly one primary image');
     }
   });
 
