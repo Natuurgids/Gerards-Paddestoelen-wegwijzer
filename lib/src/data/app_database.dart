@@ -40,8 +40,9 @@ class AppDatabase {
         await db.execute('PRAGMA journal_mode = WAL');
         await db.execute('PRAGMA busy_timeout = 5000');
       },
-      onCreate: DatabaseSchema.create,
-      onUpgrade: DatabaseSchema.upgrade,
+      onCreate: (db, version) => DatabaseSchema.create(db),
+      onUpgrade: (db, oldVersion, newVersion) =>
+          DatabaseSchema.upgrade(db, oldVersion, newVersion),
       onOpen: (db) async {
         _lastManifestSyncFailures = await ManifestSyncCoordinator.run(db, [
           (name: 'species-catalogue', sync: SpeciesCatalogImporter.sync),
