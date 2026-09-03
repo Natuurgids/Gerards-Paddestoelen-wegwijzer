@@ -21,7 +21,9 @@ void main() {
     final failures = await ManifestSyncCoordinator.run(db, [
       (
         name: 'catalogue',
-        sync: (database) => database.insert('sync_probe', {'name': 'catalogue'}),
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'catalogue'});
+        },
       ),
       (
         name: 'traits',
@@ -31,7 +33,9 @@ void main() {
       ),
       (
         name: 'field-data',
-        sync: (database) => database.insert('sync_probe', {'name': 'field-data'}),
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'field-data'});
+        },
       ),
     ]);
 
