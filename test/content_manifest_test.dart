@@ -49,7 +49,6 @@ void main() {
       expect(traitIds.add(trait['id'] as int), isTrue,
           reason: 'Trait ids must be unique');
       _expectLanguages(trait['labels'] as Map<String, dynamic>);
-
       for (final rawOption in trait['options'] as List<dynamic>) {
         final option = rawOption as Map<String, dynamic>;
         expect(optionIds.add(option['id'] as int), isTrue,
@@ -76,15 +75,13 @@ void main() {
       final images = item['images'] as List<dynamic>;
       expect(images.length, 5,
           reason: 'Each seeded species should expose five gallery slots');
-
       final orders = <int>{};
       var primaryCount = 0;
       for (final rawImage in images) {
         final image = rawImage as Map<String, dynamic>;
         expect(orders.add(image['order'] as int), isTrue,
             reason: 'Gallery sort orders must be unique per species');
-        final path = image['path'] as String;
-        expect(path, startsWith('assets/images/species/'));
+        expect(image['path'] as String, startsWith('assets/images/species/'));
         if (image['primary'] == true) primaryCount++;
       }
       expect(primaryCount, 1,
@@ -92,11 +89,22 @@ void main() {
     }
   });
 
-  test('field data has valid numeric ranges and regional season datasets',
-      () async {
+  test('field data has valid localized regions, ranges and calendars', () async {
     final raw = await rootBundle.loadString('assets/data/field_data.json');
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     final species = decoded['species'] as List<dynamic>;
+    final declaredRegions = <String>{};
+
+    for (final rawRegion
+        in decoded['season_regions'] as List<dynamic>? ?? const []) {
+      final region = rawRegion as Map<String, dynamic>;
+      final code = (region['code'] as String).trim();
+      expect(code, isNotEmpty);
+      expect(declaredRegions.add(code), isTrue,
+          reason: 'Season region codes must be unique');
+      _expectLanguages(region['labels'] as Map<String, dynamic>);
+      _expectLanguages(region['notes'] as Map<String, dynamic>);
+    }
 
     for (final rawSpecies in species) {
       final item = rawSpecies as Map<String, dynamic>;
@@ -119,7 +127,8 @@ void main() {
       for (final rawDataset in datasets) {
         final dataset = rawDataset as Map<String, dynamic>;
         final regionCode = dataset['region_code'] as String;
-        expect(regionCode.trim(), isNotEmpty);
+        expect(declaredRegions, contains(regionCode),
+            reason: 'Every season dataset must reference a declared region');
         expect(regionCodes.add(regionCode), isTrue,
             reason: 'A species can only define one calendar per region');
 
@@ -150,13 +159,11 @@ void main() {
       expect(lessonIds.add(lesson['id'] as int), isTrue);
       _expectLocalizedObjects(
           lesson['texts'] as Map<String, dynamic>, ['title', 'body']);
-
       for (final rawQuestion in lesson['questions'] as List<dynamic>) {
         final question = rawQuestion as Map<String, dynamic>;
         expect(questionIds.add(question['id'] as int), isTrue);
         _expectLocalizedObjects(
             question['texts'] as Map<String, dynamic>, ['prompt']);
-
         final answers = question['answers'] as List<dynamic>;
         expect(answers.length, greaterThanOrEqualTo(2));
         var correctCount = 0;
