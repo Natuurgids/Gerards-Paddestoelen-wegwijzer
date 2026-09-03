@@ -19,9 +19,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final button = find.widgetWithText(FilledButton, 'Show candidates');
-    await tester.ensureVisible(button);
-    await tester.tap(button);
+    await _showResults(tester, 'Show candidates');
+    await tester.scrollUntilVisible(find.text('Porcini'), 200);
     await tester.pumpAndSettle();
 
     expect(find.text('Porcini'), findsOneWidget);
@@ -46,9 +45,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final button = find.widgetWithText(FilledButton, 'Toon kandidaten');
-    await tester.ensureVisible(button);
-    await tester.tap(button);
+    await _showResults(tester, 'Toon kandidaten');
+    await tester.scrollUntilVisible(
+      find.textContaining('matchscore 90%'),
+      200,
+    );
     await tester.pumpAndSettle();
 
     expect(find.textContaining('matchscore 90%'), findsOneWidget);
@@ -67,9 +68,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final button = find.widgetWithText(FilledButton, 'Kandidaten anzeigen');
-    await tester.ensureVisible(button);
-    await tester.tap(button);
+    await _showResults(tester, 'Kandidaten anzeigen');
+    await tester.scrollUntilVisible(
+      find.textContaining('Übereinstimmungswert 90%'),
+      200,
+    );
     await tester.pumpAndSettle();
 
     expect(
@@ -77,6 +80,13 @@ void main() {
       findsOneWidget,
     );
   });
+}
+
+Future<void> _showResults(WidgetTester tester, String buttonLabel) async {
+  final button = find.widgetWithText(FilledButton, buttonLabel);
+  await tester.ensureVisible(button);
+  await tester.tap(button);
+  await tester.pumpAndSettle();
 }
 
 class _ResultIdentificationRepository extends IdentificationRepository {
