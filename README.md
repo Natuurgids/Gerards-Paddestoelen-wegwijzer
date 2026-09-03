@@ -38,7 +38,7 @@ The bootstrap script generates standard Android/iOS Flutter platform scaffolding
 
 ## Database design
 
-The schema is in `lib/src/data/app_database.dart`. The app is currently schema version 5. Developer-editable manifests are synchronized into SQLite whenever the database opens.
+Schema creation and migrations live in `lib/src/data/database_schema.dart`; `lib/src/data/app_database.dart` owns opening, configuration and manifest synchronization. The app is currently schema version 5. Developer-editable manifests are synchronized into SQLite whenever the database opens.
 
 The normalized model separates:
 
@@ -67,6 +67,8 @@ The application keeps content maintenance separate from Flutter UI source code:
 - `assets/data/species_images.json` — gallery paths, angle/order, primary image and optional attribution/licence metadata.
 - `assets/data/training_content.json` — multilingual lessons, questions, answers and explanations.
 
+Importers validate their manifest structure before applying writes. Catalogue and trait imports reject invalid IDs, translations and references before mutation; field and gallery imports validate their complete authoritative datasets before replacement; training content validates before insert/update and deliberately does not delete lessons, so persisted `training_progress` is never removed as a side effect of content synchronization.
+
 Stable numeric IDs should not be reused for a different biological or educational meaning after release.
 
 ## Adding a species
@@ -77,7 +79,7 @@ Stable numeric IDs should not be reused for a different biological or educationa
 4. Add cap/stem measurements and any validated regional calendars in `assets/data/field_data.json`.
 5. Add about five gallery slots in `assets/data/species_images.json`.
 
-The import order is catalogue → traits → field data → images → training, so dependent manifests can safely reference newly added species.
+The import order is catalogue → traits → field data → images → training, so dependent manifests can safely reference newly added species. Manifest synchronization is dependency-aware: if catalogue synchronization fails, catalogue-dependent trait, field-data and gallery steps are skipped while independent training content can still synchronize.
 
 `edible_status` and `toxicity_level` are descriptive metadata only. Neither contributes to identification confidence.
 
@@ -120,7 +122,7 @@ Missing files never result in a broken UI: the application displays the localize
 
 The current starter material includes safe-identification fundamentals and an underside/spore lesson. Quiz progress, attempts and best score remain local in SQLite.
 
-Single-choice questions must have exactly one correct answer. CI verifies this content contract.
+Single-choice questions must have exactly one correct answer. Both CI and runtime import validation enforce the training content contract before writes begin.
 
 ## Identification scoring
 
@@ -137,6 +139,8 @@ The result score is a narrowing/ranking aid only. It is deliberately **not an ed
 ## Tests
 
 `test/content_manifest_test.dart` validates the developer-editable content contracts, including unique IDs/references, complete NL/EN/DE text, trait mappings, measurement ranges, declared localized season regions, valid per-region calendars, gallery slots and quiz correctness.
+
+Importer regressions additionally exercise validation-before-mutation behavior for catalogue, traits, field data, galleries and training content, including preservation of existing reference rows or user-owned training progress when malformed manifests are rejected.
 
 `test/identification_scoring_test.dart` verifies morphology dominance, field-only ranking behavior, score clamping, inclusive measurement ranges and exact regional season matching.
 
