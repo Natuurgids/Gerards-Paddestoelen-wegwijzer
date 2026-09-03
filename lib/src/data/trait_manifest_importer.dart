@@ -9,9 +9,8 @@ class TraitManifestImporter {
   static Future<void> sync(Database db) async {
     final raw = await rootBundle.loadString(_assetPath);
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    final traits = (decoded['traits'] as List<dynamic>? ?? const []);
-    final speciesTraits =
-        (decoded['species_traits'] as List<dynamic>? ?? const []);
+    final traits = decoded['traits'] as List<dynamic>? ?? const [];
+    final speciesTraits = decoded['species_traits'] as List<dynamic>? ?? const [];
 
     await db.transaction((txn) async {
       for (final item in traits) {
@@ -30,18 +29,15 @@ class TraitManifestImporter {
 
         final labels = trait['labels'] as Map<String, dynamic>? ?? const {};
         for (final entry in labels.entries) {
-          // Trait labels are stored in category for the legacy seed traits. The
-          // UI resolves developer-managed labels from this manifest via the
-          // option group title fallback below until trait_text is introduced.
-          // Keeping schema v1 compatible avoids destructive migration.
-          if (entry.key == 'en' && entry.value is String) {
-            await txn.update(
-              'trait',
-              {'category': entry.value as String},
-              where: 'id=?',
-              whereArgs: [traitId],
-            );
-          }
+          await txn.insert(
+            'trait_text',
+            {
+              'trait_id': traitId,
+              'language_code': entry.key,
+              'label': entry.value,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
         }
 
         final options = trait['options'] as List<dynamic>? ?? const [];
@@ -59,8 +55,7 @@ class TraitManifestImporter {
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
 
-          final optionLabels =
-              option['labels'] as Map<String, dynamic>? ?? const {};
+          final optionLabels = option['labels'] as Map<String, dynamic>? ?? const {};
           for (final entry in optionLabels.entries) {
             await txn.insert(
               'trait_option_text',
