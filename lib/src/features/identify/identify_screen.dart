@@ -411,10 +411,15 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                             final field = result.fieldRequested == 0
                                 ? ''
                                 : ' · ${result.fieldMatched}/${result.fieldRequested} ${t('veld', 'field', 'Feld')}';
+                            final scoreLabel = t(
+                              'matchscore',
+                              'match score',
+                              'Übereinstimmungswert',
+                            );
                             return ListTile(
                               title: Text(result.species.commonName),
                               subtitle: Text(
-                                '${result.species.scientificName} · ${(result.score * 100).round()}% · $morphology$field',
+                                '${result.species.scientificName} · $scoreLabel ${(result.score * 100).round()}% · $morphology$field',
                               ),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () => Navigator.of(context).push(
