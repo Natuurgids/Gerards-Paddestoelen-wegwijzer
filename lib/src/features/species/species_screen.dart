@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../../data/models.dart';
 import '../../data/repositories.dart';
 import '../../widgets/safety_notice.dart';
+import '../../widgets/species_image.dart';
 
 class SpeciesScreen extends StatefulWidget {
   const SpeciesScreen({super.key, required this.locale, required this.speciesId});
+
   final Locale locale;
   final int speciesId;
 
@@ -96,51 +98,9 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
       : value.toStringAsFixed(1);
 
   String _monthName(int month) {
-    const nl = [
-      '',
-      'jan',
-      'feb',
-      'mrt',
-      'apr',
-      'mei',
-      'jun',
-      'jul',
-      'aug',
-      'sep',
-      'okt',
-      'nov',
-      'dec',
-    ];
-    const en = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    const de = [
-      '',
-      'Jan',
-      'Feb',
-      'Mär',
-      'Apr',
-      'Mai',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Dez',
-    ];
+    const nl = ['', 'jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+    const en = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const de = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
     final values = widget.locale.languageCode == 'nl'
         ? nl
         : widget.locale.languageCode == 'de'
@@ -215,6 +175,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                   if (species == null) {
                     return Center(child: Text(_label('notFound')));
                   }
+
                   final images = species.images.isEmpty
                       ? List<SpeciesImage>.generate(
                           5,
@@ -226,6 +187,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                         )
                       : species.images;
                   final seasonByRegion = _seasonByRegion(species.season);
+
                   return ListView(
                     children: [
                       AspectRatio(
@@ -235,9 +197,8 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                             PageView.builder(
                               controller: _controller,
                               itemCount: images.length,
-                              onPageChanged: (value) =>
-                                  setState(() => _page = value),
-                              itemBuilder: (_, index) => _SpeciesImage(
+                              onPageChanged: (value) => setState(() => _page = value),
+                              itemBuilder: (_, index) => SpeciesImageView(
                                 path: images[index].path,
                                 missingLabel: _label('missing'),
                               ),
@@ -251,10 +212,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                   child: Text(
                                     '${_page + 1} / ${images.length}',
                                     style: const TextStyle(color: Colors.white),
@@ -270,68 +228,40 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              species.commonName,
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
+                            Text(species.commonName, style: Theme.of(context).textTheme.headlineMedium),
                             Text(
                               species.scientificName,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(fontStyle: FontStyle.italic),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontStyle: FontStyle.italic),
                             ),
                             const SizedBox(height: 16),
                             Text(species.description ?? species.summary ?? ''),
                             if (species.measurements.isNotEmpty) ...[
                               const SizedBox(height: 20),
-                              Text(
-                                _label('measurements'),
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
+                              Text(_label('measurements'), style: Theme.of(context).textTheme.titleMedium),
                               const SizedBox(height: 6),
                               ...species.measurements.map(
                                 (measurement) => Padding(
                                   padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    '${_label(measurement.code)}: ${_measurement(measurement)}',
-                                  ),
+                                  child: Text('${_label(measurement.code)}: ${_measurement(measurement)}'),
                                 ),
                               ),
                             ],
                             if (species.season.isNotEmpty) ...[
                               const SizedBox(height: 20),
-                              Text(
-                                _label('season'),
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
+                              Text(_label('season'), style: Theme.of(context).textTheme.titleMedium),
                               const SizedBox(height: 6),
                               ...seasonByRegion.entries.map((entry) {
                                 final note = _regionNote(entry.key);
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        _regionName(entry.key),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelLarge,
-                                      ),
+                                      Text(_regionName(entry.key), style: Theme.of(context).textTheme.labelLarge),
                                       if (note != null && note.isNotEmpty)
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 2,
-                                            bottom: 4,
-                                          ),
-                                          child: Text(
-                                            note,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall,
-                                          ),
+                                          padding: const EdgeInsets.only(top: 2, bottom: 4),
+                                          child: Text(note, style: Theme.of(context).textTheme.bodySmall),
                                         ),
                                       Wrap(
                                         spacing: 6,
@@ -339,17 +269,10 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                                         children: entry.value
                                             .map(
                                               (month) => Chip(
-                                                label:
-                                                    Text(_monthName(month.month)),
+                                                label: Text(_monthName(month.month)),
                                                 avatar: Icon(
-                                                  month.likelihood >= 3
-                                                      ? Icons.circle
-                                                      : Icons.circle_outlined,
-                                                  size: month.likelihood >= 3
-                                                      ? 14
-                                                      : month.likelihood == 2
-                                                          ? 11
-                                                          : 8,
+                                                  month.likelihood >= 3 ? Icons.circle : Icons.circle_outlined,
+                                                  size: month.likelihood >= 3 ? 14 : month.likelihood == 2 ? 11 : 8,
                                                 ),
                                               ),
                                             )
@@ -361,22 +284,13 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                               }),
                             ],
                             const SizedBox(height: 20),
-                            Text(
-                              _label('habitat'),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
+                            Text(_label('habitat'), style: Theme.of(context).textTheme.titleMedium),
                             Text(species.habitat ?? '-'),
                             const SizedBox(height: 16),
-                            Text(
-                              _label('lookalikes'),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
+                            Text(_label('lookalikes'), style: Theme.of(context).textTheme.titleMedium),
                             Text(species.lookalikes ?? '-'),
                             const SizedBox(height: 16),
-                            Text(
-                              _label('status'),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
+                            Text(_label('status'), style: Theme.of(context).textTheme.titleMedium),
                             Text(_safetyReference(species)),
                           ],
                         ),
@@ -390,34 +304,6 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _SpeciesImage extends StatelessWidget {
-  const _SpeciesImage({required this.path, required this.missingLabel});
-  final String path;
-  final String missingLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget fallback() => Container(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          alignment: Alignment.center,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.image_not_supported_outlined, size: 56),
-              const SizedBox(height: 8),
-              Text(missingLabel),
-            ],
-          ),
-        );
-    if (path.isEmpty) return fallback();
-    return Image.asset(
-      path,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => fallback(),
     );
   }
 }
