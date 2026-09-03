@@ -16,8 +16,7 @@ class FieldDataImporter {
         final item = rawSpecies as Map<String, dynamic>;
         final speciesId = item['species_id'] as int;
 
-        final measurements =
-            item['measurements'] as List<dynamic>? ?? const [];
+        final measurements = item['measurements'] as List<dynamic>? ?? const [];
         for (final rawMeasurement in measurements) {
           final measurement = rawMeasurement as Map<String, dynamic>;
           await txn.insert(
@@ -33,22 +32,45 @@ class FieldDataImporter {
           );
         }
 
-        final regionCode = item['season_region'] as String?;
-        final season = item['season'] as List<dynamic>? ?? const [];
-        for (final rawMonth in season) {
-          final month = rawMonth as Map<String, dynamic>;
-          await txn.insert(
-            'species_season',
-            {
-              'species_id': speciesId,
-              'month': month['month'],
-              'likelihood': month['likelihood'] ?? 1,
-              'region_code': regionCode,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+        final seasonDatasets = item['season_datasets'] as List<dynamic>?;
+        if (seasonDatasets != null) {
+          for (final rawDataset in seasonDatasets) {
+            final dataset = rawDataset as Map<String, dynamic>;
+            await _syncSeasonDataset(txn, speciesId, dataset);
+          }
+        } else {
+          final legacySeason = item['season'] as List<dynamic>? ?? const [];
+          if (legacySeason.isNotEmpty) {
+            await _syncSeasonDataset(txn, speciesId, {
+              'region_code': item['season_region'],
+              'months': legacySeason,
+            });
+          }
         }
       }
     });
+  }
+
+  static Future<void> _syncSeasonDataset(
+    Transaction txn,
+    int speciesId,
+    Map<String, dynamic> dataset,
+  ) async {
+    final regionCode = dataset['region_code'] as String?;
+    if (regionCode == null || regionCode.trim().isEmpty) return;
+    final months = dataset['months'] as List<dynamic>? ?? const [];
+    for (final rawMonth in months) {
+      final month = rawMonth as Map<String, dynamic>;
+      await txn.insert(
+        'species_season',
+        {
+          'species_id': speciesId,
+          'region_code': regionCode,
+          'month': month['month'],
+          'likelihood': month['likelihood'] ?? 1,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
   }
 }
