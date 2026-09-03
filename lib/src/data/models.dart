@@ -53,11 +53,23 @@ class TraitChoice {
 }
 
 class IdentificationCandidate {
-  const IdentificationCandidate({required this.species, required this.score, required this.matched, required this.requested});
+  const IdentificationCandidate({
+    required this.species,
+    required this.score,
+    required this.matched,
+    required this.requested,
+    this.fieldScore = 0,
+    this.fieldMatched = 0,
+    this.fieldRequested = 0,
+  });
+
   final SpeciesSummary species;
   final double score;
   final int matched;
   final int requested;
+  final double fieldScore;
+  final int fieldMatched;
+  final int fieldRequested;
 }
 
 class LessonSummary {
