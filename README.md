@@ -7,12 +7,12 @@ Offline-first Flutter application for mushroom identification and mycology educa
 - Flutter mobile application foundation.
 - Offline SQLite database; no network is needed for species browsing, identification or training.
 - Dutch (`nl`), English (`en`) and German (`de`) content foundation.
-- Developer-editable species/taxonomy, identification-trait and gallery manifests synchronized into SQLite.
-- Normalized taxonomy, translated species content, localized identification traits, image metadata, lessons/questions and training progress.
-- Indexed scientific/common-name lookup, localized trait lookup, species-trait filtering, image ordering and lesson/question joins.
+- Developer-editable species/taxonomy, identification-trait, field-data, gallery and training manifests synchronized into SQLite.
+- Normalized taxonomy, translated species content, localized identification traits, measurements, seasonality, image metadata, lessons/questions and training progress.
+- Indexed scientific/common-name lookup, localized trait lookup, species-trait filtering, numeric measurement lookup, month/season lookup, image ordering and lesson/question joins.
 - Offline species catalogue with local search.
 - Trait-based identification with weighted candidate ranking using one aggregate SQLite query.
-- Species detail pages backed by SQLite.
+- Species detail pages backed by SQLite, including measurements and fruiting season.
 - About five swipeable image slots per species, with automatic placeholder fallback when an image is not packaged yet.
 - Offline lessons and quizzes with best score and attempt count persisted locally.
 - Permanent mushroom safety disclaimer at the bottom of relevant screens.
@@ -33,75 +33,87 @@ The bootstrap script generates standard Android/iOS Flutter platform scaffolding
 
 ## Database design
 
-The schema is in `lib/src/data/app_database.dart`. Initial offline training content is seeded by `lib/src/data/database_seeder.dart`. Species/taxonomy, identification traits and galleries are developer-editable manifests synchronized into SQLite when the database opens.
+The schema is in `lib/src/data/app_database.dart`. The app is currently schema version 3. Developer-editable manifests are synchronized into SQLite whenever the database opens.
 
 The normalized model separates:
 
 - taxonomy: `taxon`, `species`
 - species translations: `species_text`
 - identification: `trait`, `trait_text`, `trait_option`, `trait_option_text`, `species_trait`
+- quantitative field characters: `species_measurement`
+- fruiting season: `species_season`
 - galleries: `species_image`
 - education: `lesson`, `lesson_text`, `question`, `question_text`, `answer_option`, `answer_option_text`
 - user learning state: `training_progress`
 
-Important lookup columns are indexed, including taxonomy parents, scientific/common names, translated trait labels, species traits, gallery order and training relations. Foreign keys are enabled and SQLite runs in WAL mode.
+Important lookup columns are indexed, including taxonomy parents, scientific/common names, translated trait labels, species traits, measurement ranges, season months, gallery order and training relations. Foreign keys are enabled and SQLite runs in WAL mode.
+
+## Content manifests
+
+The application keeps content maintenance separate from Flutter UI source code:
+
+- `assets/data/species_catalog.json` — taxonomy, species metadata and NL/EN/DE species text.
+- `assets/data/identification_traits.json` — localized determination traits/options and weighted species mappings.
+- `assets/data/field_data.json` — normalized numeric measurements and month-by-month fruiting season data.
+- `assets/data/species_images.json` — gallery paths, angle/order, primary image and optional attribution/licence metadata.
+- `assets/data/training_content.json` — multilingual lessons, questions, answers and explanations.
+
+Stable numeric IDs should not be reused for a different biological or educational meaning after release.
 
 ## Adding a species
 
-The developer-editable catalogue is `assets/data/species_catalog.json`.
+1. Add the required genus/species taxonomy rows to `assets/data/species_catalog.json` using stable numeric IDs.
+2. Add the species record and complete `nl`, `en` and `de` text objects.
+3. Add identifying trait relations in `assets/data/identification_traits.json`.
+4. Add cap/stem measurements and season months in `assets/data/field_data.json` where known.
+5. Add about five gallery slots in `assets/data/species_images.json`.
 
-1. Add the required genus/species taxonomy rows under `taxa` using stable numeric IDs.
-2. Add the species record under `species` and reference its `taxon_id`.
-3. Supply `edible_status` and `toxicity_level` as descriptive metadata only; neither is used as an identification-confidence value.
-4. Add complete `nl`, `en` and `de` text objects with common name, summary, description, habitat and lookalikes.
-5. Add identifying trait relations in `assets/data/identification_traits.json`.
-6. Add about five gallery slots in `assets/data/species_images.json`.
+The import order is catalogue → traits → field data → images → training, so dependent manifests can safely reference newly added species.
 
-The importer upserts catalogue records before traits and images, so those manifests can safely reference newly added species. Keep released IDs stable so progress, references and future migrations remain predictable.
+`edible_status` and `toxicity_level` are descriptive metadata only. Neither contributes to identification confidence.
 
-## Adding or changing identification traits
+## Identification traits
 
-The developer-editable identification manifest is `assets/data/identification_traits.json`. The application synchronizes it into the normalized identification tables whenever the database opens.
+Each developer-managed trait contains a stable id/code, structural category, NL/EN/DE label and one or more localized options. `species_traits` maps species to applicable options and provides a positive diagnostic weight.
 
-Each trait contains:
+The current starter vocabulary includes cap colour/shape/surface, hymenium type, gill attachment, ring, volva, stem-base shape, bruising response, substrate, spore-print colour and broad habitat tree group.
 
-- a stable numeric `id`
-- a stable machine-readable `code`
-- a structural `category`
-- localized `labels` for `nl`, `en` and `de`
-- one or more options with their own stable ids/codes/order/localized labels
+## Measurements and seasonality
 
-The `species_traits` section maps a species to the option that applies and assigns a positive `weight`. Higher weights make diagnostically useful observations count more strongly in candidate ranking.
+`assets/data/field_data.json` stores quantitative data separately from prose. Each measurement has a machine-readable code, minimum, maximum and unit. Current examples include `cap_diameter`, `stem_height` and `stem_diameter`.
 
-Keep IDs stable once released. Changing the displayed wording is safe; reusing an ID for another biological meaning is not. The content tests verify unique IDs, required translations, valid references and positive weights.
+Fruiting periods are stored as individual month rows with likelihood 1–3. This allows future identification filters such as "observed in October" to use an indexed relation instead of parsing descriptive text.
 
-The current starter vocabulary includes cap colour/shape/surface, hymenium type, gill attachment, ring, volva, stem-base shape, bruising response, substrate, spore-print colour and broad habitat tree group. It is intentionally extensible for more detailed production keys.
+The species detail screen renders these measurements and season months offline.
 
 ## Adding species pictures
 
 Keep compressed image files as application assets rather than SQLite BLOBs. SQLite stores paths and metadata, which keeps the database small and gallery queries fast.
 
-The developer-editable gallery manifest is `assets/data/species_images.json`. It is synchronized into the normalized `species_image` table whenever the database opens, so developers can add or reorder photographs without editing Dart source code.
-
-1. Create a directory such as `assets/images/species/amanita_muscaria/`.
+1. Create a directory below `assets/images/species/`.
 2. Aim for five useful identification perspectives:
    - cap/top
    - underside: gills, pores or teeth
    - complete side view/stem
    - stem base, volva or another diagnostic structure
    - habitat or another important detail
-3. Add the files to `assets/data/species_images.json` for the correct `speciesId`.
+3. Add entries to `assets/data/species_images.json` for the correct species ID.
 4. Set `path`, `angle` and `order`; optionally add `photographer`, `license` and `thumbnailPath`.
 5. Set `primary: true` on the preferred cover image.
-6. Ensure the image files remain under the `assets/images/` tree declared in `pubspec.yaml`.
 
-The gallery reads images in `sort_order`. Missing files never result in a broken UI: the application displays the localized **image not available yet** placeholder instead. This means developers can add species records before all photography has been collected.
+Missing files never result in a broken UI: the application displays the localized **image not available yet** placeholder instead.
 
-For a production catalogue, the next content tooling step is to move training seed data into a validated manifest and automatically generate thumbnails while checking that every declared asset exists and that photographer/licence fields are complete.
+## Training content
+
+`assets/data/training_content.json` defines lessons, localized lesson text, questions, answer choices and explanations. Developers can add training material without editing Dart source.
+
+The current starter material includes safe-identification fundamentals and an underside/spore lesson. Quiz progress, attempts and best score remain local in SQLite.
+
+Single-choice questions must have exactly one correct answer. CI verifies this content contract.
 
 ## Identification scoring
 
-The identification screen stores the user’s selected observable trait option per trait. Candidate species are scored from the normalized `species_trait` table using each relation’s `weight`. Ranking is performed with one indexed aggregate query rather than a query for every species/trait pair.
+The identification screen stores selected observable trait options. Candidate species are scored from the normalized `species_trait` table using each relation’s diagnostic weight. Ranking uses one indexed aggregate query rather than a query for every species/trait pair.
 
 Results display a percentage and number of matched selected traits. This score is a narrowing/ranking aid only. It is deliberately **not an edibility confidence score**.
 
@@ -110,12 +122,14 @@ Results display a percentage and number of matched selected traits. This score i
 `test/content_manifest_test.dart` validates the developer-editable content contracts, including:
 
 - unique taxonomy/species IDs and valid taxon references
-- Dutch, English and German species text
-- unique trait and option IDs
-- Dutch, English and German trait/option labels
+- complete Dutch, English and German species text
+- unique trait and option IDs with all three translations
 - valid species-trait references and positive weights
-- five ordered image slots per seeded species
-- exactly one primary image per seeded species
+- valid measurement ranges and units
+- unique season months in the range 1–12 and likelihood in the range 1–3
+- five ordered image slots and exactly one primary image per seeded species
+- complete multilingual training text
+- globally unique question/answer IDs and exactly one correct answer per single-choice question
 
 CI runs both analysis and tests on pushes to the feature/main branches and on pull requests to `main`.
 
