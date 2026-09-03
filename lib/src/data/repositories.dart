@@ -61,13 +61,16 @@ class IdentificationRepository {
   Future<List<TraitChoice>> choices(String languageCode) async {
     final db = await AppDatabase.instance.database;
     final rows = await db.rawQuery('''
-      SELECT tr.id trait_id, tr.code trait_code, tr.category trait_label,
+      SELECT tr.id trait_id, tr.code trait_code,
+             COALESCE(tt.label, tr.category) trait_label,
              o.id option_id, txt.label option_label
-      FROM trait tr JOIN trait_option o ON o.trait_id=tr.id
+      FROM trait tr
+      JOIN trait_option o ON o.trait_id=tr.id
       JOIN trait_option_text txt ON txt.option_id=o.id AND txt.language_code=?
+      LEFT JOIN trait_text tt ON tt.trait_id=tr.id AND tt.language_code=?
       WHERE tr.value_type='choice'
       ORDER BY tr.id, o.sort_order
-    ''', [languageCode]);
+    ''', [languageCode, languageCode]);
     return rows.map((r) => TraitChoice(traitId:r['trait_id'] as int, traitCode:r['trait_code'] as String, traitLabel:r['trait_label'] as String, optionId:r['option_id'] as int, optionLabel:r['option_label'] as String)).toList();
   }
 
