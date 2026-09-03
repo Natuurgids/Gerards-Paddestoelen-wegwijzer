@@ -45,11 +45,31 @@ class AppDatabase {
           DatabaseSchema.upgrade(db, oldVersion, newVersion),
       onOpen: (db) async {
         _lastManifestSyncFailures = await ManifestSyncCoordinator.run(db, [
-          (name: 'species-catalogue', sync: SpeciesCatalogImporter.sync),
-          (name: 'identification-traits', sync: TraitManifestImporter.sync),
-          (name: 'field-data', sync: FieldDataImporter.sync),
-          (name: 'species-images', sync: ImageManifestImporter.sync),
-          (name: 'training-content', sync: TrainingManifestImporter.sync),
+          (
+            name: 'species-catalogue',
+            sync: SpeciesCatalogImporter.sync,
+            dependsOn: const [],
+          ),
+          (
+            name: 'identification-traits',
+            sync: TraitManifestImporter.sync,
+            dependsOn: const ['species-catalogue'],
+          ),
+          (
+            name: 'field-data',
+            sync: FieldDataImporter.sync,
+            dependsOn: const ['species-catalogue'],
+          ),
+          (
+            name: 'species-images',
+            sync: ImageManifestImporter.sync,
+            dependsOn: const ['species-catalogue'],
+          ),
+          (
+            name: 'training-content',
+            sync: TrainingManifestImporter.sync,
+            dependsOn: const [],
+          ),
         ]);
       },
     );
