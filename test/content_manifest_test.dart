@@ -6,6 +6,36 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('species catalogue has valid taxonomy and all translations', () async {
+    final raw = await rootBundle.loadString('assets/data/species_catalog.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final taxa = decoded['taxa'] as List<dynamic>;
+    final species = decoded['species'] as List<dynamic>;
+    final taxonIds = <int>{};
+    final speciesIds = <int>{};
+
+    for (final rawTaxon in taxa) {
+      final taxon = rawTaxon as Map<String, dynamic>;
+      expect(taxonIds.add(taxon['id'] as int), isTrue,
+          reason: 'Taxon ids must be unique');
+      expect((taxon['scientific_name'] as String).trim(), isNotEmpty);
+    }
+
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      expect(speciesIds.add(item['id'] as int), isTrue,
+          reason: 'Species ids must be unique');
+      expect(taxonIds, contains(item['taxon_id']));
+      final texts = item['texts'] as Map<String, dynamic>;
+      for (final language in const ['nl', 'en', 'de']) {
+        expect(texts, contains(language));
+        final text = texts[language] as Map<String, dynamic>;
+        expect((text['common_name'] as String).trim(), isNotEmpty);
+        expect((text['description'] as String).trim(), isNotEmpty);
+      }
+    }
+  });
+
   test('identification traits have unique ids and all translations', () async {
     final raw = await rootBundle.loadString('assets/data/identification_traits.json');
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
