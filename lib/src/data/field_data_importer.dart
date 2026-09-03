@@ -31,17 +31,58 @@ class FieldDataImporter {
 
     for (final rawSpecies in species) {
       final item = rawSpecies as Map<String, dynamic>;
+      final speciesId = item['species_id'] as int;
+      final measurementCodes = <String>{};
+      for (final rawMeasurement
+          in item['measurements'] as List<dynamic>? ?? const []) {
+        final measurement = rawMeasurement as Map<String, dynamic>;
+        final code = measurement['code'];
+        if (code is! String || code.trim().isEmpty || code.trim() != code) {
+          throw FormatException(
+            'Invalid measurement code for species $speciesId: $code',
+          );
+        }
+        if (!measurementCodes.add(code)) {
+          throw FormatException(
+            'Duplicate measurement code for species $speciesId: $code',
+          );
+        }
+        final min = measurement['min'];
+        final max = measurement['max'];
+        if (min is! num || max is! num ||
+            !min.toDouble().isFinite || !max.toDouble().isFinite ||
+            min < 0 || max < min) {
+          throw FormatException(
+            'Invalid measurement range for species $speciesId, $code: '
+            '$min..$max',
+          );
+        }
+        final unit = measurement['unit'];
+        if (unit is! String || unit.trim().isEmpty || unit.trim() != unit) {
+          throw FormatException(
+            'Invalid measurement unit for species $speciesId, $code: $unit',
+          );
+        }
+      }
+
       final seasonDatasets = item['season_datasets'] as List<dynamic>?;
       if (seasonDatasets != null) {
+        final speciesRegions = <String>{};
         for (final rawDataset in seasonDatasets) {
           final dataset = rawDataset as Map<String, dynamic>;
           final regionCode = _canonicalRegionCode(dataset['region_code']);
           if (!declaredRegions.contains(regionCode)) {
             throw FormatException(
               'Undeclared season region code for species '
-              '${item['species_id']}: $regionCode',
+              '$speciesId: $regionCode',
             );
           }
+          if (!speciesRegions.add(regionCode)) {
+            throw FormatException(
+              'Duplicate season dataset for species $speciesId: $regionCode',
+            );
+          }
+          _validateMonths(speciesId, regionCode, dataset['months']);
         }
       } else {
         final legacySeason = item['season'] as List<dynamic>? ?? const [];
@@ -50,9 +91,10 @@ class FieldDataImporter {
           if (!declaredRegions.contains(regionCode)) {
             throw FormatException(
               'Undeclared legacy season region code for species '
-              '${item['species_id']}: $regionCode',
+              '$speciesId: $regionCode',
             );
           }
+          _validateMonths(speciesId, regionCode, legacySeason);
         }
       }
     }
@@ -112,6 +154,32 @@ class FieldDataImporter {
       );
     }
     return value;
+  }
+
+  static void _validateMonths(int speciesId, String regionCode, Object? value) {
+    final months = value as List<dynamic>? ?? const [];
+    final seen = <int>{};
+    for (final rawMonth in months) {
+      final month = rawMonth as Map<String, dynamic>;
+      final number = month['month'];
+      final likelihood = month['likelihood'] ?? 1;
+      if (number is! int || number < 1 || number > 12) {
+        throw FormatException(
+          'Invalid season month for species $speciesId, $regionCode: $number',
+        );
+      }
+      if (!seen.add(number)) {
+        throw FormatException(
+          'Duplicate season month for species $speciesId, $regionCode: $number',
+        );
+      }
+      if (likelihood is! int || likelihood < 1 || likelihood > 3) {
+        throw FormatException(
+          'Invalid season likelihood for species $speciesId, $regionCode, '
+          'month $number: $likelihood',
+        );
+      }
+    }
   }
 
   static Future<void> _syncSeasonDataset(
