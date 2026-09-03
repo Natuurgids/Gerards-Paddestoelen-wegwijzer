@@ -92,7 +92,7 @@ void main() {
     }
   });
 
-  test('field data has valid numeric ranges and season months', () async {
+  test('field data has valid numeric ranges and regional season months', () async {
     final raw = await rootBundle.loadString('assets/data/field_data.json');
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     final species = decoded['species'] as List<dynamic>;
@@ -113,8 +113,14 @@ void main() {
         expect((measurement['unit'] as String).trim(), isNotEmpty);
       }
 
+      final season = item['season'] as List<dynamic>? ?? const [];
+      if (season.isNotEmpty) {
+        expect(item['season_region'], isA<String>());
+        expect((item['season_region'] as String).trim(), isNotEmpty,
+            reason: 'Season data must state the regional reference');
+      }
       final months = <int>{};
-      for (final rawMonth in item['season'] as List<dynamic>? ?? const []) {
+      for (final rawMonth in season) {
         final month = rawMonth as Map<String, dynamic>;
         final value = month['month'] as int;
         expect(months.add(value), isTrue,
