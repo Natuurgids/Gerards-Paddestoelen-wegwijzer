@@ -13,4 +13,7 @@ flutter pub get
 Write-Host 'Running analyzer...'
 flutter analyze
 
+Write-Host 'Running tests...'
+flutter test
+
 Write-Host 'Bootstrap complete. Run: flutter run'
