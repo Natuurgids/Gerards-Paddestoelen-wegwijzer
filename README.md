@@ -17,8 +17,10 @@ Offline-first Flutter application for mushroom identification and mycology educa
 - Species detail pages backed by SQLite, including measurements and region-labelled fruiting season.
 - About five swipeable image slots per species, with automatic placeholder fallback when an image is not packaged yet.
 - Offline lessons and quizzes with best score and attempt count persisted locally.
-- Permanent mushroom safety disclaimer at the bottom of relevant screens.
+- Permanent mushroom safety disclaimer at the bottom of every current user-facing screen.
 - Database repositories accept an injectable database provider for in-memory SQL testing while defaulting to the production singleton.
+- Serialized first database open prevents concurrent startup reads from opening/synchronizing SQLite more than once.
+- SQLite query-plan regression tests protect the main catalogue and identification indexes.
 - GitHub Actions quality workflow running `flutter analyze` and `flutter test`.
 
 ## Run on Windows
@@ -49,7 +51,9 @@ The normalized model separates:
 - education: `lesson`, `lesson_text`, `question`, `question_text`, `answer_option`, `answer_option_text`
 - user learning state: `training_progress`
 
-Important lookup columns are indexed, including taxonomy parents, scientific/common names, translated trait labels, species traits, measurement ranges, regional season months, gallery order and training relations. Foreign keys are enabled and SQLite runs in WAL mode.
+Important lookup columns are indexed, including taxonomy parents, scientific/common names, translated trait labels, species traits, measurement ranges, regional season months, gallery order and training relations. Foreign keys are enabled, SQLite runs in WAL mode, and a 5-second busy timeout reduces transient lock failures.
+
+`AppDatabase` shares one in-flight opening future. Concurrent first reads therefore await the same database open/import operation instead of racing multiple opens.
 
 Repository classes in `lib/src/data/repositories.dart` take an optional `DatabaseProvider`. Normal application code uses `AppDatabase.instance.database`; tests can inject an in-memory database and exercise the same SQL without accessing a device database.
 
@@ -142,8 +146,10 @@ The result score is a narrowing/ranking aid only. It is deliberately **not an ed
 
 `test/identification_repository_test.dart` injects an in-memory SQLite database into the production `IdentificationRepository` and executes the real SQL path. It covers exact morphology ranking, combined morphology/field evidence, measurement-only ranking and isolation between regional calendars.
 
+`test/query_plan_test.dart` uses `EXPLAIN QUERY PLAN` to verify that SQLite continues to select the intended indexes for localized species names, species traits, numeric measurement filters and regional season filters.
+
 CI runs both analysis and tests on pushes to the feature/main branches and on pull requests to `main`.
 
 ## Safety
 
-Identification output is educational assistance, not an edibility guarantee. Relevant screens retain a visible warning telling users never to consume a mushroom solely because of an app identification and to have edible specimens verified by a qualified local expert.
+Identification output is educational assistance, not an edibility guarantee. Every current user-facing screen retains a visible warning telling users never to consume a mushroom solely because of an app identification and to have edible specimens verified by a qualified local expert.
