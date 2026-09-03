@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class SpeciesImage extends StatelessWidget {
-  const SpeciesImage({
+class SpeciesImageView extends StatelessWidget {
+  const SpeciesImageView({
     super.key,
     required this.path,
     required this.missingLabel,
