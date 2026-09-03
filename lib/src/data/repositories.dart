@@ -6,6 +6,10 @@ import 'app_database.dart';
 import 'identification_scoring.dart';
 import 'models.dart';
 
+typedef DatabaseProvider = Future<Database> Function();
+
+Future<Database> _defaultDatabaseProvider() => AppDatabase.instance.database;
+
 class FieldDataRepository {
   static const _assetPath = 'assets/data/field_data.json';
 
@@ -29,10 +33,13 @@ class FieldDataRepository {
 }
 
 class SpeciesRepository {
-  Future<Database> get _db => AppDatabase.instance.database;
+  SpeciesRepository({DatabaseProvider? databaseProvider})
+      : _databaseProvider = databaseProvider ?? _defaultDatabaseProvider;
+
+  final DatabaseProvider _databaseProvider;
 
   Future<List<SpeciesSummary>> search(String languageCode, {String query = ''}) async {
-    final db = await _db;
+    final db = await _databaseProvider();
     final like = '%${query.trim()}%';
     final rows = await db.rawQuery('''
       SELECT s.id, t.scientific_name, st.common_name, st.summary,
@@ -47,7 +54,7 @@ class SpeciesRepository {
   }
 
   Future<SpeciesDetail?> detail(int id, String languageCode) async {
-    final db = await _db;
+    final db = await _databaseProvider();
     final rows = await db.rawQuery('''
       SELECT s.id, s.edible_status, s.toxicity_level, t.scientific_name,
              st.common_name, st.summary, st.description, st.habitat_text, st.lookalikes_text,
@@ -88,8 +95,13 @@ class SpeciesRepository {
 }
 
 class IdentificationRepository {
+  IdentificationRepository({DatabaseProvider? databaseProvider})
+      : _databaseProvider = databaseProvider ?? _defaultDatabaseProvider;
+
+  final DatabaseProvider _databaseProvider;
+
   Future<List<TraitChoice>> choices(String languageCode) async {
-    final db = await AppDatabase.instance.database;
+    final db = await _databaseProvider();
     final rows = await db.rawQuery('''
       SELECT tr.id trait_id, tr.code trait_code,
              COALESCE(tt.label, tr.category) trait_label,
@@ -120,7 +132,7 @@ class IdentificationRepository {
         (stemDiameterCm != null ? 1 : 0);
     if (fieldRequested == 0) return morphology;
 
-    final db = await AppDatabase.instance.database;
+    final db = await _databaseProvider();
     final evidenceRows = await db.rawQuery('''
       SELECT s.id,
         CASE WHEN ? IS NULL OR ? IS NULL THEN 0.0 ELSE COALESCE((
@@ -172,10 +184,10 @@ class IdentificationRepository {
 
   Future<List<IdentificationCandidate>> _morphologyCandidates(String languageCode, Map<int,int> selected) async {
     if (selected.isEmpty) {
-      final species = await SpeciesRepository().search(languageCode);
+      final species = await SpeciesRepository(databaseProvider: _databaseProvider).search(languageCode);
       return species.take(50).map((s) => IdentificationCandidate(species:s, score:0, matched:0, requested:0)).toList();
     }
-    final db = await AppDatabase.instance.database;
+    final db = await _databaseProvider();
     final valueSql = List.filled(selected.length, '(?, ?)').join(', ');
     final args = <Object?>[];
     for (final entry in selected.entries) { args..add(entry.key)..add(entry.value); }
@@ -201,14 +213,19 @@ class IdentificationRepository {
 }
 
 class TrainingRepository {
+  TrainingRepository({DatabaseProvider? databaseProvider})
+      : _databaseProvider = databaseProvider ?? _defaultDatabaseProvider;
+
+  final DatabaseProvider _databaseProvider;
+
   Future<List<LessonSummary>> lessons(String languageCode) async {
-    final db = await AppDatabase.instance.database;
+    final db = await _databaseProvider();
     final rows = await db.rawQuery('''SELECT l.id,l.difficulty,lt.title,lt.body,COALESCE(p.best_score,0) best_score,COALESCE(p.attempts,0) attempts FROM lesson l JOIN lesson_text lt ON lt.lesson_id=l.id AND lt.language_code=? LEFT JOIN training_progress p ON p.lesson_id=l.id ORDER BY l.sort_order''',[languageCode]);
     return rows.map((r)=>LessonSummary(id:r['id'] as int,title:r['title'] as String,body:r['body'] as String,difficulty:r['difficulty'] as int,bestScore:(r['best_score'] as num).toDouble(),attempts:r['attempts'] as int)).toList();
   }
 
   Future<List<QuizQuestion>> questions(int lessonId, String languageCode) async {
-    final db = await AppDatabase.instance.database;
+    final db = await _databaseProvider();
     final qs = await db.rawQuery('''SELECT q.id,qt.prompt,qt.explanation FROM question q JOIN question_text qt ON qt.question_id=q.id AND qt.language_code=? WHERE q.lesson_id=? ORDER BY q.sort_order''',[languageCode,lessonId]);
     final result=<QuizQuestion>[];
     for(final q in qs){
@@ -219,7 +236,7 @@ class TrainingRepository {
   }
 
   Future<void> saveScore(int lessonId,double score) async {
-    final db=await AppDatabase.instance.database;
+    final db=await _databaseProvider();
     final current=await db.query('training_progress',where:'lesson_id=?',whereArgs:[lessonId],limit:1);
     final oldBest=current.isEmpty?0.0:(current.first['best_score'] as num).toDouble();
     final attempts=current.isEmpty?0:current.first['attempts'] as int;
