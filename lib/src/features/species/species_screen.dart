@@ -31,11 +31,30 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
 
   String _label(String key) {
     const values = {
-      'nl': {'habitat':'Habitat','lookalikes':'Gelijkende soorten','status':'Veiligheidsstatus','missing':'Afbeelding nog niet beschikbaar'},
-      'en': {'habitat':'Habitat','lookalikes':'Lookalikes','status':'Safety status','missing':'Image not available yet'},
-      'de': {'habitat':'Lebensraum','lookalikes':'Verwechslungsarten','status':'Sicherheitsstatus','missing':'Bild noch nicht verfügbar'},
+      'nl': {'habitat':'Habitat','lookalikes':'Gelijkende soorten','status':'Veiligheidsstatus','missing':'Afbeelding nog niet beschikbaar','measurements':'Afmetingen','season':'Seizoen','cap_diameter':'Hoeddiameter','stem_height':'Steelhoogte','stem_diameter':'Steeldiameter'},
+      'en': {'habitat':'Habitat','lookalikes':'Lookalikes','status':'Safety status','missing':'Image not available yet','measurements':'Measurements','season':'Season','cap_diameter':'Cap diameter','stem_height':'Stem height','stem_diameter':'Stem diameter'},
+      'de': {'habitat':'Lebensraum','lookalikes':'Verwechslungsarten','status':'Sicherheitsstatus','missing':'Bild noch nicht verfügbar','measurements':'Maße','season':'Saison','cap_diameter':'Hutdurchmesser','stem_height':'Stielhöhe','stem_diameter':'Stieldurchmesser'},
     };
-    return (values[widget.locale.languageCode] ?? values['en']!)[key]!;
+    return (values[widget.locale.languageCode] ?? values['en']!)[key] ?? key;
+  }
+
+  String _measurement(SpeciesMeasurement m) {
+    final min = m.minValue;
+    final max = m.maxValue;
+    if (min != null && max != null) return '${_format(min)}–${_format(max)} ${m.unit}';
+    if (min != null) return '≥ ${_format(min)} ${m.unit}';
+    if (max != null) return '≤ ${_format(max)} ${m.unit}';
+    return '-';
+  }
+
+  String _format(double value) => value == value.roundToDouble() ? value.toInt().toString() : value.toStringAsFixed(1);
+
+  String _monthName(int month) {
+    const nl=['','jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+    const en=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const de=['','Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    final values=widget.locale.languageCode=='nl'?nl:widget.locale.languageCode=='de'?de:en;
+    return values[month];
   }
 
   @override
@@ -76,6 +95,18 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                           Text(species.scientificName,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontStyle:FontStyle.italic)),
                           const SizedBox(height:16),
                           Text(species.description ?? species.summary ?? ''),
+                          if(species.measurements.isNotEmpty)...[
+                            const SizedBox(height:20),
+                            Text(_label('measurements'),style:Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height:6),
+                            ...species.measurements.map((m)=>Padding(padding:const EdgeInsets.only(bottom:4),child:Text('${_label(m.code)}: ${_measurement(m)}'))),
+                          ],
+                          if(species.season.isNotEmpty)...[
+                            const SizedBox(height:20),
+                            Text(_label('season'),style:Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height:8),
+                            Wrap(spacing:6,runSpacing:6,children:species.season.map((m)=>Chip(label:Text(_monthName(m.month)),avatar:Icon(m.likelihood>=3?Icons.circle:m.likelihood==2?Icons.circle_outlined:Icons.circle_outlined,size:m.likelihood>=3?14:10))).toList()),
+                          ],
                           const SizedBox(height:20),
                           Text(_label('habitat'),style:Theme.of(context).textTheme.titleMedium),
                           Text(species.habitat ?? '-'),
