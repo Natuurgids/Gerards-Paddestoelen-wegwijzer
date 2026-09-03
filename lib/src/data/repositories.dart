@@ -174,12 +174,16 @@ class IdentificationRepository {
     double? stemHeightCm,
     double? stemDiameterCm,
   }) async {
-    final morphology = await _morphologyCandidates(languageCode, selected);
     final fieldRequested =
         (observationMonth != null && seasonRegionCode != null ? 1 : 0) +
             (capDiameterCm != null ? 1 : 0) +
             (stemHeightCm != null ? 1 : 0) +
             (stemDiameterCm != null ? 1 : 0);
+    final morphology = await _morphologyCandidates(
+      languageCode,
+      selected,
+      includeZeroMatches: fieldRequested > 0,
+    );
     if (fieldRequested == 0) return morphology;
 
     final db = await _databaseProvider();
@@ -283,8 +287,9 @@ class IdentificationRepository {
 
   Future<List<IdentificationCandidate>> _morphologyCandidates(
     String languageCode,
-    Map<int, int> selected,
-  ) async {
+    Map<int, int> selected, {
+    bool includeZeroMatches = false,
+  }) async {
     if (selected.isEmpty) {
       final species = await SpeciesRepository(
         databaseProvider: _databaseProvider,
@@ -312,6 +317,8 @@ class IdentificationRepository {
     }
     args.add(languageCode);
 
+    final matchFilter =
+        includeZeroMatches ? '' : 'WHERE scores.matched_weight > 0';
     final rows = await db.rawQuery(
       '''WITH selected(trait_id, option_id) AS (VALUES $valueSql),
       per_trait AS (
@@ -329,7 +336,7 @@ class IdentificationRepository {
         (SELECT asset_path FROM species_image si WHERE si.species_id=s.id ORDER BY si.is_primary DESC, si.sort_order LIMIT 1) image_path,
         scores.matched_weight / NULLIF(scores.total_weight, 0) score, scores.matched_count
       FROM scores JOIN species s ON s.id=scores.species_id JOIN taxon t ON t.id=s.taxon_id JOIN species_text txt ON txt.species_id=s.id AND txt.language_code=?
-      WHERE scores.matched_weight > 0 ORDER BY score DESC, scores.matched_count DESC, txt.common_name COLLATE NOCASE LIMIT 50''',
+      $matchFilter ORDER BY score DESC, scores.matched_count DESC, txt.common_name COLLATE NOCASE LIMIT 50''',
       args,
     );
     return rows
