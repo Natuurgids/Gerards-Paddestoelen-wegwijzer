@@ -71,6 +71,7 @@ void main() {
     final species = decoded['species'] as List<dynamic>;
     final allPaths = <String>{};
     const requiredAngles = {'top', 'underside', 'side', 'base', 'habitat'};
+    const requiredOrders = {0, 1, 2, 3, 4};
 
     for (final rawSpecies in species) {
       final item = rawSpecies as Map<String, dynamic>;
@@ -110,6 +111,8 @@ void main() {
         }
         if (image['primary'] == true) primaryCount++;
       }
+      expect(orders, requiredOrders,
+          reason: 'Each species gallery must use sort positions 0 through 4');
       expect(angles, requiredAngles,
           reason: 'Each species gallery must cover all five standard angles');
       expect(primaryCount, 1,
