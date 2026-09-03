@@ -85,11 +85,13 @@ class IdentificationRepository {
     String? seasonRegionCode,
     double? capDiameterCm,
     double? stemHeightCm,
+    double? stemDiameterCm,
   }) async {
     final morphology = await _morphologyCandidates(languageCode, selected);
     final fieldRequested = (observationMonth != null && seasonRegionCode != null ? 1 : 0) +
         (capDiameterCm != null ? 1 : 0) +
-        (stemHeightCm != null ? 1 : 0);
+        (stemHeightCm != null ? 1 : 0) +
+        (stemDiameterCm != null ? 1 : 0);
 
     if (fieldRequested == 0) return morphology;
 
@@ -122,7 +124,16 @@ class IdentificationRepository {
             WHERE sm.species_id=s.id AND sm.measurement_code='stem_height'
             LIMIT 1
           ), 0.0)
-        END stem_score
+        END stem_height_score,
+        CASE
+          WHEN ? IS NULL THEN 0.0
+          ELSE COALESCE((
+            SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
+            FROM species_measurement sm
+            WHERE sm.species_id=s.id AND sm.measurement_code='stem_diameter'
+            LIMIT 1
+          ), 0.0)
+        END stem_diameter_score
       FROM species s
     ''', [
       observationMonth,
@@ -133,18 +144,22 @@ class IdentificationRepository {
       capDiameterCm,
       stemHeightCm,
       stemHeightCm,
+      stemDiameterCm,
+      stemDiameterCm,
     ]);
 
     final evidenceBySpecies = <int, ({double score, int matched})>{};
     for (final row in evidenceRows) {
       final seasonScore = (row['season_score'] as num).toDouble();
       final capScore = (row['cap_score'] as num).toDouble();
-      final stemScore = (row['stem_score'] as num).toDouble();
-      final total = seasonScore + capScore + stemScore;
+      final stemHeightScore = (row['stem_height_score'] as num).toDouble();
+      final stemDiameterScore = (row['stem_diameter_score'] as num).toDouble();
+      final total = seasonScore + capScore + stemHeightScore + stemDiameterScore;
       var matched = 0;
       if (observationMonth != null && seasonRegionCode != null && seasonScore > 0) matched++;
       if (capDiameterCm != null && capScore > 0) matched++;
-      if (stemHeightCm != null && stemScore > 0) matched++;
+      if (stemHeightCm != null && stemHeightScore > 0) matched++;
+      if (stemDiameterCm != null && stemDiameterScore > 0) matched++;
       evidenceBySpecies[row['id'] as int] = (score: total / fieldRequested, matched: matched);
     }
 
