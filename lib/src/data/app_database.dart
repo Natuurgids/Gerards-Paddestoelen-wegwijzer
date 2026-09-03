@@ -1,6 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database_seeder.dart';
+import 'image_manifest_importer.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -26,6 +27,7 @@ class AppDatabase {
           await DatabaseSeeder.seed(txn);
         });
       },
+      onOpen: (db) => ImageManifestImporter.sync(db),
     );
   }
 
