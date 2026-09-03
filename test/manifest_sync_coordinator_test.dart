@@ -76,4 +76,42 @@ void main() {
     final rows = await db.query('sync_probe', orderBy: 'name');
     expect(rows.map((row) => row['name']), ['training']);
   });
+
+  test('duplicate step names are reported without running either duplicate',
+      () async {
+    final failures = await ManifestSyncCoordinator.run(db, [
+      (
+        name: 'catalogue',
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'catalogue-a'});
+        },
+        dependsOn: const [],
+      ),
+      (
+        name: 'catalogue',
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'catalogue-b'});
+        },
+        dependsOn: const [],
+      ),
+      (
+        name: 'field-data',
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'field-data'});
+        },
+        dependsOn: const ['catalogue'],
+      ),
+      (
+        name: 'training',
+        sync: (database) async {
+          await database.insert('sync_probe', {'name': 'training'});
+        },
+        dependsOn: const [],
+      ),
+    ]);
+
+    expect(failures, ['catalogue', 'field-data']);
+    final rows = await db.query('sync_probe', orderBy: 'name');
+    expect(rows.map((row) => row['name']), ['training']);
+  });
 }
