@@ -1,5 +1,20 @@
 {
-  "version": 2,
+  "version": 3,
+  "season_regions": [
+    {
+      "code": "GB-IE",
+      "labels": {
+        "nl": "Groot-Brittannië/Ierland",
+        "en": "Britain/Ireland",
+        "de": "Großbritannien/Irland"
+      },
+      "notes": {
+        "nl": "Regionale referentie voor vruchtvorming; patronen verschillen per locatie en jaar.",
+        "en": "Regional fruiting reference; patterns vary by location and year.",
+        "de": "Regionale Fruktifikationsreferenz; Muster variieren je nach Ort und Jahr."
+      }
+    }
+  ],
   "species": [
     {
       "species_id": 1,
