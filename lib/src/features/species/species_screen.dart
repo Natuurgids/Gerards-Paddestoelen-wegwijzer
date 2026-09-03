@@ -21,10 +21,15 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
   @override
   void initState() {
     super.initState();
-    _future = SpeciesRepository().detail(widget.speciesId, widget.locale.languageCode);
-    FieldDataRepository().seasonRegions(widget.locale.languageCode).then((regions) {
-      if (mounted) setState(() => _regionOptions = regions);
-    });
+    _future = SpeciesRepository().detail(
+      widget.speciesId,
+      widget.locale.languageCode,
+    );
+    FieldDataRepository().seasonRegions(widget.locale.languageCode).then(
+      (regions) {
+        if (mounted) setState(() => _regionOptions = regions);
+      },
+    );
   }
 
   @override
@@ -35,29 +40,112 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
 
   String _label(String key) {
     const values = {
-      'nl': {'habitat':'Habitat','lookalikes':'Gelijkende soorten','status':'Veiligheidsstatus','missing':'Afbeelding nog niet beschikbaar','measurements':'Afmetingen','season':'Seizoen','cap_diameter':'Hoeddiameter','stem_height':'Steelhoogte','stem_diameter':'Steeldiameter'},
-      'en': {'habitat':'Habitat','lookalikes':'Lookalikes','status':'Safety status','missing':'Image not available yet','measurements':'Measurements','season':'Season','cap_diameter':'Cap diameter','stem_height':'Stem height','stem_diameter':'Stem diameter'},
-      'de': {'habitat':'Lebensraum','lookalikes':'Verwechslungsarten','status':'Sicherheitsstatus','missing':'Bild noch nicht verfügbar','measurements':'Maße','season':'Saison','cap_diameter':'Hutdurchmesser','stem_height':'Stielhöhe','stem_diameter':'Stieldurchmesser'},
+      'nl': {
+        'habitat': 'Habitat',
+        'lookalikes': 'Gelijkende soorten',
+        'status': 'Veiligheidsreferentie',
+        'missing': 'Afbeelding nog niet beschikbaar',
+        'measurements': 'Afmetingen',
+        'season': 'Seizoen',
+        'cap_diameter': 'Hoeddiameter',
+        'stem_height': 'Steelhoogte',
+        'stem_diameter': 'Steeldiameter',
+        'notFound': 'Soort niet gevonden',
+      },
+      'en': {
+        'habitat': 'Habitat',
+        'lookalikes': 'Lookalikes',
+        'status': 'Safety reference',
+        'missing': 'Image not available yet',
+        'measurements': 'Measurements',
+        'season': 'Season',
+        'cap_diameter': 'Cap diameter',
+        'stem_height': 'Stem height',
+        'stem_diameter': 'Stem diameter',
+        'notFound': 'Species not found',
+      },
+      'de': {
+        'habitat': 'Lebensraum',
+        'lookalikes': 'Verwechslungsarten',
+        'status': 'Sicherheitsreferenz',
+        'missing': 'Bild noch nicht verfügbar',
+        'measurements': 'Maße',
+        'season': 'Saison',
+        'cap_diameter': 'Hutdurchmesser',
+        'stem_height': 'Stielhöhe',
+        'stem_diameter': 'Stieldurchmesser',
+        'notFound': 'Art nicht gefunden',
+      },
     };
     return (values[widget.locale.languageCode] ?? values['en']!)[key] ?? key;
   }
 
-  String _measurement(SpeciesMeasurement m) {
-    final min = m.minValue;
-    final max = m.maxValue;
-    if (min != null && max != null) return '${_format(min)}–${_format(max)} ${m.unit}';
-    if (min != null) return '≥ ${_format(min)} ${m.unit}';
-    if (max != null) return '≤ ${_format(max)} ${m.unit}';
+  String _measurement(SpeciesMeasurement measurement) {
+    final min = measurement.minValue;
+    final max = measurement.maxValue;
+    if (min != null && max != null) {
+      return '${_format(min)}–${_format(max)} ${measurement.unit}';
+    }
+    if (min != null) return '≥ ${_format(min)} ${measurement.unit}';
+    if (max != null) return '≤ ${_format(max)} ${measurement.unit}';
     return '-';
   }
 
-  String _format(double value) => value == value.roundToDouble() ? value.toInt().toString() : value.toStringAsFixed(1);
+  String _format(double value) => value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toStringAsFixed(1);
 
   String _monthName(int month) {
-    const nl=['','jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
-    const en=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const de=['','Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-    final values=widget.locale.languageCode=='nl'?nl:widget.locale.languageCode=='de'?de:en;
+    const nl = [
+      '',
+      'jan',
+      'feb',
+      'mrt',
+      'apr',
+      'mei',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'okt',
+      'nov',
+      'dec',
+    ];
+    const en = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const de = [
+      '',
+      'Jan',
+      'Feb',
+      'Mär',
+      'Apr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Dez',
+    ];
+    final values = widget.locale.languageCode == 'nl'
+        ? nl
+        : widget.locale.languageCode == 'de'
+            ? de
+            : en;
     return values[month];
   }
 
@@ -75,13 +163,38 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
     return null;
   }
 
-  Map<String, List<SpeciesSeasonMonth>> _seasonByRegion(List<SpeciesSeasonMonth> months) {
+  Map<String, List<SpeciesSeasonMonth>> _seasonByRegion(
+    List<SpeciesSeasonMonth> months,
+  ) {
     final result = <String, List<SpeciesSeasonMonth>>{};
     for (final month in months) {
       final code = month.regionCode ?? 'UNSPECIFIED';
       result.putIfAbsent(code, () => []).add(month);
     }
     return result;
+  }
+
+  String _safetyReference(SpeciesDetail species) {
+    final language = widget.locale.languageCode;
+    if (species.toxicityLevel == 'deadly') {
+      return language == 'nl'
+          ? 'Bekend als potentieel dodelijk giftig. Niet consumeren. Gebruik de app nooit als basis voor consumptie.'
+          : language == 'de'
+              ? 'Als potenziell tödlich giftig bekannt. Nicht verzehren. Die App darf niemals Grundlage für den Verzehr sein.'
+              : 'Known as potentially deadly poisonous. Do not consume. Never use the app as a basis for consumption.';
+    }
+    if (species.toxicityLevel == 'poisonous') {
+      return language == 'nl'
+          ? 'Bekend als giftig. Niet consumeren. Gebruik de app nooit als basis voor consumptie.'
+          : language == 'de'
+              ? 'Als giftig bekannt. Nicht verzehren. Die App darf niemals Grundlage für den Verzehr sein.'
+              : 'Known as poisonous. Do not consume. Never use the app as a basis for consumption.';
+    }
+    return language == 'nl'
+        ? 'Deze app geeft geen oordeel dat consumptie veilig is. Laat identificatie en eventuele eetbaarheid altijd door een gekwalificeerde lokale deskundige controleren.'
+        : language == 'de'
+            ? 'Diese App bestätigt niemals, dass ein Verzehr sicher ist. Bestimmung und mögliche Essbarkeit müssen immer von einer qualifizierten örtlichen Fachperson geprüft werden.'
+            : 'This app never confirms that consumption is safe. Identification and any possible edibility must always be verified by a qualified local expert.';
   }
 
   @override
@@ -95,74 +208,178 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
               child: FutureBuilder<SpeciesDetail?>(
                 future: _future,
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
                   final species = snapshot.data;
-                  if (species == null) return const Center(child: Text('Species not found'));
-                  final images = species.images.isEmpty ? List<SpeciesImage>.generate(5, (i) => SpeciesImage(path:'', angleCode:null, sortOrder:i)) : species.images;
+                  if (species == null) {
+                    return Center(child: Text(_label('notFound')));
+                  }
+                  final images = species.images.isEmpty
+                      ? List<SpeciesImage>.generate(
+                          5,
+                          (index) => SpeciesImage(
+                            path: '',
+                            angleCode: null,
+                            sortOrder: index,
+                          ),
+                        )
+                      : species.images;
                   final seasonByRegion = _seasonByRegion(species.season);
                   return ListView(
                     children: [
                       AspectRatio(
-                        aspectRatio: 4/3,
+                        aspectRatio: 4 / 3,
                         child: Stack(
                           children: [
                             PageView.builder(
                               controller: _controller,
                               itemCount: images.length,
-                              onPageChanged: (value) => setState(() => _page=value),
-                              itemBuilder: (_, index) => _SpeciesImage(path: images[index].path, missingLabel: _label('missing')),
+                              onPageChanged: (value) =>
+                                  setState(() => _page = value),
+                              itemBuilder: (_, index) => _SpeciesImage(
+                                path: images[index].path,
+                                missingLabel: _label('missing'),
+                              ),
                             ),
-                            Positioned(right:12,bottom:12,child:DecoratedBox(decoration:BoxDecoration(color:Colors.black54,borderRadius:BorderRadius.circular(20)),child:Padding(padding:const EdgeInsets.symmetric(horizontal:10,vertical:5),child:Text('${_page+1} / ${images.length}',style:const TextStyle(color:Colors.white))))),
+                            Positioned(
+                              right: 12,
+                              bottom: 12,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  child: Text(
+                                    '${_page + 1} / ${images.length}',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(20),
-                        child: Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-                          Text(species.commonName,style:Theme.of(context).textTheme.headlineMedium),
-                          Text(species.scientificName,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontStyle:FontStyle.italic)),
-                          const SizedBox(height:16),
-                          Text(species.description ?? species.summary ?? ''),
-                          if(species.measurements.isNotEmpty)...[
-                            const SizedBox(height:20),
-                            Text(_label('measurements'),style:Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height:6),
-                            ...species.measurements.map((m)=>Padding(padding:const EdgeInsets.only(bottom:4),child:Text('${_label(m.code)}: ${_measurement(m)}'))),
-                          ],
-                          if(species.season.isNotEmpty)...[
-                            const SizedBox(height:20),
-                            Text(_label('season'),style:Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height:6),
-                            ...seasonByRegion.entries.map((entry) {
-                              final note = _regionNote(entry.key);
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom:12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(_regionName(entry.key), style: Theme.of(context).textTheme.labelLarge),
-                                    if (note != null && note.isNotEmpty)
-                                      Padding(padding: const EdgeInsets.only(top:2,bottom:4), child: Text(note, style: Theme.of(context).textTheme.bodySmall)),
-                                    Wrap(
-                                      spacing:6,
-                                      runSpacing:6,
-                                      children: entry.value.map((m)=>Chip(label:Text(_monthName(m.month)),avatar:Icon(m.likelihood>=3?Icons.circle:Icons.circle_outlined,size:m.likelihood>=3?14:m.likelihood==2?11:8))).toList(),
-                                    ),
-                                  ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              species.commonName,
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            Text(
+                              species.scientificName,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontStyle: FontStyle.italic),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(species.description ?? species.summary ?? ''),
+                            if (species.measurements.isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              Text(
+                                _label('measurements'),
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 6),
+                              ...species.measurements.map(
+                                (measurement) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Text(
+                                    '${_label(measurement.code)}: ${_measurement(measurement)}',
+                                  ),
                                 ),
-                              );
-                            }),
+                              ),
+                            ],
+                            if (species.season.isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              Text(
+                                _label('season'),
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 6),
+                              ...seasonByRegion.entries.map((entry) {
+                                final note = _regionNote(entry.key);
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _regionName(entry.key),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge,
+                                      ),
+                                      if (note != null && note.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 2,
+                                            bottom: 4,
+                                          ),
+                                          child: Text(
+                                            note,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall,
+                                          ),
+                                        ),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 6,
+                                        children: entry.value
+                                            .map(
+                                              (month) => Chip(
+                                                label:
+                                                    Text(_monthName(month.month)),
+                                                avatar: Icon(
+                                                  month.likelihood >= 3
+                                                      ? Icons.circle
+                                                      : Icons.circle_outlined,
+                                                  size: month.likelihood >= 3
+                                                      ? 14
+                                                      : month.likelihood == 2
+                                                          ? 11
+                                                          : 8,
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                            const SizedBox(height: 20),
+                            Text(
+                              _label('habitat'),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(species.habitat ?? '-'),
+                            const SizedBox(height: 16),
+                            Text(
+                              _label('lookalikes'),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(species.lookalikes ?? '-'),
+                            const SizedBox(height: 16),
+                            Text(
+                              _label('status'),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(_safetyReference(species)),
                           ],
-                          const SizedBox(height:20),
-                          Text(_label('habitat'),style:Theme.of(context).textTheme.titleMedium),
-                          Text(species.habitat ?? '-'),
-                          const SizedBox(height:16),
-                          Text(_label('lookalikes'),style:Theme.of(context).textTheme.titleMedium),
-                          Text(species.lookalikes ?? '-'),
-                          const SizedBox(height:16),
-                          Text(_label('status'),style:Theme.of(context).textTheme.titleMedium),
-                          Text('${species.edibleStatus} · ${species.toxicityLevel}'),
-                        ]),
+                        ),
                       ),
                     ],
                   );
@@ -178,13 +395,29 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
 }
 
 class _SpeciesImage extends StatelessWidget {
-  const _SpeciesImage({required this.path,required this.missingLabel});
+  const _SpeciesImage({required this.path, required this.missingLabel});
   final String path;
   final String missingLabel;
+
   @override
   Widget build(BuildContext context) {
-    Widget fallback() => Container(color:Theme.of(context).colorScheme.surfaceContainerHighest,alignment:Alignment.center,child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.image_not_supported_outlined,size:56),const SizedBox(height:8),Text(missingLabel)]));
-    if(path.isEmpty) return fallback();
-    return Image.asset(path,fit:BoxFit.cover,errorBuilder:(_,__,___)=>fallback());
+    Widget fallback() => Container(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.image_not_supported_outlined, size: 56),
+              const SizedBox(height: 8),
+              Text(missingLabel),
+            ],
+          ),
+        );
+    if (path.isEmpty) return fallback();
+    return Image.asset(
+      path,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => fallback(),
+    );
   }
 }
