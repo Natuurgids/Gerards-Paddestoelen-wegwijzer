@@ -33,6 +33,7 @@ class FieldDataImporter {
           );
         }
 
+        final regionCode = item['season_region'] as String?;
         final season = item['season'] as List<dynamic>? ?? const [];
         for (final rawMonth in season) {
           final month = rawMonth as Map<String, dynamic>;
@@ -42,6 +43,7 @@ class FieldDataImporter {
               'species_id': speciesId,
               'month': month['month'],
               'likelihood': month['likelihood'] ?? 1,
+              'region_code': regionCode,
             },
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
