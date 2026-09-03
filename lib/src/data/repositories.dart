@@ -87,26 +87,35 @@ class IdentificationRepository {
     if (fieldRequested == 0) return morphology;
     final db = await _databaseProvider();
     final evidenceRows = await db.rawQuery('''SELECT s.id,
-      CASE WHEN ? IS NULL OR ? IS NULL THEN 0.0 ELSE COALESCE((SELECT ss.likelihood / 3.0 FROM species_season ss WHERE ss.species_id=s.id AND ss.month=? AND ss.region_code=? LIMIT 1), 0.0) END season_score,
-      CASE WHEN ? IS NULL THEN 0.0 ELSE COALESCE((SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='cap_diameter' LIMIT 1), 0.0) END cap_score,
-      CASE WHEN ? IS NULL THEN 0.0 ELSE COALESCE((SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_height' LIMIT 1), 0.0) END stem_height_score,
-      CASE WHEN ? IS NULL THEN 0.0 ELSE COALESCE((SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_diameter' LIMIT 1), 0.0) END stem_diameter_score FROM species s''',
-      [observationMonth, seasonRegionCode, observationMonth, seasonRegionCode, capDiameterCm, capDiameterCm, stemHeightCm, stemHeightCm, stemDiameterCm, stemDiameterCm]);
-    final evidenceBySpecies = <int, ({double score, int matched})>{};
+      CASE WHEN ? IS NULL OR ? IS NULL THEN NULL
+        WHEN EXISTS(SELECT 1 FROM species_season ss WHERE ss.species_id=s.id AND ss.region_code=? LIMIT 1)
+          THEN COALESCE((SELECT ss.likelihood / 3.0 FROM species_season ss WHERE ss.species_id=s.id AND ss.month=? AND ss.region_code=? LIMIT 1), 0.0)
+        ELSE NULL END season_score,
+      CASE WHEN ? IS NULL THEN NULL ELSE (SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='cap_diameter' LIMIT 1) END cap_score,
+      CASE WHEN ? IS NULL THEN NULL ELSE (SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_height' LIMIT 1) END stem_height_score,
+      CASE WHEN ? IS NULL THEN NULL ELSE (SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_diameter' LIMIT 1) END stem_diameter_score FROM species s''',
+      [observationMonth, seasonRegionCode, seasonRegionCode, observationMonth, seasonRegionCode, capDiameterCm, capDiameterCm, stemHeightCm, stemHeightCm, stemDiameterCm, stemDiameterCm]);
+    final evidenceBySpecies = <int, ({double score, int matched, int evaluated})>{};
     for (final row in evidenceRows) {
-      final seasonScore = (row['season_score'] as num).toDouble(); final capScore = (row['cap_score'] as num).toDouble();
-      final stemHeightScore = (row['stem_height_score'] as num).toDouble(); final stemDiameterScore = (row['stem_diameter_score'] as num).toDouble();
-      final total = seasonScore + capScore + stemHeightScore + stemDiameterScore; var matched = 0;
-      if (observationMonth != null && seasonRegionCode != null && seasonScore > 0) matched++; if (capDiameterCm != null && capScore > 0) matched++;
-      if (stemHeightCm != null && stemHeightScore > 0) matched++; if (stemDiameterCm != null && stemDiameterScore > 0) matched++;
-      evidenceBySpecies[row['id'] as int] = (score: total / fieldRequested, matched: matched);
+      final scores = <double>[];
+      var matched = 0;
+      for (final key in const ['season_score', 'cap_score', 'stem_height_score', 'stem_diameter_score']) {
+        final rawScore = row[key] as num?;
+        if (rawScore == null) continue;
+        final score = rawScore.toDouble();
+        scores.add(score);
+        if (score > 0) matched++;
+      }
+      final evaluated = scores.length;
+      final score = evaluated == 0 ? 0.0 : scores.reduce((a, b) => a + b) / evaluated;
+      evidenceBySpecies[row['id'] as int] = (score: score, matched: matched, evaluated: evaluated);
     }
     final hasMorphology = selected.isNotEmpty;
     final combined = morphology.map((candidate) {
-      final field = evidenceBySpecies[candidate.species.id] ?? (score: 0.0, matched: 0);
+      final field = evidenceBySpecies[candidate.species.id] ?? (score: 0.0, matched: 0, evaluated: 0);
       final breakdown = combineIdentificationScores(morphologyScore: candidate.score, fieldScore: field.score, hasMorphology: hasMorphology);
       return IdentificationCandidate(species: candidate.species, score: breakdown.combinedScore, matched: candidate.matched, requested: candidate.requested,
-        fieldScore: breakdown.fieldScore, fieldMatched: field.matched, fieldRequested: fieldRequested);
+        fieldScore: breakdown.fieldScore, fieldMatched: field.matched, fieldRequested: field.evaluated);
     }).where((candidate) => candidate.score > 0).toList();
     combined.sort((a, b) { final byScore = b.score.compareTo(a.score); if (byScore != 0) return byScore;
       final byMorphology = b.matched.compareTo(a.matched); if (byMorphology != 0) return byMorphology; return b.fieldMatched.compareTo(a.fieldMatched); });
