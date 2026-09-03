@@ -1,0 +1,9 @@
+{
+  "@@locale": "en",
+  "appTitle": "Gerard’s Mushroom Guide",
+  "homeIntro": "Identify mushrooms and learn mycology fully offline.",
+  "homeIdentify": "Identify",
+  "homeLearn": "Learn",
+  "homeBrowseSpecies": "Browse species",
+  "safetyNotice": "Safety notice: Never consume a mushroom based solely on identification by this app. Mistakes may cause serious poisoning or death. Always have edible mushrooms verified by a qualified local expert."
+}
