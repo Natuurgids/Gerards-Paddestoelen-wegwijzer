@@ -8,13 +8,15 @@ class SpeciesSummary {
 }
 
 class SpeciesDetail extends SpeciesSummary {
-  const SpeciesDetail({required super.id, required super.scientificName, required super.commonName, required super.summary, required super.imagePath, required this.description, required this.habitat, required this.lookalikes, required this.edibleStatus, required this.toxicityLevel, required this.images});
+  const SpeciesDetail({required super.id, required super.scientificName, required super.commonName, required super.summary, required super.imagePath, required this.description, required this.habitat, required this.lookalikes, required this.edibleStatus, required this.toxicityLevel, required this.images, required this.measurements, required this.season});
   final String? description;
   final String? habitat;
   final String? lookalikes;
   final String edibleStatus;
   final String toxicityLevel;
   final List<SpeciesImage> images;
+  final List<SpeciesMeasurement> measurements;
+  final List<SpeciesSeasonMonth> season;
 }
 
 class SpeciesImage {
@@ -24,6 +26,20 @@ class SpeciesImage {
   final int sortOrder;
   final String? photographer;
   final String? license;
+}
+
+class SpeciesMeasurement {
+  const SpeciesMeasurement({required this.code, required this.minValue, required this.maxValue, required this.unit});
+  final String code;
+  final double? minValue;
+  final double? maxValue;
+  final String unit;
+}
+
+class SpeciesSeasonMonth {
+  const SpeciesSeasonMonth({required this.month, required this.likelihood});
+  final int month;
+  final int likelihood;
 }
 
 class TraitChoice {
