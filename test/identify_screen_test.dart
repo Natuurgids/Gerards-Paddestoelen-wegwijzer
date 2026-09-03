@@ -100,6 +100,48 @@ void main() {
     expect(find.text('Select an observation month.'), findsOneWidget);
     expect(repository.identifyCalls, 0);
   });
+
+  testWidgets('selected season evidence is forwarded to identification',
+      (tester) async {
+    final repository = _FakeIdentificationRepository();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: IdentifyScreen(
+          locale: const Locale('en'),
+          repository: repository,
+          fieldDataRepository: _RegionFieldDataRepository(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final seasonReference =
+        find.widgetWithText(DropdownButtonFormField<String?>, 'Season reference');
+    await _dragUntilBuilt(tester, seasonReference);
+    await tester.tap(seasonReference);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Britain & Ireland').last);
+    await tester.pumpAndSettle();
+
+    final month =
+        find.widgetWithText(DropdownButtonFormField<int>, 'Observation month');
+    await _dragUntilBuilt(tester, month);
+    await tester.tap(month);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Oct').last);
+    await tester.pumpAndSettle();
+
+    final button = find.widgetWithText(FilledButton, 'Show candidates');
+    await _dragUntilBuilt(tester, button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+
+    expect(repository.identifyCalls, 1);
+    expect(repository.lastSeasonRegionCode, 'GB-IE');
+    expect(repository.lastObservationMonth, 10);
+    expect(find.text('Select an observation month.'), findsNothing);
+  });
 }
 
 Future<void> _dragUntilBuilt(WidgetTester tester, Finder target) async {
@@ -113,6 +155,8 @@ Future<void> _dragUntilBuilt(WidgetTester tester, Finder target) async {
 
 class _FakeIdentificationRepository extends IdentificationRepository {
   int identifyCalls = 0;
+  int? lastObservationMonth;
+  String? lastSeasonRegionCode;
 
   @override
   Future<List<TraitChoice>> choices(String languageCode) async => const [];
@@ -128,6 +172,8 @@ class _FakeIdentificationRepository extends IdentificationRepository {
     double? stemDiameterCm,
   }) async {
     identifyCalls++;
+    lastObservationMonth = observationMonth;
+    lastSeasonRegionCode = seasonRegionCode;
     return const [];
   }
 }
