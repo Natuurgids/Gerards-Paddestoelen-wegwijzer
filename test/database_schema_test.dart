@@ -64,6 +64,61 @@ void main() {
     expect(region['notnull'], 1);
   });
 
+  test('v2 to v5 creates field tables with current regional season key', () async {
+    await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
+
+    await DatabaseSchema.upgrade(db, 2, DatabaseSchema.currentVersion);
+
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table'",
+    );
+    expect(
+      tables.map((row) => row['name']),
+      containsAll(<String>{'species_measurement', 'species_season'}),
+    );
+
+    final seasonColumns = await db.rawQuery('PRAGMA table_info(species_season)');
+    final primaryKey = {
+      for (final row in seasonColumns) row['name']: row['pk'],
+    };
+    expect(primaryKey['species_id'], 1);
+    expect(primaryKey['region_code'], 2);
+    expect(primaryKey['month'], 3);
+
+    final indexes = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='species_season'",
+    );
+    expect(
+      indexes.map((row) => row['name']),
+      contains('idx_species_season_region_month'),
+    );
+  });
+
+  test('v3 to v5 adds region column before preserving legacy rows', () async {
+    await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
+    await db.execute('''CREATE TABLE species_season (
+      species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+      month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
+      likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
+      PRIMARY KEY(species_id, month)
+    )''');
+    await db.insert('species', {'id': 1});
+    await db.insert('species_season', {
+      'species_id': 1,
+      'month': 8,
+      'likelihood': 2,
+    });
+
+    await DatabaseSchema.upgrade(db, 3, DatabaseSchema.currentVersion);
+
+    final rows = await db.query('species_season');
+    expect(rows, hasLength(1));
+    expect(rows.single['species_id'], 1);
+    expect(rows.single['region_code'], 'UNSPECIFIED');
+    expect(rows.single['month'], 8);
+    expect(rows.single['likelihood'], 2);
+  });
+
   test('v4 to v5 migration preserves season rows and enables regions', () async {
     await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
     await db.execute('''CREATE TABLE species_season (
