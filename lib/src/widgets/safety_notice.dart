@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 
 class SafetyNotice extends StatelessWidget {
-  const SafetyNotice({super.key, Locale? locale});
+  const SafetyNotice({super.key});
 
   @override
   Widget build(BuildContext context) => Container(
