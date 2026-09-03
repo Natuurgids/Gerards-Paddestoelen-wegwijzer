@@ -94,13 +94,22 @@ void main() {
 
   test('known measurement beyond shoulder remains negative evidence', () async {
     final candidates = await repository.identify('en', {1: 101}, capDiameterCm: 18);
-    expect(candidates, hasLength(1));
-    final candidate = candidates.first;
-    expect(candidate.species.id, 1);
-    expect(candidate.fieldRequested, 1);
-    expect(candidate.fieldMatched, 0);
-    expect(candidate.fieldScore, closeTo(0.0, 0.0001));
-    expect(candidate.score, closeTo(0.8, 0.0001));
+    expect(candidates, hasLength(2));
+
+    final morphologyMatch = candidates.first;
+    expect(morphologyMatch.species.id, 1);
+    expect(morphologyMatch.fieldRequested, 1);
+    expect(morphologyMatch.fieldMatched, 0);
+    expect(morphologyMatch.fieldScore, closeTo(0.0, 0.0001));
+    expect(morphologyMatch.score, closeTo(0.8, 0.0001));
+
+    final fieldRescued =
+        candidates.singleWhere((candidate) => candidate.species.id == 2);
+    expect(fieldRescued.matched, 0);
+    expect(fieldRescued.fieldRequested, 1);
+    expect(fieldRescued.fieldMatched, 1);
+    expect(fieldRescued.fieldScore, closeTo(0.2, 0.0001));
+    expect(fieldRescued.score, closeTo(0.04, 0.0001));
   });
 
   test('regional season lookup does not borrow another region calendar', () async {
