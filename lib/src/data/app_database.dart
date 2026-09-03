@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import 'database_seeder.dart';
 import 'field_data_importer.dart';
 import 'image_manifest_importer.dart';
+import 'manifest_sync_coordinator.dart';
 import 'species_catalog_importer.dart';
 import 'training_manifest_importer.dart';
 import 'trait_manifest_importer.dart';
@@ -12,6 +13,10 @@ class AppDatabase {
   static final instance = AppDatabase._();
   Database? _db;
   Future<Database>? _opening;
+  List<String> _lastManifestSyncFailures = const [];
+
+  List<String> get lastManifestSyncFailures =>
+      List.unmodifiable(_lastManifestSyncFailures);
 
   Future<Database> get database {
     final existing = _db;
@@ -92,11 +97,13 @@ class AppDatabase {
         }
       },
       onOpen: (db) async {
-        await SpeciesCatalogImporter.sync(db);
-        await TraitManifestImporter.sync(db);
-        await FieldDataImporter.sync(db);
-        await ImageManifestImporter.sync(db);
-        await TrainingManifestImporter.sync(db);
+        _lastManifestSyncFailures = await ManifestSyncCoordinator.run(db, [
+          (name: 'species-catalogue', sync: SpeciesCatalogImporter.sync),
+          (name: 'identification-traits', sync: TraitManifestImporter.sync),
+          (name: 'field-data', sync: FieldDataImporter.sync),
+          (name: 'species-images', sync: ImageManifestImporter.sync),
+          (name: 'training-content', sync: TrainingManifestImporter.sync),
+        ]);
       },
     );
   }
