@@ -7,10 +7,16 @@ import '../../widgets/safety_notice.dart';
 import '../../widgets/species_image.dart';
 
 class SpeciesScreen extends StatefulWidget {
-  const SpeciesScreen({super.key, required this.locale, required this.speciesId});
+  const SpeciesScreen({
+    super.key,
+    required this.locale,
+    required this.speciesId,
+    this.repository,
+  });
 
   final Locale locale;
   final int speciesId;
+  final SpeciesRepository? repository;
 
   @override
   State<SpeciesScreen> createState() => _SpeciesScreenState();
@@ -25,7 +31,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
   @override
   void initState() {
     super.initState();
-    _future = SpeciesRepository().detail(
+    _future = (widget.repository ?? SpeciesRepository()).detail(
       widget.speciesId,
       widget.locale.languageCode,
     );
@@ -146,7 +152,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
               child: FutureBuilder<SpeciesDetail?>(
                 future: _future,
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.connectionState != ConnectionState.done) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final species = snapshot.data;
@@ -190,7 +196,10 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
                                   child: Text(
                                     '${_page + 1} / ${images.length}',
                                     style: const TextStyle(color: Colors.white),
@@ -206,27 +215,40 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(species.commonName, style: Theme.of(context).textTheme.headlineMedium),
+                            Text(
+                              species.commonName,
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
                             Text(
                               species.scientificName,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontStyle: FontStyle.italic),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                  ),
                             ),
                             const SizedBox(height: 16),
                             Text(species.description ?? species.summary ?? ''),
                             if (species.measurements.isNotEmpty) ...[
                               const SizedBox(height: 20),
-                              Text(l10n.speciesMeasurements, style: Theme.of(context).textTheme.titleMedium),
+                              Text(
+                                l10n.speciesMeasurements,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
                               const SizedBox(height: 6),
                               ...species.measurements.map(
                                 (measurement) => Padding(
                                   padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text('${_measurementLabel(l10n, measurement.code)}: ${_measurement(measurement)}'),
+                                  child: Text(
+                                    '${_measurementLabel(l10n, measurement.code)}: ${_measurement(measurement)}',
+                                  ),
                                 ),
                               ),
                             ],
                             if (species.season.isNotEmpty) ...[
                               const SizedBox(height: 20),
-                              Text(l10n.speciesSeason, style: Theme.of(context).textTheme.titleMedium),
+                              Text(
+                                l10n.speciesSeason,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
                               const SizedBox(height: 6),
                               ...seasonByRegion.entries.map((entry) {
                                 final note = _regionNote(entry.key);
@@ -235,11 +257,20 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(_regionName(entry.key), style: Theme.of(context).textTheme.labelLarge),
+                                      Text(
+                                        _regionName(entry.key),
+                                        style: Theme.of(context).textTheme.labelLarge,
+                                      ),
                                       if (note != null && note.isNotEmpty)
                                         Padding(
-                                          padding: const EdgeInsets.only(top: 2, bottom: 4),
-                                          child: Text(note, style: Theme.of(context).textTheme.bodySmall),
+                                          padding: const EdgeInsets.only(
+                                            top: 2,
+                                            bottom: 4,
+                                          ),
+                                          child: Text(
+                                            note,
+                                            style: Theme.of(context).textTheme.bodySmall,
+                                          ),
                                         ),
                                       Wrap(
                                         spacing: 6,
@@ -247,10 +278,18 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                                         children: entry.value
                                             .map(
                                               (month) => Chip(
-                                                label: Text(_monthName(l10n, month.month)),
+                                                label: Text(
+                                                  _monthName(l10n, month.month),
+                                                ),
                                                 avatar: Icon(
-                                                  month.likelihood >= 3 ? Icons.circle : Icons.circle_outlined,
-                                                  size: month.likelihood >= 3 ? 14 : month.likelihood == 2 ? 11 : 8,
+                                                  month.likelihood >= 3
+                                                      ? Icons.circle
+                                                      : Icons.circle_outlined,
+                                                  size: month.likelihood >= 3
+                                                      ? 14
+                                                      : month.likelihood == 2
+                                                          ? 11
+                                                          : 8,
                                                 ),
                                               ),
                                             )
@@ -262,13 +301,22 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                               }),
                             ],
                             const SizedBox(height: 20),
-                            Text(l10n.speciesHabitat, style: Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              l10n.speciesHabitat,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             Text(species.habitat ?? '-'),
                             const SizedBox(height: 16),
-                            Text(l10n.speciesLookalikes, style: Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              l10n.speciesLookalikes,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             Text(species.lookalikes ?? '-'),
                             const SizedBox(height: 16),
-                            Text(l10n.speciesSafetyReference, style: Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              l10n.speciesSafetyReference,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             Text(_safetyReference(l10n, species)),
                           ],
                         ),
