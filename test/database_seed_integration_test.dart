@@ -27,6 +27,13 @@ void main() {
     }
 
     await syncAll();
+    expect(await db.query('training_progress'), isEmpty);
+    await db.insert('training_progress', {
+      'lesson_id': 1,
+      'completed_at': '2026-09-04T00:00:00Z',
+      'best_score': 0.75,
+      'attempts': 2,
+    });
     await syncAll();
 
     const expectedCounts = <String, int>{
@@ -65,13 +72,11 @@ void main() {
     );
     expect(placeholders.single['count'], 15);
 
-    final progress = await db.rawQuery(
-      'SELECT COUNT(*) AS count FROM training_progress',
-    );
-    expect(
-      progress.single['count'],
-      0,
-      reason: 'training_progress is user-owned state and must not be seeded',
-    );
+    final progress = await db.query('training_progress');
+    expect(progress, hasLength(1));
+    expect(progress.single['lesson_id'], 1);
+    expect(progress.single['completed_at'], '2026-09-04T00:00:00Z');
+    expect(progress.single['best_score'], 0.75);
+    expect(progress.single['attempts'], 2);
   });
 }
