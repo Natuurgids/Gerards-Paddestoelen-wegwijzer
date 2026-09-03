@@ -37,6 +37,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
   MeasurementInputStatus? _capError;
   MeasurementInputStatus? _stemError;
   MeasurementInputStatus? _stemDiameterError;
+  bool _seasonMonthMissing = false;
 
   @override
   void initState() {
@@ -80,17 +81,33 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
     return null;
   }
 
+  String? get _seasonMonthError => _seasonMonthMissing
+      ? t(
+          'Kies een waarnemingsmaand.',
+          'Select an observation month.',
+          'Wähle einen Beobachtungsmonat.',
+        )
+      : null;
+
   Future<void> _identify() async {
     final cap = parseMeasurementInput(_capController.text);
     final stem = parseMeasurementInput(_stemController.text);
     final stemDiameter = parseMeasurementInput(_stemDiameterController.text);
+    final seasonMonthMissing =
+        _seasonRegion != null && _observationMonth == null;
 
     setState(() {
       _capError = cap.isValid ? null : cap.status;
       _stemError = stem.isValid ? null : stem.status;
       _stemDiameterError = stemDiameter.isValid ? null : stemDiameter.status;
+      _seasonMonthMissing = seasonMonthMissing;
     });
-    if (!cap.isValid || !stem.isValid || !stemDiameter.isValid) return;
+    if (!cap.isValid ||
+        !stem.isValid ||
+        !stemDiameter.isValid ||
+        seasonMonthMissing) {
+      return;
+    }
 
     final result = await _repo.identify(
       widget.locale.languageCode,
@@ -320,6 +337,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                                           onChanged: regionSnapshot.hasData
                                               ? (value) => setState(() {
                                                     _seasonRegion = value;
+                                                    _seasonMonthMissing = false;
                                                     if (value == null) {
                                                       _observationMonth = null;
                                                     }
@@ -339,6 +357,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                                                 'Observation month',
                                                 'Beobachtungsmonat',
                                               ),
+                                              errorText: _seasonMonthError,
                                             ),
                                             items: List.generate(
                                               12,
@@ -349,9 +368,10 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                                                 ),
                                               ),
                                             ),
-                                            onChanged: (value) => setState(
-                                              () => _observationMonth = value,
-                                            ),
+                                            onChanged: (value) => setState(() {
+                                              _observationMonth = value;
+                                              _seasonMonthMissing = false;
+                                            }),
                                           ),
                                           if (selectedRegion != null &&
                                               selectedRegion.note.isNotEmpty) ...[
