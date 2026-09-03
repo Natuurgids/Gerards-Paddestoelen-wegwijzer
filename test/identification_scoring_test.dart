@@ -39,9 +39,26 @@ void main() {
       expect(measurementMatchScore(observedValue: 15, minValue: 5, maxValue: 15), 1);
     });
 
-    test('does not match values outside range or malformed ranges', () {
-      expect(measurementMatchScore(observedValue: 4.9, minValue: 5, maxValue: 15), 0);
+    test('tapers linearly just outside a biological reference range', () {
+      expect(
+        measurementMatchScore(observedValue: 4, minValue: 5, maxValue: 15),
+        closeTo(0.6, 0.0001),
+      );
+      expect(
+        measurementMatchScore(observedValue: 16, minValue: 5, maxValue: 15),
+        closeTo(0.6, 0.0001),
+      );
+    });
+
+    test('reaches zero after a quarter-range shoulder', () {
+      expect(measurementMatchScore(observedValue: 2.5, minValue: 5, maxValue: 15), 0);
+      expect(measurementMatchScore(observedValue: 17.5, minValue: 5, maxValue: 15), 0);
+    });
+
+    test('rejects malformed or zero-width ranges outside the exact value', () {
       expect(measurementMatchScore(observedValue: 10, minValue: 15, maxValue: 5), 0);
+      expect(measurementMatchScore(observedValue: 5, minValue: 5, maxValue: 5), 1);
+      expect(measurementMatchScore(observedValue: 5.1, minValue: 5, maxValue: 5), 0);
     });
   });
 
