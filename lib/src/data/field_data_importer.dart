@@ -12,6 +12,12 @@ class FieldDataImporter {
     final species = decoded['species'] as List<dynamic>? ?? const [];
 
     await db.transaction((txn) async {
+      // These tables contain developer-managed reference content only. Treat
+      // the manifest as authoritative so removed measurements, calendars,
+      // regions or species entries cannot survive as stale SQLite rows.
+      await txn.delete('species_measurement');
+      await txn.delete('species_season');
+
       for (final rawSpecies in species) {
         final item = rawSpecies as Map<String, dynamic>;
         final speciesId = item['species_id'] as int;
