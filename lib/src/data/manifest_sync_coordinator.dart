@@ -8,6 +8,30 @@ typedef ManifestSyncTask = ({
   List<String> dependsOn,
 });
 
+enum ManifestSyncStatus {
+  success,
+  failed,
+  skippedUnknownDependency,
+  skippedUnavailableDependency,
+  skippedDuplicateName,
+}
+
+class ManifestSyncResult {
+  const ManifestSyncResult({
+    required this.name,
+    required this.status,
+    this.dependencies = const [],
+    this.error,
+  });
+
+  final String name;
+  final ManifestSyncStatus status;
+  final List<String> dependencies;
+  final Object? error;
+
+  bool get unavailable => status != ManifestSyncStatus.success;
+}
+
 class ManifestSyncCoordinator {
   const ManifestSyncCoordinator._();
 
@@ -15,8 +39,21 @@ class ManifestSyncCoordinator {
     Database db,
     List<ManifestSyncTask> steps,
   ) async {
+    final results = await runDetailed(db, steps);
+    final unavailable = <String>{};
+    for (final result in results) {
+      if (result.unavailable) unavailable.add(result.name);
+    }
+    return unavailable.toList();
+  }
+
+  static Future<List<ManifestSyncResult>> runDetailed(
+    Database db,
+    List<ManifestSyncTask> steps,
+  ) async {
     final unavailable = <String>{};
     final knownSteps = <String>{};
+    final results = <ManifestSyncResult>[];
     final nameCounts = <String, int>{};
     for (final step in steps) {
       nameCounts.update(step.name, (count) => count + 1, ifAbsent: () => 1);
@@ -33,6 +70,12 @@ class ManifestSyncCoordinator {
             'Manifest sync skipped for ${step.name}: duplicate step name',
           );
         }
+        results.add(
+          ManifestSyncResult(
+            name: step.name,
+            status: ManifestSyncStatus.skippedDuplicateName,
+          ),
+        );
         knownSteps.add(step.name);
         continue;
       }
@@ -45,6 +88,13 @@ class ManifestSyncCoordinator {
         debugPrint(
           'Manifest sync skipped for ${step.name}: unknown dependencies '
           '${missingDependencies.join(', ')}',
+        );
+        results.add(
+          ManifestSyncResult(
+            name: step.name,
+            status: ManifestSyncStatus.skippedUnknownDependency,
+            dependencies: List.unmodifiable(missingDependencies),
+          ),
         );
         knownSteps.add(step.name);
         continue;
@@ -59,19 +109,39 @@ class ManifestSyncCoordinator {
           'Manifest sync skipped for ${step.name}: unavailable dependencies '
           '${failedDependencies.join(', ')}',
         );
+        results.add(
+          ManifestSyncResult(
+            name: step.name,
+            status: ManifestSyncStatus.skippedUnavailableDependency,
+            dependencies: List.unmodifiable(failedDependencies),
+          ),
+        );
         knownSteps.add(step.name);
         continue;
       }
 
       try {
         await step.sync(db);
+        results.add(
+          ManifestSyncResult(
+            name: step.name,
+            status: ManifestSyncStatus.success,
+          ),
+        );
       } catch (error, stackTrace) {
         unavailable.add(step.name);
         debugPrint('Manifest sync failed for ${step.name}: $error');
         debugPrintStack(stackTrace: stackTrace);
+        results.add(
+          ManifestSyncResult(
+            name: step.name,
+            status: ManifestSyncStatus.failed,
+            error: error,
+          ),
+        );
       }
       knownSteps.add(step.name);
     }
-    return unavailable.toList();
+    return results;
   }
 }
