@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database_seeder.dart';
 import 'image_manifest_importer.dart';
+import 'trait_manifest_importer.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -14,7 +15,7 @@ class AppDatabase {
     final path = join(await getDatabasesPath(), 'mycology.sqlite');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
         await db.execute('PRAGMA journal_mode = WAL');
@@ -27,7 +28,21 @@ class AppDatabase {
           await DatabaseSeeder.seed(txn);
         });
       },
-      onOpen: (db) => ImageManifestImporter.sync(db),
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('''CREATE TABLE IF NOT EXISTS trait_text (
+            trait_id INTEGER NOT NULL REFERENCES trait(id) ON DELETE CASCADE,
+            language_code TEXT NOT NULL CHECK(language_code IN ('nl','en','de')),
+            label TEXT NOT NULL,
+            help_text TEXT,
+            PRIMARY KEY(trait_id, language_code)
+          )''');
+        }
+      },
+      onOpen: (db) async {
+        await ImageManifestImporter.sync(db);
+        await TraitManifestImporter.sync(db);
+      },
     );
   }
 
@@ -63,6 +78,13 @@ class AppDatabase {
       code TEXT NOT NULL UNIQUE,
       category TEXT NOT NULL,
       value_type TEXT NOT NULL CHECK(value_type IN ('choice','boolean','number','text'))
+    )''',
+    '''CREATE TABLE trait_text (
+      trait_id INTEGER NOT NULL REFERENCES trait(id) ON DELETE CASCADE,
+      language_code TEXT NOT NULL CHECK(language_code IN ('nl','en','de')),
+      label TEXT NOT NULL,
+      help_text TEXT,
+      PRIMARY KEY(trait_id, language_code)
     )''',
     '''CREATE TABLE trait_option (
       id INTEGER PRIMARY KEY,
@@ -149,6 +171,7 @@ class AppDatabase {
     '''CREATE INDEX idx_taxon_parent ON taxon(parent_id)''',
     '''CREATE INDEX idx_taxon_scientific_name ON taxon(scientific_name COLLATE NOCASE)''',
     '''CREATE INDEX idx_species_text_language_name ON species_text(language_code, common_name COLLATE NOCASE)''',
+    '''CREATE INDEX idx_trait_text_language_label ON trait_text(language_code, label COLLATE NOCASE)''',
     '''CREATE INDEX idx_species_trait_filter ON species_trait(trait_id, option_id, species_id)''',
     '''CREATE INDEX idx_species_image_gallery ON species_image(species_id, sort_order)''',
     '''CREATE INDEX idx_question_lesson ON question(lesson_id, sort_order)''',
