@@ -78,10 +78,110 @@ class IdentificationRepository {
     return rows.map((r) => TraitChoice(traitId:r['trait_id'] as int, traitCode:r['trait_code'] as String, traitLabel:r['trait_label'] as String, optionId:r['option_id'] as int, optionLabel:r['option_label'] as String)).toList();
   }
 
-  Future<List<IdentificationCandidate>> identify(String languageCode, Map<int,int> selected) async {
+  Future<List<IdentificationCandidate>> identify(
+    String languageCode,
+    Map<int,int> selected, {
+    int? observationMonth,
+    String? seasonRegionCode,
+    double? capDiameterCm,
+    double? stemHeightCm,
+  }) async {
+    final morphology = await _morphologyCandidates(languageCode, selected);
+    final fieldRequested = (observationMonth != null && seasonRegionCode != null ? 1 : 0) +
+        (capDiameterCm != null ? 1 : 0) +
+        (stemHeightCm != null ? 1 : 0);
+
+    if (fieldRequested == 0) return morphology;
+
+    final db = await AppDatabase.instance.database;
+    final evidenceRows = await db.rawQuery('''
+      SELECT s.id,
+        CASE
+          WHEN ? IS NULL OR ? IS NULL THEN 0.0
+          ELSE COALESCE((
+            SELECT ss.likelihood / 3.0
+            FROM species_season ss
+            WHERE ss.species_id=s.id AND ss.month=? AND ss.region_code=?
+            LIMIT 1
+          ), 0.0)
+        END season_score,
+        CASE
+          WHEN ? IS NULL THEN 0.0
+          ELSE COALESCE((
+            SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
+            FROM species_measurement sm
+            WHERE sm.species_id=s.id AND sm.measurement_code='cap_diameter'
+            LIMIT 1
+          ), 0.0)
+        END cap_score,
+        CASE
+          WHEN ? IS NULL THEN 0.0
+          ELSE COALESCE((
+            SELECT CASE WHEN ? BETWEEN sm.min_value AND sm.max_value THEN 1.0 ELSE 0.0 END
+            FROM species_measurement sm
+            WHERE sm.species_id=s.id AND sm.measurement_code='stem_height'
+            LIMIT 1
+          ), 0.0)
+        END stem_score
+      FROM species s
+    ''', [
+      observationMonth,
+      seasonRegionCode,
+      observationMonth,
+      seasonRegionCode,
+      capDiameterCm,
+      capDiameterCm,
+      stemHeightCm,
+      stemHeightCm,
+    ]);
+
+    final evidenceBySpecies = <int, ({double score, int matched})>{};
+    for (final row in evidenceRows) {
+      final seasonScore = (row['season_score'] as num).toDouble();
+      final capScore = (row['cap_score'] as num).toDouble();
+      final stemScore = (row['stem_score'] as num).toDouble();
+      final total = seasonScore + capScore + stemScore;
+      var matched = 0;
+      if (observationMonth != null && seasonRegionCode != null && seasonScore > 0) matched++;
+      if (capDiameterCm != null && capScore > 0) matched++;
+      if (stemHeightCm != null && stemScore > 0) matched++;
+      evidenceBySpecies[row['id'] as int] = (score: total / fieldRequested, matched: matched);
+    }
+
+    final hasMorphology = selected.isNotEmpty;
+    final combined = morphology.map((candidate) {
+      final field = evidenceBySpecies[candidate.species.id] ?? (score: 0.0, matched: 0);
+      final score = hasMorphology
+          ? (candidate.score * 0.8) + (field.score * 0.2)
+          : field.score;
+      return IdentificationCandidate(
+        species: candidate.species,
+        score: score,
+        matched: candidate.matched,
+        requested: candidate.requested,
+        fieldScore: field.score,
+        fieldMatched: field.matched,
+        fieldRequested: fieldRequested,
+      );
+    }).where((candidate) => candidate.score > 0).toList();
+
+    combined.sort((a, b) {
+      final byScore = b.score.compareTo(a.score);
+      if (byScore != 0) return byScore;
+      final byMorphology = b.matched.compareTo(a.matched);
+      if (byMorphology != 0) return byMorphology;
+      return b.fieldMatched.compareTo(a.fieldMatched);
+    });
+    return combined;
+  }
+
+  Future<List<IdentificationCandidate>> _morphologyCandidates(
+    String languageCode,
+    Map<int,int> selected,
+  ) async {
     if (selected.isEmpty) {
       final species = await SpeciesRepository().search(languageCode);
-      return species.take(20).map((s) => IdentificationCandidate(species:s, score:0, matched:0, requested:0)).toList();
+      return species.take(50).map((s) => IdentificationCandidate(species:s, score:0, matched:0, requested:0)).toList();
     }
 
     final db = await AppDatabase.instance.database;
