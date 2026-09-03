@@ -19,6 +19,7 @@ class FieldDataImporter {
   ) async {
     final species = decoded['species'] as List<dynamic>? ?? const [];
     final declaredRegions = <String>{};
+    final speciesIds = <int>{};
 
     for (final rawRegion
         in decoded['season_regions'] as List<dynamic>? ?? const []) {
@@ -32,6 +33,9 @@ class FieldDataImporter {
     for (final rawSpecies in species) {
       final item = rawSpecies as Map<String, dynamic>;
       final speciesId = item['species_id'] as int;
+      if (!speciesIds.add(speciesId)) {
+        throw FormatException('Duplicate field-data species entry: $speciesId');
+      }
       final measurementCodes = <String>{};
       for (final rawMeasurement
           in item['measurements'] as List<dynamic>? ?? const []) {
@@ -49,9 +53,12 @@ class FieldDataImporter {
         }
         final min = measurement['min'];
         final max = measurement['max'];
-        if (min is! num || max is! num ||
-            !min.toDouble().isFinite || !max.toDouble().isFinite ||
-            min < 0 || max < min) {
+        if (min is! num ||
+            max is! num ||
+            !min.toDouble().isFinite ||
+            !max.toDouble().isFinite ||
+            min < 0 ||
+            max < min) {
           throw FormatException(
             'Invalid measurement range for species $speciesId, $code: '
             '$min..$max',
@@ -146,7 +153,8 @@ class FieldDataImporter {
   }
 
   static String _canonicalRegionCode(Object? value) {
-    if (value is! String || value.trim() != value ||
+    if (value is! String ||
+        value.trim() != value ||
         !_regionCodePattern.hasMatch(value)) {
       throw FormatException(
         'Season region codes must use canonical uppercase two-letter segments: '
