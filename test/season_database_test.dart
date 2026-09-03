@@ -63,8 +63,8 @@ void main() {
       'likelihood': 3,
     });
 
-    expect(
-      () => db.insert('species_season', {
+    await expectLater(
+      db.insert('species_season', {
         'species_id': 1,
         'region_code': 'GB-IE',
         'month': 10,
