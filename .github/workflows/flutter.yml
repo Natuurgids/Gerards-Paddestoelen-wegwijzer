@@ -2,7 +2,9 @@ name: Flutter CI
 
 on:
   push:
-    branches: [main, feature/flutter-offline-first-foundation]
+    branches:
+      - main
+      - 'feature/**'
   pull_request:
     branches: [main]
 
