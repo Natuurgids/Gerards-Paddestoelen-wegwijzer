@@ -1,8 +1,10 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database_seeder.dart';
+import 'field_data_importer.dart';
 import 'image_manifest_importer.dart';
 import 'species_catalog_importer.dart';
+import 'training_manifest_importer.dart';
 import 'trait_manifest_importer.dart';
 
 class AppDatabase {
@@ -16,7 +18,7 @@ class AppDatabase {
     final path = join(await getDatabasesPath(), 'mycology.sqlite');
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
         await db.execute('PRAGMA journal_mode = WAL');
@@ -39,11 +41,31 @@ class AppDatabase {
             PRIMARY KEY(trait_id, language_code)
           )''');
         }
+        if (oldVersion < 3) {
+          await db.execute('''CREATE TABLE IF NOT EXISTS species_measurement (
+            species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+            measurement_code TEXT NOT NULL,
+            min_value REAL,
+            max_value REAL,
+            unit TEXT NOT NULL,
+            PRIMARY KEY(species_id, measurement_code)
+          )''');
+          await db.execute('''CREATE TABLE IF NOT EXISTS species_season (
+            species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+            month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
+            likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
+            PRIMARY KEY(species_id, month)
+          )''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_species_measurement_lookup ON species_measurement(measurement_code, min_value, max_value, species_id)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_species_season_month ON species_season(month, likelihood, species_id)');
+        }
       },
       onOpen: (db) async {
         await SpeciesCatalogImporter.sync(db);
         await TraitManifestImporter.sync(db);
+        await FieldDataImporter.sync(db);
         await ImageManifestImporter.sync(db);
+        await TrainingManifestImporter.sync(db);
       },
     );
   }
@@ -111,6 +133,20 @@ class AppDatabase {
       weight REAL NOT NULL DEFAULT 1.0,
       PRIMARY KEY(species_id, trait_id, option_id)
     )''',
+    '''CREATE TABLE species_measurement (
+      species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+      measurement_code TEXT NOT NULL,
+      min_value REAL,
+      max_value REAL,
+      unit TEXT NOT NULL,
+      PRIMARY KEY(species_id, measurement_code)
+    )''',
+    '''CREATE TABLE species_season (
+      species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+      month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
+      likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
+      PRIMARY KEY(species_id, month)
+    )''',
     '''CREATE TABLE species_image (
       id INTEGER PRIMARY KEY,
       species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
@@ -175,6 +211,8 @@ class AppDatabase {
     '''CREATE INDEX idx_species_text_language_name ON species_text(language_code, common_name COLLATE NOCASE)''',
     '''CREATE INDEX idx_trait_text_language_label ON trait_text(language_code, label COLLATE NOCASE)''',
     '''CREATE INDEX idx_species_trait_filter ON species_trait(trait_id, option_id, species_id)''',
+    '''CREATE INDEX idx_species_measurement_lookup ON species_measurement(measurement_code, min_value, max_value, species_id)''',
+    '''CREATE INDEX idx_species_season_month ON species_season(month, likelihood, species_id)''',
     '''CREATE INDEX idx_species_image_gallery ON species_image(species_id, sort_order)''',
     '''CREATE INDEX idx_question_lesson ON question(lesson_id, sort_order)''',
     '''CREATE INDEX idx_answer_question ON answer_option(question_id, sort_order)''',
