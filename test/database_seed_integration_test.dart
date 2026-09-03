@@ -18,11 +18,16 @@ void main() {
     await db.execute('PRAGMA foreign_keys = ON');
     await DatabaseSchema.create(db);
 
-    await SpeciesCatalogImporter.sync(db);
-    await TraitManifestImporter.sync(db);
-    await FieldDataImporter.sync(db);
-    await ImageManifestImporter.sync(db);
-    await TrainingManifestImporter.sync(db);
+    Future<void> syncAll() async {
+      await SpeciesCatalogImporter.sync(db);
+      await TraitManifestImporter.sync(db);
+      await FieldDataImporter.sync(db);
+      await ImageManifestImporter.sync(db);
+      await TrainingManifestImporter.sync(db);
+    }
+
+    await syncAll();
+    await syncAll();
 
     const expectedCounts = <String, int>{
       'taxon': 6,
