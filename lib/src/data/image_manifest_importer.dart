@@ -146,6 +146,7 @@ class ImageManifestImporter {
             'license': image['license'] as String?,
             'sort_order': image['order'] as int,
             'is_primary': image['primary'] == true ? 1 : 0,
+            'is_placeholder': image['placeholder'] == true ? 1 : 0,
           });
         }
       }
