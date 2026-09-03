@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 class DatabaseSchema {
   const DatabaseSchema._();
 
-  static const currentVersion = 5;
+  static const currentVersion = 6;
 
   static Future<void> create(DatabaseExecutor db) async {
     for (final statement in statements) {
@@ -68,6 +68,25 @@ class DatabaseSchema {
       await db.execute(
         'CREATE INDEX idx_species_season_region_month ON species_season(region_code, month, likelihood, species_id)',
       );
+    }
+    if (oldVersion < 6) {
+      await db.execute('''CREATE TABLE IF NOT EXISTS season_region (
+        code TEXT PRIMARY KEY
+      )''');
+      await db.execute('''CREATE TABLE IF NOT EXISTS season_region_text (
+        region_code TEXT NOT NULL REFERENCES season_region(code) ON DELETE CASCADE,
+        language_code TEXT NOT NULL CHECK(language_code IN ('nl','en','de')),
+        label TEXT NOT NULL,
+        notes TEXT,
+        PRIMARY KEY(region_code, language_code)
+      )''');
+      final imageColumns = await db.rawQuery('PRAGMA table_info(species_image)');
+      if (imageColumns.isNotEmpty &&
+          !imageColumns.any((row) => row['name'] == 'is_placeholder')) {
+        await db.execute(
+          'ALTER TABLE species_image ADD COLUMN is_placeholder INTEGER NOT NULL DEFAULT 1 CHECK(is_placeholder IN (0,1))',
+        );
+      }
     }
   }
 
@@ -142,6 +161,16 @@ class DatabaseSchema {
       unit TEXT NOT NULL,
       PRIMARY KEY(species_id, measurement_code)
     )''',
+    '''CREATE TABLE season_region (
+      code TEXT PRIMARY KEY
+    )''',
+    '''CREATE TABLE season_region_text (
+      region_code TEXT NOT NULL REFERENCES season_region(code) ON DELETE CASCADE,
+      language_code TEXT NOT NULL CHECK(language_code IN ('nl','en','de')),
+      label TEXT NOT NULL,
+      notes TEXT,
+      PRIMARY KEY(region_code, language_code)
+    )''',
     '''CREATE TABLE species_season (
       species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
       region_code TEXT NOT NULL,
@@ -160,6 +189,7 @@ class DatabaseSchema {
       license TEXT,
       sort_order INTEGER NOT NULL DEFAULT 0,
       is_primary INTEGER NOT NULL DEFAULT 0 CHECK(is_primary IN (0,1)),
+      is_placeholder INTEGER NOT NULL DEFAULT 1 CHECK(is_placeholder IN (0,1)),
       UNIQUE(species_id, asset_path)
     )''',
     '''CREATE TABLE lesson (

@@ -24,16 +24,12 @@ class TrainingManifestImporter {
       for (final rawLesson in lessons) {
         final lesson = rawLesson as Map<String, dynamic>;
         final lessonId = lesson['id'] as int;
-        await txn.insert(
-          'lesson',
-          {
-            'id': lessonId,
-            'slug': lesson['slug'],
-            'difficulty': lesson['difficulty'] ?? 1,
-            'sort_order': lesson['sort_order'] ?? 0,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await _upsertById(txn, 'lesson', {
+          'id': lessonId,
+          'slug': lesson['slug'],
+          'difficulty': lesson['difficulty'] ?? 1,
+          'sort_order': lesson['sort_order'] ?? 0,
+        });
 
         final texts = lesson['texts'] as Map<String, dynamic>;
         for (final entry in texts.entries) {
@@ -54,16 +50,12 @@ class TrainingManifestImporter {
         for (final rawQuestion in questions) {
           final question = rawQuestion as Map<String, dynamic>;
           final questionId = question['id'] as int;
-          await txn.insert(
-            'question',
-            {
-              'id': questionId,
-              'lesson_id': lessonId,
-              'question_type': 'single_choice',
-              'sort_order': question['sort_order'] ?? 0,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+          await _upsertById(txn, 'question', {
+            'id': questionId,
+            'lesson_id': lessonId,
+            'question_type': 'single_choice',
+            'sort_order': question['sort_order'] ?? 0,
+          });
 
           final questionTexts = question['texts'] as Map<String, dynamic>;
           for (final entry in questionTexts.entries) {
@@ -84,16 +76,12 @@ class TrainingManifestImporter {
           for (final rawAnswer in answers) {
             final answer = rawAnswer as Map<String, dynamic>;
             final answerId = answer['id'] as int;
-            await txn.insert(
-              'answer_option',
-              {
-                'id': answerId,
-                'question_id': questionId,
-                'is_correct': answer['correct'] == true ? 1 : 0,
-                'sort_order': answer['sort_order'] ?? 0,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            await _upsertById(txn, 'answer_option', {
+              'id': answerId,
+              'question_id': questionId,
+              'is_correct': answer['correct'] == true ? 1 : 0,
+              'sort_order': answer['sort_order'] ?? 0,
+            });
 
             final labels = answer['labels'] as Map<String, dynamic>;
             for (final entry in labels.entries) {
@@ -111,6 +99,23 @@ class TrainingManifestImporter {
         }
       }
     });
+  }
+
+  static Future<void> _upsertById(
+    Transaction txn,
+    String table,
+    Map<String, Object?> values,
+  ) async {
+    final id = values['id'];
+    final updated = await txn.update(
+      table,
+      values,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (updated == 0) {
+      await txn.insert(table, values);
+    }
   }
 
   static void _validate(List<dynamic> lessons) {

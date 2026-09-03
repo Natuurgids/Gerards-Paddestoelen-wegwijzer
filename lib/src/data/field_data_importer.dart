@@ -7,6 +7,7 @@ import 'field_measurement_contract.dart';
 
 class FieldDataImporter {
   static const _assetPath = 'assets/data/field_data.json';
+  static const _languages = {'nl', 'en', 'de'};
   static final RegExp _regionCodePattern = RegExp(r'^[A-Z]{2}(?:-[A-Z]{2})*$');
 
   static Future<void> sync(Database db) async {
@@ -19,17 +20,19 @@ class FieldDataImporter {
     Database db,
     Map<String, dynamic> decoded,
   ) async {
+    final regions = decoded['season_regions'] as List<dynamic>? ?? const [];
     final species = decoded['species'] as List<dynamic>? ?? const [];
     final declaredRegions = <String>{};
     final speciesIds = <int>{};
 
-    for (final rawRegion
-        in decoded['season_regions'] as List<dynamic>? ?? const []) {
+    for (final rawRegion in regions) {
       final region = rawRegion as Map<String, dynamic>;
       final code = _canonicalRegionCode(region['code']);
       if (!declaredRegions.add(code)) {
         throw FormatException('Duplicate season region code: $code');
       }
+      _validateLocalizedRegionField(region['labels'], 'labels', code, required: true);
+      _validateLocalizedRegionField(region['notes'], 'notes', code, required: false);
     }
 
     for (final rawSpecies in species) {
@@ -126,6 +129,32 @@ class FieldDataImporter {
       // regions or species entries cannot survive as stale SQLite rows.
       await txn.delete('species_measurement');
       await txn.delete('species_season');
+      await txn.delete('season_region_text');
+      await txn.delete('season_region');
+
+      for (final rawRegion in regions) {
+        final region = rawRegion as Map<String, dynamic>;
+        final code = region['code'] as String;
+        await txn.insert(
+          'season_region',
+          {'code': code},
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        final labels = region['labels'] as Map<String, dynamic>;
+        final notes = region['notes'] as Map<String, dynamic>?;
+        for (final language in _languages) {
+          await txn.insert(
+            'season_region_text',
+            {
+              'region_code': code,
+              'language_code': language,
+              'label': labels[language],
+              'notes': notes?[language],
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      }
 
       for (final rawSpecies in species) {
         final item = rawSpecies as Map<String, dynamic>;
@@ -164,6 +193,28 @@ class FieldDataImporter {
         }
       }
     });
+  }
+
+  static void _validateLocalizedRegionField(
+    Object? value,
+    String field,
+    String code, {
+    required bool required,
+  }) {
+    if (value == null && !required) return;
+    if (value is! Map<String, dynamic> || !_languages.every(value.containsKey)) {
+      throw FormatException(
+        'Season region $code must have nl, en and de $field',
+      );
+    }
+    for (final language in _languages) {
+      final text = value[language];
+      if (text is! String || text.trim().isEmpty || text.trim() != text) {
+        throw FormatException(
+          'Season region $code has invalid $language $field',
+        );
+      }
+    }
   }
 
   static String _canonicalRegionCode(Object? value) {

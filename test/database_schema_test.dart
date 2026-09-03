@@ -41,6 +41,8 @@ void main() {
         'trait_text',
         'species_trait',
         'species_measurement',
+        'season_region',
+        'season_region_text',
         'species_season',
         'species_image',
         'lesson',
@@ -62,9 +64,15 @@ void main() {
     final seasonColumns = await db.rawQuery('PRAGMA table_info(species_season)');
     final region = seasonColumns.singleWhere((row) => row['name'] == 'region_code');
     expect(region['notnull'], 1);
+
+    final imageColumns = await db.rawQuery('PRAGMA table_info(species_image)');
+    final placeholder =
+        imageColumns.singleWhere((row) => row['name'] == 'is_placeholder');
+    expect(placeholder['notnull'], 1);
+    expect(placeholder['dflt_value'], '1');
   });
 
-  test('v1 to v5 creates localization and field schema', () async {
+  test('v1 to current creates localization and field schema', () async {
     await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
     await db.execute('CREATE TABLE trait (id INTEGER PRIMARY KEY)');
 
@@ -79,6 +87,8 @@ void main() {
         'trait_text',
         'species_measurement',
         'species_season',
+        'season_region',
+        'season_region_text',
       }),
     );
 
@@ -112,7 +122,8 @@ void main() {
     );
   });
 
-  test('v2 to v5 creates field tables with current regional season key', () async {
+  test('v2 to current creates field tables with current regional season key',
+      () async {
     await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
 
     await DatabaseSchema.upgrade(db, 2, DatabaseSchema.currentVersion);
@@ -122,7 +133,12 @@ void main() {
     );
     expect(
       tables.map((row) => row['name']),
-      containsAll(<String>{'species_measurement', 'species_season'}),
+      containsAll(<String>{
+        'species_measurement',
+        'species_season',
+        'season_region',
+        'season_region_text',
+      }),
     );
 
     final seasonColumns = await db.rawQuery('PRAGMA table_info(species_season)');
@@ -142,7 +158,8 @@ void main() {
     );
   });
 
-  test('v3 to v5 adds region column before preserving legacy rows', () async {
+  test('v3 to current adds region column before preserving legacy rows',
+      () async {
     await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
     await db.execute('''CREATE TABLE species_season (
       species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
@@ -167,7 +184,8 @@ void main() {
     expect(rows.single['likelihood'], 2);
   });
 
-  test('v4 to v5 migration preserves season rows and enables regions', () async {
+  test('v4 to current migration preserves season rows and enables regions',
+      () async {
     await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
     await db.execute('''CREATE TABLE species_season (
       species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
@@ -234,5 +252,41 @@ void main() {
       indexes.map((row) => row['name']),
       contains('idx_species_season_region_month'),
     );
+  });
+
+  test('v5 to v6 adds manifest metadata storage without losing image rows',
+      () async {
+    await db.execute('''CREATE TABLE species_image (
+      id INTEGER PRIMARY KEY,
+      species_id INTEGER NOT NULL,
+      asset_path TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      is_primary INTEGER NOT NULL DEFAULT 0
+    )''');
+    await db.insert('species_image', {
+      'id': 1,
+      'species_id': 1,
+      'asset_path': 'assets/images/species/species_1/1.jpg',
+      'sort_order': 0,
+      'is_primary': 1,
+    });
+
+    await DatabaseSchema.upgrade(db, 5, 6);
+
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table'",
+    );
+    expect(
+      tables.map((row) => row['name']),
+      containsAll(<String>{'season_region', 'season_region_text'}),
+    );
+    final imageColumns = await db.rawQuery('PRAGMA table_info(species_image)');
+    expect(
+      imageColumns.map((row) => row['name']),
+      contains('is_placeholder'),
+    );
+    final rows = await db.query('species_image');
+    expect(rows, hasLength(1));
+    expect(rows.single['is_placeholder'], 1);
   });
 }

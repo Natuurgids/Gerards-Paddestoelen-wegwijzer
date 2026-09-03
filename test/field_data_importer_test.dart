@@ -11,6 +11,16 @@ void main() {
 
   setUp(() async {
     db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+    await db.execute('''CREATE TABLE season_region (
+      code TEXT PRIMARY KEY
+    )''');
+    await db.execute('''CREATE TABLE season_region_text (
+      region_code TEXT NOT NULL,
+      language_code TEXT NOT NULL,
+      label TEXT NOT NULL,
+      notes TEXT,
+      PRIMARY KEY(region_code, language_code)
+    )''');
     await db.execute('''CREATE TABLE species_measurement (
       species_id INTEGER NOT NULL,
       measurement_code TEXT NOT NULL,
@@ -68,6 +78,13 @@ void main() {
   }
 
   test('sync removes stale field rows before importing manifest', () async {
+    await db.insert('season_region', {'code': 'STALE'});
+    await db.insert('season_region_text', {
+      'region_code': 'STALE',
+      'language_code': 'en',
+      'label': 'Stale',
+      'notes': 'Stale',
+    });
     await db.insert('species_measurement', {
       'species_id': 999,
       'measurement_code': 'stale_measurement',
@@ -100,6 +117,10 @@ void main() {
       ),
       isEmpty,
     );
+    expect(
+      await db.query('season_region', where: 'code = ?', whereArgs: ['STALE']),
+      isEmpty,
+    );
 
     final measurementCount = await db.rawQuery(
       'SELECT COUNT(*) AS count FROM species_measurement',
@@ -109,6 +130,19 @@ void main() {
     );
     expect(measurementCount.single['count'] as int, greaterThan(0));
     expect(seasonCount.single['count'] as int, greaterThan(0));
+
+    final regions = await db.query('season_region');
+    expect(regions, hasLength(1));
+    expect(regions.single['code'], 'GB-IE');
+    final regionTexts = await db.query(
+      'season_region_text',
+      where: 'region_code = ?',
+      whereArgs: ['GB-IE'],
+      orderBy: 'language_code',
+    );
+    expect(regionTexts, hasLength(3));
+    expect(regionTexts.every((row) => (row['label'] as String).isNotEmpty), isTrue);
+    expect(regionTexts.every((row) => (row['notes'] as String).isNotEmpty), isTrue);
   });
 
   test('invalid region content fails before authoritative rows are deleted',

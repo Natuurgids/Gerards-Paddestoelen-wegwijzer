@@ -21,6 +21,7 @@ void main() {
       license TEXT,
       sort_order INTEGER NOT NULL DEFAULT 0,
       is_primary INTEGER NOT NULL DEFAULT 0,
+      is_placeholder INTEGER NOT NULL DEFAULT 1,
       UNIQUE(species_id, asset_path)
     )''');
   });
@@ -36,6 +37,7 @@ void main() {
       'angle_code': 'top',
       'sort_order': 0,
       'is_primary': 1,
+      'is_placeholder': 1,
     });
 
     await ImageManifestImporter.sync(db);
@@ -46,6 +48,7 @@ void main() {
     );
     final rows = await db.query('species_image');
     expect(rows, isNotEmpty);
+    expect(rows.every((row) => row['is_placeholder'] == 1), isTrue);
   });
 
   test('invalid gallery fails before authoritative rows are deleted', () async {
@@ -55,6 +58,7 @@ void main() {
       'angle_code': 'top',
       'sort_order': 0,
       'is_primary': 1,
+      'is_placeholder': 1,
     });
 
     final malformed = <String, dynamic>{
@@ -113,6 +117,7 @@ void main() {
     expect(rows.every((row) => row['photographer'] == 'Example photographer'),
         isTrue);
     expect(rows.every((row) => row['license'] == 'CC BY 4.0'), isTrue);
+    expect(rows.every((row) => row['is_placeholder'] == 0), isTrue);
   });
 
   test('placeholder gallery images must not carry fake attribution', () async {
