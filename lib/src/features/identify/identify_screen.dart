@@ -23,6 +23,16 @@ class _IdentifyScreenState extends State<IdentifyScreen>{
 
   String t(String nl,String en,String de)=>widget.locale.languageCode=='nl'?nl:widget.locale.languageCode=='de'?de:en;
 
+  String _traitLabel(String code){
+    switch(code){
+      case 'cap_color': return t('Hoedkleur','Cap colour','Hutfarbe');
+      case 'hymenium': return t('Onderzijde','Underside','Unterseite');
+      case 'ring': return t('Ring aan de steel','Stem ring','Stielring');
+      case 'volva': return t('Steelbasis / beurs','Stem base / volva','Stielbasis / Volva');
+      default: return code.replaceAll('_',' ');
+    }
+  }
+
   Future<void> _identify() async {
     final r=await _repo.identify(widget.locale.languageCode,_selected);
     if(mounted)setState(()=>_results=r);
@@ -40,7 +50,7 @@ class _IdentifyScreenState extends State<IdentifyScreen>{
           Text(t('Kies alleen kenmerken die je zeker ziet.','Select only characteristics you can observe confidently.','Wähle nur Merkmale, die du sicher beobachten kannst.')),
           const SizedBox(height:12),
           ...groups.values.map((items)=>Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-            Text(items.first.traitLabel,style:Theme.of(context).textTheme.titleMedium),
+            Text(_traitLabel(items.first.traitCode),style:Theme.of(context).textTheme.titleMedium),
             ...items.map((c)=>RadioListTile<int>(title:Text(c.optionLabel),value:c.optionId,groupValue:_selected[c.traitId],onChanged:(v)=>setState((){if(v!=null)_selected[c.traitId]=v;}))),
             if(_selected.containsKey(items.first.traitId))TextButton(onPressed:()=>setState(()=>_selected.remove(items.first.traitId)),child:Text(t('Overslaan','Clear','Löschen'))),
           ])))),
