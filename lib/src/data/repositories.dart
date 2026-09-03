@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'app_database.dart';
+import 'field_measurement_contract.dart';
 import 'identification_scoring.dart';
 import 'models.dart';
 
@@ -193,12 +194,12 @@ class IdentificationRepository {
         WHEN EXISTS(SELECT 1 FROM species_season ss WHERE ss.species_id=s.id AND ss.region_code=? LIMIT 1)
           THEN COALESCE((SELECT ss.likelihood / 3.0 FROM species_season ss WHERE ss.species_id=s.id AND ss.month=? AND ss.region_code=? LIMIT 1), 0.0)
         ELSE NULL END season_score,
-      (SELECT sm.min_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='cap_diameter' LIMIT 1) cap_min,
-      (SELECT sm.max_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='cap_diameter' LIMIT 1) cap_max,
-      (SELECT sm.min_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_height' LIMIT 1) stem_height_min,
-      (SELECT sm.max_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_height' LIMIT 1) stem_height_max,
-      (SELECT sm.min_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_diameter' LIMIT 1) stem_diameter_min,
-      (SELECT sm.max_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='stem_diameter' LIMIT 1) stem_diameter_max
+      (SELECT sm.min_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='$capDiameterMeasurementCode' LIMIT 1) cap_min,
+      (SELECT sm.max_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='$capDiameterMeasurementCode' LIMIT 1) cap_max,
+      (SELECT sm.min_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='$stemHeightMeasurementCode' LIMIT 1) stem_height_min,
+      (SELECT sm.max_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='$stemHeightMeasurementCode' LIMIT 1) stem_height_max,
+      (SELECT sm.min_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='$stemDiameterMeasurementCode' LIMIT 1) stem_diameter_min,
+      (SELECT sm.max_value FROM species_measurement sm WHERE sm.species_id=s.id AND sm.measurement_code='$stemDiameterMeasurementCode' LIMIT 1) stem_diameter_max
       FROM species s''',
       [
         observationMonth,
