@@ -5,5 +5,8 @@
   "homeIdentify": "Identify",
   "homeLearn": "Learn",
   "homeBrowseSpecies": "Browse species",
+  "speciesBrowserTitle": "Species",
+  "speciesBrowserSearchHint": "Search by name",
+  "speciesBrowserEmpty": "No results",
   "safetyNotice": "Safety notice: Never consume a mushroom based solely on identification by this app. Mistakes may cause serious poisoning or death. Always have edible mushrooms verified by a qualified local expert."
 }
