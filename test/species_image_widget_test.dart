@@ -15,7 +15,7 @@ void main() {
           body: SizedBox(
             width: 320,
             height: 240,
-            child: SpeciesImage(path: path, missingLabel: missingLabel),
+            child: SpeciesImageView(path: path, missingLabel: missingLabel),
           ),
         ),
       ),
