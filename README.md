@@ -7,7 +7,8 @@ Offline-first Flutter application for mushroom identification and mycology educa
 - Flutter mobile application foundation.
 - Offline SQLite database; no network is needed for species browsing, identification or training.
 - Dutch (`nl`), English (`en`) and German (`de`) content foundation.
-- Normalized taxonomy, translated species content, identification traits, image metadata, lessons/questions and training progress.
+- Developer-editable species/taxonomy, identification-trait and gallery manifests synchronized into SQLite.
+- Normalized taxonomy, translated species content, localized identification traits, image metadata, lessons/questions and training progress.
 - Indexed scientific/common-name lookup, localized trait lookup, species-trait filtering, image ordering and lesson/question joins.
 - Offline species catalogue with local search.
 - Trait-based identification with weighted candidate ranking using one aggregate SQLite query.
@@ -32,7 +33,7 @@ The bootstrap script generates standard Android/iOS Flutter platform scaffolding
 
 ## Database design
 
-The schema is in `lib/src/data/app_database.dart`. Initial offline species/training content is seeded by `lib/src/data/database_seeder.dart`. Developer-editable manifests are synchronized into SQLite when the database opens.
+The schema is in `lib/src/data/app_database.dart`. Initial offline training content is seeded by `lib/src/data/database_seeder.dart`. Species/taxonomy, identification traits and galleries are developer-editable manifests synchronized into SQLite when the database opens.
 
 The normalized model separates:
 
@@ -44,6 +45,19 @@ The normalized model separates:
 - user learning state: `training_progress`
 
 Important lookup columns are indexed, including taxonomy parents, scientific/common names, translated trait labels, species traits, gallery order and training relations. Foreign keys are enabled and SQLite runs in WAL mode.
+
+## Adding a species
+
+The developer-editable catalogue is `assets/data/species_catalog.json`.
+
+1. Add the required genus/species taxonomy rows under `taxa` using stable numeric IDs.
+2. Add the species record under `species` and reference its `taxon_id`.
+3. Supply `edible_status` and `toxicity_level` as descriptive metadata only; neither is used as an identification-confidence value.
+4. Add complete `nl`, `en` and `de` text objects with common name, summary, description, habitat and lookalikes.
+5. Add identifying trait relations in `assets/data/identification_traits.json`.
+6. Add about five gallery slots in `assets/data/species_images.json`.
+
+The importer upserts catalogue records before traits and images, so those manifests can safely reference newly added species. Keep released IDs stable so progress, references and future migrations remain predictable.
 
 ## Adding or changing identification traits
 
@@ -83,7 +97,7 @@ The developer-editable gallery manifest is `assets/data/species_images.json`. It
 
 The gallery reads images in `sort_order`. Missing files never result in a broken UI: the application displays the localized **image not available yet** placeholder instead. This means developers can add species records before all photography has been collected.
 
-For a production catalogue, the next content tooling step is to move the remaining species/training seed data into validated JSON/CSV import files and automatically generate thumbnails while checking that every declared asset exists and that photographer/licence fields are complete.
+For a production catalogue, the next content tooling step is to move training seed data into a validated manifest and automatically generate thumbnails while checking that every declared asset exists and that photographer/licence fields are complete.
 
 ## Identification scoring
 
@@ -95,10 +109,11 @@ Results display a percentage and number of matched selected traits. This score i
 
 `test/content_manifest_test.dart` validates the developer-editable content contracts, including:
 
+- unique taxonomy/species IDs and valid taxon references
+- Dutch, English and German species text
 - unique trait and option IDs
-- Dutch, English and German labels
-- valid species-trait references
-- positive identification weights
+- Dutch, English and German trait/option labels
+- valid species-trait references and positive weights
 - five ordered image slots per seeded species
 - exactly one primary image per seeded species
 
