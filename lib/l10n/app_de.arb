@@ -5,5 +5,8 @@
   "homeIdentify": "Bestimmen",
   "homeLearn": "Lernen",
   "homeBrowseSpecies": "Arten ansehen",
+  "speciesBrowserTitle": "Arten",
+  "speciesBrowserSearchHint": "Nach Namen suchen",
+  "speciesBrowserEmpty": "Keine Ergebnisse",
   "safetyNotice": "Sicherheitshinweis: Verzehren Sie niemals einen Pilz ausschließlich aufgrund einer Bestimmung durch diese App. Fehler können schwere Vergiftungen oder den Tod verursachen. Lassen Sie essbare Pilze immer von einer qualifizierten örtlichen Fachperson überprüfen."
 }
