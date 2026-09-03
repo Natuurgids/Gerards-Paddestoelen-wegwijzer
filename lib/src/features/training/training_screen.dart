@@ -157,16 +157,21 @@ class _LessonScreenState extends State<LessonScreen> {
                                     question.prompt,
                                     style: Theme.of(context).textTheme.titleMedium,
                                   ),
-                                  ...question.answers.map(
-                                    (answer) => RadioListTile<int>(
-                                      title: Text(answer.label),
-                                      value: answer.id,
-                                      groupValue: _answers[question.id],
-                                      onChanged: (value) => setState(() {
-                                        if (value != null) {
-                                          _answers[question.id] = value;
-                                        }
-                                      }),
+                                  RadioGroup<int>(
+                                    groupValue: _answers[question.id],
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setState(() => _answers[question.id] = value);
+                                    },
+                                    child: Column(
+                                      children: question.answers
+                                          .map(
+                                            (answer) => RadioListTile<int>(
+                                              title: Text(answer.label),
+                                              value: answer.id,
+                                            ),
+                                          )
+                                          .toList(),
                                     ),
                                   ),
                                   if (_score != null &&
