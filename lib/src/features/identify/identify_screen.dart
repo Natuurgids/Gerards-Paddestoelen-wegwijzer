@@ -381,7 +381,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                 },
               ),
             ),
-            SafetyNotice(locale: widget.locale),
+            const SafetyNotice(),
           ],
         ),
       ),
