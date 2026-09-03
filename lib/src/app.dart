@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'data/app_database.dart';
 import 'features/home/home_screen.dart';
 
@@ -25,8 +27,9 @@ class _MycologyAppState extends State<MycologyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       locale: _locale,
-      supportedLocales: const [Locale('nl'), Locale('en'), Locale('de')],
-      title: 'Gerards Paddestoelen Wegwijzer',
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: ThemeData(
         colorSchemeSeed: Colors.green,
         useMaterial3: true,
