@@ -84,7 +84,7 @@ void main() {
 
     final seasonReference =
         find.widgetWithText(DropdownButtonFormField<String?>, 'Season reference');
-    await tester.ensureVisible(seasonReference);
+    await _dragUntilBuilt(tester, seasonReference);
     await tester.tap(seasonReference);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Britain & Ireland').last);
@@ -100,6 +100,15 @@ void main() {
     expect(find.text('Select an observation month.'), findsOneWidget);
     expect(repository.identifyCalls, 0);
   });
+}
+
+Future<void> _dragUntilBuilt(WidgetTester tester, Finder target) async {
+  final listView = find.byType(ListView);
+  for (var attempt = 0; attempt < 8 && target.evaluate().isEmpty; attempt++) {
+    await tester.drag(listView, const Offset(0, -240));
+    await tester.pumpAndSettle();
+  }
+  expect(target, findsOneWidget);
 }
 
 class _FakeIdentificationRepository extends IdentificationRepository {
