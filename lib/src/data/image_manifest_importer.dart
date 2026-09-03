@@ -72,6 +72,14 @@ class ImageManifestImporter {
           );
         }
 
+        final placeholder = image['placeholder'];
+        if (placeholder is! bool) {
+          throw FormatException(
+            'Gallery placeholder status is required for species $speciesId: '
+            '$placeholder',
+          );
+        }
+
         final thumbnailPath = image['thumbnailPath'];
         if (thumbnailPath != null &&
             (thumbnailPath is! String ||
@@ -81,15 +89,25 @@ class ImageManifestImporter {
             'Invalid thumbnail path for species $speciesId: $thumbnailPath',
           );
         }
+
         for (final field in const ['photographer', 'license']) {
           final value = image[field];
-          if (value != null &&
-              (value is! String || value.trim() != value || value.isEmpty)) {
+          if (placeholder) {
+            if (value != null) {
+              throw FormatException(
+                'Placeholder gallery $field must be omitted for species '
+                '$speciesId: $value',
+              );
+            }
+          } else if (value is! String ||
+              value.trim() != value ||
+              value.isEmpty) {
             throw FormatException(
-              'Invalid gallery $field for species $speciesId: $value',
+              'Real gallery $field is required for species $speciesId: $value',
             );
           }
         }
+
         if (image['primary'] == true) primaryCount++;
       }
 
