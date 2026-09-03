@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
 import '../../data/repositories.dart';
 import '../../widgets/safety_notice.dart';
@@ -40,46 +42,17 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
     super.dispose();
   }
 
-  String _label(String key) {
-    const values = {
-      'nl': {
-        'habitat': 'Habitat',
-        'lookalikes': 'Gelijkende soorten',
-        'status': 'Veiligheidsreferentie',
-        'missing': 'Afbeelding nog niet beschikbaar',
-        'measurements': 'Afmetingen',
-        'season': 'Seizoen',
-        'cap_diameter': 'Hoeddiameter',
-        'stem_height': 'Steelhoogte',
-        'stem_diameter': 'Steeldiameter',
-        'notFound': 'Soort niet gevonden',
-      },
-      'en': {
-        'habitat': 'Habitat',
-        'lookalikes': 'Lookalikes',
-        'status': 'Safety reference',
-        'missing': 'Image not available yet',
-        'measurements': 'Measurements',
-        'season': 'Season',
-        'cap_diameter': 'Cap diameter',
-        'stem_height': 'Stem height',
-        'stem_diameter': 'Stem diameter',
-        'notFound': 'Species not found',
-      },
-      'de': {
-        'habitat': 'Lebensraum',
-        'lookalikes': 'Verwechslungsarten',
-        'status': 'Sicherheitsreferenz',
-        'missing': 'Bild noch nicht verfügbar',
-        'measurements': 'Maße',
-        'season': 'Saison',
-        'cap_diameter': 'Hutdurchmesser',
-        'stem_height': 'Stielhöhe',
-        'stem_diameter': 'Stieldurchmesser',
-        'notFound': 'Art nicht gefunden',
-      },
-    };
-    return (values[widget.locale.languageCode] ?? values['en']!)[key] ?? key;
+  String _measurementLabel(AppLocalizations l10n, String code) {
+    switch (code) {
+      case 'cap_diameter':
+        return l10n.speciesCapDiameter;
+      case 'stem_height':
+        return l10n.speciesStemHeight;
+      case 'stem_diameter':
+        return l10n.speciesStemDiameter;
+      default:
+        return code;
+    }
   }
 
   String _measurement(SpeciesMeasurement measurement) {
@@ -97,16 +70,35 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
       ? value.toInt().toString()
       : value.toStringAsFixed(1);
 
-  String _monthName(int month) {
-    const nl = ['', 'jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-    const en = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const de = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-    final values = widget.locale.languageCode == 'nl'
-        ? nl
-        : widget.locale.languageCode == 'de'
-            ? de
-            : en;
-    return values[month];
+  String _monthName(AppLocalizations l10n, int month) {
+    switch (month) {
+      case 1:
+        return l10n.monthJan;
+      case 2:
+        return l10n.monthFeb;
+      case 3:
+        return l10n.monthMar;
+      case 4:
+        return l10n.monthApr;
+      case 5:
+        return l10n.monthMay;
+      case 6:
+        return l10n.monthJun;
+      case 7:
+        return l10n.monthJul;
+      case 8:
+        return l10n.monthAug;
+      case 9:
+        return l10n.monthSep;
+      case 10:
+        return l10n.monthOct;
+      case 11:
+        return l10n.monthNov;
+      case 12:
+        return l10n.monthDec;
+      default:
+        return month.toString();
+    }
   }
 
   String _regionName(String code) {
@@ -134,31 +126,17 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
     return result;
   }
 
-  String _safetyReference(SpeciesDetail species) {
-    final language = widget.locale.languageCode;
-    if (species.toxicityLevel == 'deadly') {
-      return language == 'nl'
-          ? 'Bekend als potentieel dodelijk giftig. Niet consumeren. Gebruik de app nooit als basis voor consumptie.'
-          : language == 'de'
-              ? 'Als potenziell tödlich giftig bekannt. Nicht verzehren. Die App darf niemals Grundlage für den Verzehr sein.'
-              : 'Known as potentially deadly poisonous. Do not consume. Never use the app as a basis for consumption.';
-    }
+  String _safetyReference(AppLocalizations l10n, SpeciesDetail species) {
+    if (species.toxicityLevel == 'deadly') return l10n.speciesSafetyDeadly;
     if (species.toxicityLevel == 'poisonous') {
-      return language == 'nl'
-          ? 'Bekend als giftig. Niet consumeren. Gebruik de app nooit als basis voor consumptie.'
-          : language == 'de'
-              ? 'Als giftig bekannt. Nicht verzehren. Die App darf niemals Grundlage für den Verzehr sein.'
-              : 'Known as poisonous. Do not consume. Never use the app as a basis for consumption.';
+      return l10n.speciesSafetyPoisonous;
     }
-    return language == 'nl'
-        ? 'Deze app geeft geen oordeel dat consumptie veilig is. Laat identificatie en eventuele eetbaarheid altijd door een gekwalificeerde lokale deskundige controleren.'
-        : language == 'de'
-            ? 'Diese App bestätigt niemals, dass ein Verzehr sicher ist. Bestimmung und mögliche Essbarkeit müssen immer von einer qualifizierten örtlichen Fachperson geprüft werden.'
-            : 'This app never confirms that consumption is safe. Identification and any possible edibility must always be verified by a qualified local expert.';
+    return l10n.speciesSafetyUnknown;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(
@@ -173,7 +151,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                   }
                   final species = snapshot.data;
                   if (species == null) {
-                    return Center(child: Text(_label('notFound')));
+                    return Center(child: Text(l10n.speciesNotFound));
                   }
 
                   final images = species.images.isEmpty
@@ -200,7 +178,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                               onPageChanged: (value) => setState(() => _page = value),
                               itemBuilder: (_, index) => SpeciesImageView(
                                 path: images[index].path,
-                                missingLabel: _label('missing'),
+                                missingLabel: l10n.speciesImageMissing,
                               ),
                             ),
                             Positioned(
@@ -237,18 +215,18 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                             Text(species.description ?? species.summary ?? ''),
                             if (species.measurements.isNotEmpty) ...[
                               const SizedBox(height: 20),
-                              Text(_label('measurements'), style: Theme.of(context).textTheme.titleMedium),
+                              Text(l10n.speciesMeasurements, style: Theme.of(context).textTheme.titleMedium),
                               const SizedBox(height: 6),
                               ...species.measurements.map(
                                 (measurement) => Padding(
                                   padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text('${_label(measurement.code)}: ${_measurement(measurement)}'),
+                                  child: Text('${_measurementLabel(l10n, measurement.code)}: ${_measurement(measurement)}'),
                                 ),
                               ),
                             ],
                             if (species.season.isNotEmpty) ...[
                               const SizedBox(height: 20),
-                              Text(_label('season'), style: Theme.of(context).textTheme.titleMedium),
+                              Text(l10n.speciesSeason, style: Theme.of(context).textTheme.titleMedium),
                               const SizedBox(height: 6),
                               ...seasonByRegion.entries.map((entry) {
                                 final note = _regionNote(entry.key);
@@ -269,7 +247,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                                         children: entry.value
                                             .map(
                                               (month) => Chip(
-                                                label: Text(_monthName(month.month)),
+                                                label: Text(_monthName(l10n, month.month)),
                                                 avatar: Icon(
                                                   month.likelihood >= 3 ? Icons.circle : Icons.circle_outlined,
                                                   size: month.likelihood >= 3 ? 14 : month.likelihood == 2 ? 11 : 8,
@@ -284,14 +262,14 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                               }),
                             ],
                             const SizedBox(height: 20),
-                            Text(_label('habitat'), style: Theme.of(context).textTheme.titleMedium),
+                            Text(l10n.speciesHabitat, style: Theme.of(context).textTheme.titleMedium),
                             Text(species.habitat ?? '-'),
                             const SizedBox(height: 16),
-                            Text(_label('lookalikes'), style: Theme.of(context).textTheme.titleMedium),
+                            Text(l10n.speciesLookalikes, style: Theme.of(context).textTheme.titleMedium),
                             Text(species.lookalikes ?? '-'),
                             const SizedBox(height: 16),
-                            Text(_label('status'), style: Theme.of(context).textTheme.titleMedium),
-                            Text(_safetyReference(species)),
+                            Text(l10n.speciesSafetyReference, style: Theme.of(context).textTheme.titleMedium),
+                            Text(_safetyReference(l10n, species)),
                           ],
                         ),
                       ),
@@ -300,7 +278,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                 },
               ),
             ),
-            SafetyNotice(locale: widget.locale),
+            const SafetyNotice(),
           ],
         ),
       ),

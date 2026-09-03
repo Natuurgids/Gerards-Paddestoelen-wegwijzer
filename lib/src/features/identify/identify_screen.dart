@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
 import '../../data/repositories.dart';
 import '../../widgets/safety_notice.dart';
@@ -56,38 +57,21 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
     super.dispose();
   }
 
-  String t(String nl, String en, String de) =>
-      widget.locale.languageCode == 'nl'
-          ? nl
-          : widget.locale.languageCode == 'de'
-              ? de
-              : en;
-
-  String? _measurementError(MeasurementInputStatus? status) {
+  String? _measurementError(
+    AppLocalizations l10n,
+    MeasurementInputStatus? status,
+  ) {
     if (status == MeasurementInputStatus.invalidNumber) {
-      return t(
-        'Vul een geldig getal in.',
-        'Enter a valid number.',
-        'Gib eine gültige Zahl ein.',
-      );
+      return l10n.identifyInvalidNumber;
     }
     if (status == MeasurementInputStatus.nonPositive) {
-      return t(
-        'Gebruik een waarde groter dan 0.',
-        'Use a value greater than 0.',
-        'Verwende einen Wert größer als 0.',
-      );
+      return l10n.identifyNonPositive;
     }
     return null;
   }
 
-  String? get _seasonMonthError => _seasonMonthMissing
-      ? t(
-          'Kies een waarnemingsmaand.',
-          'Select an observation month.',
-          'Wähle einen Beobachtungsmonat.',
-        )
-      : null;
+  String? _seasonMonthError(AppLocalizations l10n) =>
+      _seasonMonthMissing ? l10n.identifyObservationMonthRequired : null;
 
   Future<void> _identify() async {
     final cap = parseMeasurementInput(_capController.text);
@@ -121,348 +105,288 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
     if (mounted) setState(() => _results = result);
   }
 
-  String _monthName(int month) {
-    const nl = [
-      'jan', 'feb', 'mrt', 'apr', 'mei', 'jun',
-      'jul', 'aug', 'sep', 'okt', 'nov', 'dec',
+  String _monthName(AppLocalizations l10n, int month) {
+    final values = [
+      l10n.monthJan,
+      l10n.monthFeb,
+      l10n.monthMar,
+      l10n.monthApr,
+      l10n.monthMay,
+      l10n.monthJun,
+      l10n.monthJul,
+      l10n.monthAug,
+      l10n.monthSep,
+      l10n.monthOct,
+      l10n.monthNov,
+      l10n.monthDec,
     ];
-    const en = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    const de = [
-      'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez',
-    ];
-    final values = widget.locale.languageCode == 'nl'
-        ? nl
-        : widget.locale.languageCode == 'de'
-            ? de
-            : en;
     return values[month - 1];
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text(t('Determineren', 'Identify', 'Bestimmen'))),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: FutureBuilder<List<TraitChoice>>(
-                  future: _choices,
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    final groups = <int, List<TraitChoice>>{};
-                    for (final choice in snapshot.data!) {
-                      groups.putIfAbsent(choice.traitId, () => []).add(choice);
-                    }
-                    return ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        Text(
-                          t(
-                            'Kies alleen kenmerken die je zeker ziet. Metingen en seizoen zijn optionele aanvullende aanwijzingen.',
-                            'Select only characteristics you can observe confidently. Measurements and season are optional supporting evidence.',
-                            'Wähle nur Merkmale, die du sicher beobachten kannst. Maße und Saison sind optionale Zusatzhinweise.',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ...groups.values.map(
-                          (items) => Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    items.first.traitLabel,
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  RadioGroup<int>(
-                                    groupValue: _selected[items.first.traitId],
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      setState(() =>
-                                          _selected[items.first.traitId] = value);
-                                    },
-                                    child: Column(
-                                      children: items
-                                          .map(
-                                            (choice) => RadioListTile<int>(
-                                              title: Text(choice.optionLabel),
-                                              value: choice.optionId,
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                  ),
-                                  if (_selected.containsKey(items.first.traitId))
-                                    TextButton(
-                                      onPressed: () => setState(
-                                        () => _selected
-                                            .remove(items.first.traitId),
-                                      ),
-                                      child: Text(
-                                        t('Overslaan', 'Clear', 'Löschen'),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Card(
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.identifyTitle)),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: FutureBuilder<List<TraitChoice>>(
+                future: _choices,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final groups = <int, List<TraitChoice>>{};
+                  for (final choice in snapshot.data!) {
+                    groups.putIfAbsent(choice.traitId, () => []).add(choice);
+                  }
+                  return ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Text(l10n.identifyIntro),
+                      const SizedBox(height: 12),
+                      ...groups.values.map(
+                        (items) => Card(
                           child: Padding(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  t(
-                                    'Aanvullende veldgegevens',
-                                    'Supporting field data',
-                                    'Zusätzliche Felddaten',
-                                  ),
+                                  items.first.traitLabel,
                                   style: Theme.of(context).textTheme.titleMedium,
                                 ),
-                                const SizedBox(height: 8),
-                                TextField(
-                                  controller: _capController,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                                  onChanged: (_) {
-                                    if (_capError != null) {
-                                      setState(() => _capError = null);
-                                    }
+                                RadioGroup<int>(
+                                  groupValue: _selected[items.first.traitId],
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() =>
+                                        _selected[items.first.traitId] = value);
                                   },
-                                  decoration: InputDecoration(
-                                    labelText: t(
-                                      'Hoeddiameter (cm)',
-                                      'Cap diameter (cm)',
-                                      'Hutdurchmesser (cm)',
-                                    ),
-                                    errorText: _measurementError(_capError),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                TextField(
-                                  controller: _stemController,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                                  onChanged: (_) {
-                                    if (_stemError != null) {
-                                      setState(() => _stemError = null);
-                                    }
-                                  },
-                                  decoration: InputDecoration(
-                                    labelText: t(
-                                      'Steelhoogte (cm)',
-                                      'Stem height (cm)',
-                                      'Stielhöhe (cm)',
-                                    ),
-                                    errorText: _measurementError(_stemError),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                TextField(
-                                  controller: _stemDiameterController,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                                  onChanged: (_) {
-                                    if (_stemDiameterError != null) {
-                                      setState(() => _stemDiameterError = null);
-                                    }
-                                  },
-                                  decoration: InputDecoration(
-                                    labelText: t(
-                                      'Steeldiameter (cm)',
-                                      'Stem diameter (cm)',
-                                      'Stieldurchmesser (cm)',
-                                    ),
-                                    errorText:
-                                        _measurementError(_stemDiameterError),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                FutureBuilder<List<SeasonRegionOption>>(
-                                  future: _regions,
-                                  builder: (context, regionSnapshot) {
-                                    final regions = regionSnapshot.data ??
-                                        const <SeasonRegionOption>[];
-                                    final selectedRegion = regions
-                                        .where((r) => r.code == _seasonRegion)
-                                        .firstOrNull;
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        DropdownButtonFormField<String?>(
-                                          key: ValueKey(_seasonRegion),
-                                          initialValue: _seasonRegion,
-                                          decoration: InputDecoration(
-                                            labelText: t(
-                                              'Seizoensreferentie',
-                                              'Season reference',
-                                              'Saisonreferenz',
-                                            ),
+                                  child: Column(
+                                    children: items
+                                        .map(
+                                          (choice) => RadioListTile<int>(
+                                            title: Text(choice.optionLabel),
+                                            value: choice.optionId,
                                           ),
-                                          items: [
-                                            DropdownMenuItem<String?>(
-                                              value: null,
-                                              child: Text(
-                                                t(
-                                                  'Niet gebruiken',
-                                                  'Do not use',
-                                                  'Nicht verwenden',
-                                                ),
-                                              ),
-                                            ),
-                                            ...regions.map(
-                                              (region) =>
-                                                  DropdownMenuItem<String?>(
-                                                value: region.code,
-                                                child: Text(region.label),
-                                              ),
-                                            ),
-                                          ],
-                                          onChanged: regionSnapshot.hasData
-                                              ? (value) => setState(() {
-                                                    _seasonRegion = value;
-                                                    _seasonMonthMissing = false;
-                                                    if (value == null) {
-                                                      _observationMonth = null;
-                                                    }
-                                                  })
-                                              : null,
-                                        ),
-                                        if (_seasonRegion != null) ...[
-                                          const SizedBox(height: 8),
-                                          DropdownButtonFormField<int>(
-                                            key: ValueKey(
-                                              '$_seasonRegion-$_observationMonth',
-                                            ),
-                                            initialValue: _observationMonth,
-                                            decoration: InputDecoration(
-                                              labelText: t(
-                                                'Waarnemingsmaand',
-                                                'Observation month',
-                                                'Beobachtungsmonat',
-                                              ),
-                                              errorText: _seasonMonthError,
-                                            ),
-                                            items: List.generate(
-                                              12,
-                                              (index) => DropdownMenuItem(
-                                                value: index + 1,
-                                                child: Text(
-                                                  _monthName(index + 1),
-                                                ),
-                                              ),
-                                            ),
-                                            onChanged: (value) => setState(() {
-                                              _observationMonth = value;
-                                              _seasonMonthMissing = false;
-                                            }),
-                                          ),
-                                          if (selectedRegion != null &&
-                                              selectedRegion.note.isNotEmpty) ...[
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              selectedRegion.note,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall,
-                                            ),
-                                          ],
-                                        ],
-                                      ],
-                                    );
-                                  },
+                                        )
+                                        .toList(),
+                                  ),
                                 ),
+                                if (_selected.containsKey(items.first.traitId))
+                                  TextButton(
+                                    onPressed: () => setState(
+                                      () => _selected.remove(items.first.traitId),
+                                    ),
+                                    child: Text(l10n.identifyClear),
+                                  ),
                               ],
                             ),
                           ),
                         ),
-                        FilledButton.icon(
-                          onPressed: _identify,
-                          icon: const Icon(Icons.filter_alt),
-                          label: Text(
-                            t(
-                              'Toon kandidaten',
-                              'Show candidates',
-                              'Kandidaten anzeigen',
-                            ),
+                      ),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.identifyFieldData,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _capController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                onChanged: (_) {
+                                  if (_capError != null) {
+                                    setState(() => _capError = null);
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  labelText: l10n.identifyCapDiameter,
+                                  errorText: _measurementError(l10n, _capError),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _stemController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                onChanged: (_) {
+                                  if (_stemError != null) {
+                                    setState(() => _stemError = null);
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  labelText: l10n.identifyStemHeight,
+                                  errorText: _measurementError(l10n, _stemError),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _stemDiameterController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                onChanged: (_) {
+                                  if (_stemDiameterError != null) {
+                                    setState(() => _stemDiameterError = null);
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  labelText: l10n.identifyStemDiameter,
+                                  errorText:
+                                      _measurementError(l10n, _stemDiameterError),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              FutureBuilder<List<SeasonRegionOption>>(
+                                future: _regions,
+                                builder: (context, regionSnapshot) {
+                                  final regions = regionSnapshot.data ??
+                                      const <SeasonRegionOption>[];
+                                  final selectedRegion = regions
+                                      .where((r) => r.code == _seasonRegion)
+                                      .firstOrNull;
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      DropdownButtonFormField<String?>(
+                                        key: ValueKey(_seasonRegion),
+                                        initialValue: _seasonRegion,
+                                        decoration: InputDecoration(
+                                          labelText: l10n.identifySeasonReference,
+                                        ),
+                                        items: [
+                                          DropdownMenuItem<String?>(
+                                            value: null,
+                                            child: Text(l10n.identifyDoNotUse),
+                                          ),
+                                          ...regions.map(
+                                            (region) =>
+                                                DropdownMenuItem<String?>(
+                                              value: region.code,
+                                              child: Text(region.label),
+                                            ),
+                                          ),
+                                        ],
+                                        onChanged: regionSnapshot.hasData
+                                            ? (value) => setState(() {
+                                                  _seasonRegion = value;
+                                                  _seasonMonthMissing = false;
+                                                  if (value == null) {
+                                                    _observationMonth = null;
+                                                  }
+                                                })
+                                            : null,
+                                      ),
+                                      if (_seasonRegion != null) ...[
+                                        const SizedBox(height: 8),
+                                        DropdownButtonFormField<int>(
+                                          key: ValueKey(
+                                            '$_seasonRegion-$_observationMonth',
+                                          ),
+                                          initialValue: _observationMonth,
+                                          decoration: InputDecoration(
+                                            labelText:
+                                                l10n.identifyObservationMonth,
+                                            errorText: _seasonMonthError(l10n),
+                                          ),
+                                          items: List.generate(
+                                            12,
+                                            (index) => DropdownMenuItem(
+                                              value: index + 1,
+                                              child: Text(
+                                                _monthName(l10n, index + 1),
+                                              ),
+                                            ),
+                                          ),
+                                          onChanged: (value) => setState(() {
+                                            _observationMonth = value;
+                                            _seasonMonthMissing = false;
+                                          }),
+                                        ),
+                                        if (selectedRegion != null &&
+                                            selectedRegion.note.isNotEmpty) ...[
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            selectedRegion.note,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall,
+                                          ),
+                                        ],
+                                      ],
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                        if (_results != null) ...[
-                          const SizedBox(height: 20),
-                          Text(
-                            t('Resultaten', 'Results', 'Ergebnisse'),
-                            style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      FilledButton.icon(
+                        onPressed: _identify,
+                        icon: const Icon(Icons.filter_alt),
+                        label: Text(l10n.identifyShowCandidates),
+                      ),
+                      if (_results != null) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          l10n.identifyResults,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        if (_results!.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(l10n.identifyNoMatches),
                           ),
-                          if (_results!.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                t(
-                                  'Geen overeenkomsten. Pas kenmerken of veldgegevens aan.',
-                                  'No matches. Adjust the selected traits or field data.',
-                                  'Keine Treffer. Passe Merkmale oder Felddaten an.',
+                        ..._results!.map((result) {
+                          final morphology = result.requested == 0
+                              ? l10n.identifyNoMorphology
+                              : '${result.matched}/${result.requested} ${l10n.identifyTraits}';
+                          final field = result.fieldRequested == 0
+                              ? ''
+                              : ' · ${result.fieldMatched}/${result.fieldRequested} ${l10n.identifyField}';
+                          return ListTile(
+                            title: Text(result.species.commonName),
+                            subtitle: Text(
+                              '${result.species.scientificName} · ${l10n.identifyMatchScore} ${(result.score * 100).round()}% · $morphology$field',
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => SpeciesScreen(
+                                  locale: widget.locale,
+                                  speciesId: result.species.id,
                                 ),
                               ),
                             ),
-                          ..._results!.map((result) {
-                            final morphology = result.requested == 0
-                                ? t(
-                                    'geen morfologie',
-                                    'no morphology',
-                                    'keine Morphologie',
-                                  )
-                                : '${result.matched}/${result.requested} ${t('kenmerken', 'traits', 'Merkmale')}';
-                            final field = result.fieldRequested == 0
-                                ? ''
-                                : ' · ${result.fieldMatched}/${result.fieldRequested} ${t('veld', 'field', 'Feld')}';
-                            final scoreLabel = t(
-                              'matchscore',
-                              'match score',
-                              'Übereinstimmungswert',
-                            );
-                            return ListTile(
-                              title: Text(result.species.commonName),
-                              subtitle: Text(
-                                '${result.species.scientificName} · $scoreLabel ${(result.score * 100).round()}% · $morphology$field',
-                              ),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => SpeciesScreen(
-                                    locale: widget.locale,
-                                    speciesId: result.species.id,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ],
+                          );
+                        }),
                       ],
-                    );
-                  },
-                ),
+                    ],
+                  );
+                },
               ),
-              SafetyNotice(locale: widget.locale),
-            ],
-          ),
+            ),
+            const SafetyNotice(),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 extension _FirstOrNull<T> on Iterable<T> {
