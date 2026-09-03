@@ -66,6 +66,40 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('selected season region requires observation month',
+      (tester) async {
+    final repository = _FakeIdentificationRepository();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: IdentifyScreen(
+          locale: const Locale('en'),
+          repository: repository,
+          fieldDataRepository: _RegionFieldDataRepository(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final seasonReference =
+        find.widgetWithText(DropdownButtonFormField<String?>, 'Season reference');
+    await tester.ensureVisible(seasonReference);
+    await tester.tap(seasonReference);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Britain & Ireland').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Observation month'), findsOneWidget);
+
+    final button = find.widgetWithText(FilledButton, 'Show candidates');
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pump();
+
+    expect(find.text('Select an observation month.'), findsOneWidget);
+    expect(repository.identifyCalls, 0);
+  });
 }
 
 class _FakeIdentificationRepository extends IdentificationRepository {
@@ -93,4 +127,16 @@ class _FakeFieldDataRepository extends FieldDataRepository {
   @override
   Future<List<SeasonRegionOption>> seasonRegions(String languageCode) async =>
       const [];
+}
+
+class _RegionFieldDataRepository extends FieldDataRepository {
+  @override
+  Future<List<SeasonRegionOption>> seasonRegions(String languageCode) async =>
+      const [
+        SeasonRegionOption(
+          code: 'GB-IE',
+          label: 'Britain & Ireland',
+          note: 'Reference calendar for Britain and Ireland.',
+        ),
+      ];
 }
