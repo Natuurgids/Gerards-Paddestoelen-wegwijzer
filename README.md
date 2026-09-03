@@ -18,6 +18,7 @@ Offline-first Flutter application for mushroom identification and mycology educa
 - About five swipeable image slots per species, with automatic placeholder fallback when an image is not packaged yet.
 - Offline lessons and quizzes with best score and attempt count persisted locally.
 - Permanent mushroom safety disclaimer at the bottom of relevant screens.
+- Database repositories accept an injectable database provider for in-memory SQL testing while defaulting to the production singleton.
 - GitHub Actions quality workflow running `flutter analyze` and `flutter test`.
 
 ## Run on Windows
@@ -49,6 +50,8 @@ The normalized model separates:
 - user learning state: `training_progress`
 
 Important lookup columns are indexed, including taxonomy parents, scientific/common names, translated trait labels, species traits, measurement ranges, regional season months, gallery order and training relations. Foreign keys are enabled and SQLite runs in WAL mode.
+
+Repository classes in `lib/src/data/repositories.dart` take an optional `DatabaseProvider`. Normal application code uses `AppDatabase.instance.database`; tests can inject an in-memory database and exercise the same SQL without accessing a device database.
 
 ## Content manifests
 
@@ -136,6 +139,8 @@ The result score is a narrowing/ranking aid only. It is deliberately **not an ed
 `test/field_data_repository_test.dart` verifies localized region discovery and English fallback for unsupported locales.
 
 `test/season_database_test.dart` uses in-memory SQLite to verify that the v5 regional key allows the same species/month in different regions while preserving uniqueness within one region.
+
+`test/identification_repository_test.dart` injects an in-memory SQLite database into the production `IdentificationRepository` and executes the real SQL path. It covers exact morphology ranking, combined morphology/field evidence, measurement-only ranking and isolation between regional calendars.
 
 CI runs both analysis and tests on pushes to the feature/main branches and on pull requests to `main`.
 
