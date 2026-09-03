@@ -31,8 +31,10 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
 
   void _reload() => setState(() => _future = _repo.search(widget.locale.languageCode, query: _search.text));
 
-  String get _title => widget.locale.languageCode == 'nl' ? 'Soorten' : widget.locale.languageCode == 'de' ? 'Arten' : 'Species';
-  String get _hint => widget.locale.languageCode == 'nl' ? 'Zoek op naam' : widget.locale.languageCode == 'de' ? 'Nach Namen suchen' : 'Search by name';
+  String _text(String nl, String en, String de) => widget.locale.languageCode == 'nl' ? nl : widget.locale.languageCode == 'de' ? de : en;
+  String get _title => _text('Soorten', 'Species', 'Arten');
+  String get _hint => _text('Zoek op naam', 'Search by name', 'Nach Namen suchen');
+  String get _empty => _text('Geen resultaten', 'No results', 'Keine Ergebnisse');
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +57,7 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                   final items = snapshot.data!;
-                  if (items.isEmpty) return const Center(child: Text('No results'));
+                  if (items.isEmpty) return Center(child: Text(_empty));
                   return ListView.separated(
                     padding: const EdgeInsets.all(12),
                     itemCount: items.length,
