@@ -1,6 +1,5 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'database_seeder.dart';
 import 'field_data_importer.dart';
 import 'image_manifest_importer.dart';
 import 'manifest_sync_coordinator.dart';
@@ -40,12 +39,9 @@ class AppDatabase {
         await db.execute('PRAGMA busy_timeout = 5000');
       },
       onCreate: (db, version) async {
-        await db.transaction((txn) async {
-          for (final statement in _schema) {
-            await txn.execute(statement);
-          }
-          await DatabaseSeeder.seed(txn);
-        });
+        for (final statement in _schema) {
+          await db.execute(statement);
+        }
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -80,20 +76,18 @@ class AppDatabase {
           await db.execute('ALTER TABLE species_season ADD COLUMN region_code TEXT');
         }
         if (oldVersion < 5) {
-          await db.transaction((txn) async {
-            await txn.execute('''CREATE TABLE species_season_v5 (
-              species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
-              region_code TEXT NOT NULL,
-              month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
-              likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
-              PRIMARY KEY(species_id, region_code, month)
-            )''');
-            await txn.execute('''INSERT OR IGNORE INTO species_season_v5(species_id, region_code, month, likelihood)
-              SELECT species_id, COALESCE(region_code, 'UNSPECIFIED'), month, likelihood FROM species_season''');
-            await txn.execute('DROP TABLE species_season');
-            await txn.execute('ALTER TABLE species_season_v5 RENAME TO species_season');
-            await txn.execute('CREATE INDEX idx_species_season_region_month ON species_season(region_code, month, likelihood, species_id)');
-          });
+          await db.execute('''CREATE TABLE species_season_v5 (
+            species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+            region_code TEXT NOT NULL,
+            month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
+            likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
+            PRIMARY KEY(species_id, region_code, month)
+          )''');
+          await db.execute('''INSERT OR IGNORE INTO species_season_v5(species_id, region_code, month, likelihood)
+            SELECT species_id, COALESCE(region_code, 'UNSPECIFIED'), month, likelihood FROM species_season''');
+          await db.execute('DROP TABLE species_season');
+          await db.execute('ALTER TABLE species_season_v5 RENAME TO species_season');
+          await db.execute('CREATE INDEX idx_species_season_region_month ON species_season(region_code, month, likelihood, species_id)');
         }
       },
       onOpen: (db) async {
