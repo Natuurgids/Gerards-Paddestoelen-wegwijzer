@@ -34,6 +34,25 @@ void main() {
     expect(candidates.first.score, closeTo(1.0, 0.0001));
   });
 
+  test('field evidence can retain a zero-morphology candidate', () async {
+    final candidates = await repository.identify(
+      'en',
+      {1: 101},
+      capDiameterCm: 24,
+    );
+
+    expect(candidates, hasLength(2));
+    expect(candidates.first.species.id, 1);
+    final fieldRescued =
+        candidates.singleWhere((candidate) => candidate.species.id == 2);
+    expect(fieldRescued.matched, 0);
+    expect(fieldRescued.requested, 1);
+    expect(fieldRescued.fieldMatched, 1);
+    expect(fieldRescued.fieldRequested, 1);
+    expect(fieldRescued.fieldScore, closeTo(1.0, 0.0001));
+    expect(fieldRescued.score, closeTo(0.2, 0.0001));
+  });
+
   test('field evidence is combined with morphology and remains secondary', () async {
     final candidates = await repository.identify('en', {1: 101}, observationMonth: 10, seasonRegionCode: 'NL', capDiameterCm: 12);
     expect(candidates, hasLength(1));
