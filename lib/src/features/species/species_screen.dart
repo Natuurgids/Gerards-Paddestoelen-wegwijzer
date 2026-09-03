@@ -31,9 +31,9 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
 
   String _label(String key) {
     const values = {
-      'nl': {'habitat':'Habitat','lookalikes':'Gelijkende soorten','status':'Veiligheidsstatus','missing':'Afbeelding nog niet beschikbaar','measurements':'Afmetingen','season':'Seizoen','cap_diameter':'Hoeddiameter','stem_height':'Steelhoogte','stem_diameter':'Steeldiameter'},
-      'en': {'habitat':'Habitat','lookalikes':'Lookalikes','status':'Safety status','missing':'Image not available yet','measurements':'Measurements','season':'Season','cap_diameter':'Cap diameter','stem_height':'Stem height','stem_diameter':'Stem diameter'},
-      'de': {'habitat':'Lebensraum','lookalikes':'Verwechslungsarten','status':'Sicherheitsstatus','missing':'Bild noch nicht verfügbar','measurements':'Maße','season':'Saison','cap_diameter':'Hutdurchmesser','stem_height':'Stielhöhe','stem_diameter':'Stieldurchmesser'},
+      'nl': {'habitat':'Habitat','lookalikes':'Gelijkende soorten','status':'Veiligheidsstatus','missing':'Afbeelding nog niet beschikbaar','measurements':'Afmetingen','season':'Seizoen','seasonRegion':'Regionale referentie','cap_diameter':'Hoeddiameter','stem_height':'Steelhoogte','stem_diameter':'Steeldiameter'},
+      'en': {'habitat':'Habitat','lookalikes':'Lookalikes','status':'Safety status','missing':'Image not available yet','measurements':'Measurements','season':'Season','seasonRegion':'Regional reference','cap_diameter':'Cap diameter','stem_height':'Stem height','stem_diameter':'Stem diameter'},
+      'de': {'habitat':'Lebensraum','lookalikes':'Verwechslungsarten','status':'Sicherheitsstatus','missing':'Bild noch nicht verfügbar','measurements':'Maße','season':'Saison','seasonRegion':'Regionale Referenz','cap_diameter':'Hutdurchmesser','stem_height':'Stielhöhe','stem_diameter':'Stieldurchmesser'},
     };
     return (values[widget.locale.languageCode] ?? values['en']!)[key] ?? key;
   }
@@ -57,6 +57,17 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
     return values[month];
   }
 
+  String _regionName(String code) {
+    if (code == 'GB-IE') {
+      return widget.locale.languageCode == 'nl'
+          ? 'Groot-Brittannië en Ierland'
+          : widget.locale.languageCode == 'de'
+              ? 'Großbritannien und Irland'
+              : 'Britain and Ireland';
+    }
+    return code;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,6 +83,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                   final species = snapshot.data;
                   if (species == null) return const Center(child: Text('Species not found'));
                   final images = species.images.isEmpty ? List<SpeciesImage>.generate(5, (i) => SpeciesImage(path:'', angleCode:null, sortOrder:i)) : species.images;
+                  final seasonRegion = species.season.map((m)=>m.regionCode).whereType<String>().where((v)=>v.isNotEmpty).toSet();
                   return ListView(
                     children: [
                       AspectRatio(
@@ -104,8 +116,8 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                           if(species.season.isNotEmpty)...[
                             const SizedBox(height:20),
                             Text(_label('season'),style:Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height:8),
-                            Wrap(spacing:6,runSpacing:6,children:species.season.map((m)=>Chip(label:Text(_monthName(m.month)),avatar:Icon(m.likelihood>=3?Icons.circle:m.likelihood==2?Icons.circle_outlined:Icons.circle_outlined,size:m.likelihood>=3?14:10))).toList()),
+                            if(seasonRegion.isNotEmpty)Padding(padding:const EdgeInsets.only(top:2,bottom:6),child:Text('${_label('seasonRegion')}: ${seasonRegion.map(_regionName).join(', ')}',style:Theme.of(context).textTheme.bodySmall)),
+                            Wrap(spacing:6,runSpacing:6,children:species.season.map((m)=>Chip(label:Text(_monthName(m.month)),avatar:Icon(m.likelihood>=3?Icons.circle:Icons.circle_outlined,size:m.likelihood>=3?14:m.likelihood==2?11:8))).toList()),
                           ],
                           const SizedBox(height:20),
                           Text(_label('habitat'),style:Theme.of(context).textTheme.titleMedium),
