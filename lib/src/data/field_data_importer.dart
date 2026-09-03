@@ -5,11 +5,57 @@ import 'package:sqflite/sqflite.dart';
 
 class FieldDataImporter {
   static const _assetPath = 'assets/data/field_data.json';
+  static final RegExp _regionCodePattern = RegExp(r'^[A-Z]{2}(?:-[A-Z]{2})*$');
 
   static Future<void> sync(Database db) async {
     final raw = await rootBundle.loadString(_assetPath);
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    await syncDecoded(db, decoded);
+  }
+
+  static Future<void> syncDecoded(
+    Database db,
+    Map<String, dynamic> decoded,
+  ) async {
     final species = decoded['species'] as List<dynamic>? ?? const [];
+    final declaredRegions = <String>{};
+
+    for (final rawRegion
+        in decoded['season_regions'] as List<dynamic>? ?? const []) {
+      final region = rawRegion as Map<String, dynamic>;
+      final code = _canonicalRegionCode(region['code']);
+      if (!declaredRegions.add(code)) {
+        throw FormatException('Duplicate season region code: $code');
+      }
+    }
+
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      final seasonDatasets = item['season_datasets'] as List<dynamic>?;
+      if (seasonDatasets != null) {
+        for (final rawDataset in seasonDatasets) {
+          final dataset = rawDataset as Map<String, dynamic>;
+          final regionCode = _canonicalRegionCode(dataset['region_code']);
+          if (!declaredRegions.contains(regionCode)) {
+            throw FormatException(
+              'Undeclared season region code for species '
+              '${item['species_id']}: $regionCode',
+            );
+          }
+        }
+      } else {
+        final legacySeason = item['season'] as List<dynamic>? ?? const [];
+        if (legacySeason.isNotEmpty) {
+          final regionCode = _canonicalRegionCode(item['season_region']);
+          if (!declaredRegions.contains(regionCode)) {
+            throw FormatException(
+              'Undeclared legacy season region code for species '
+              '${item['species_id']}: $regionCode',
+            );
+          }
+        }
+      }
+    }
 
     await db.transaction((txn) async {
       // These tables contain developer-managed reference content only. Treat
@@ -57,13 +103,23 @@ class FieldDataImporter {
     });
   }
 
+  static String _canonicalRegionCode(Object? value) {
+    if (value is! String || value.trim() != value ||
+        !_regionCodePattern.hasMatch(value)) {
+      throw FormatException(
+        'Season region codes must use canonical uppercase two-letter segments: '
+        '$value',
+      );
+    }
+    return value;
+  }
+
   static Future<void> _syncSeasonDataset(
     Transaction txn,
     int speciesId,
     Map<String, dynamic> dataset,
   ) async {
-    final regionCode = dataset['region_code'] as String?;
-    if (regionCode == null || regionCode.trim().isEmpty) return;
+    final regionCode = _canonicalRegionCode(dataset['region_code']);
     final months = dataset['months'] as List<dynamic>? ?? const [];
     for (final rawMonth in months) {
       final month = rawMonth as Map<String, dynamic>;
