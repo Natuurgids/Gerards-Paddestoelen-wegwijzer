@@ -8,5 +8,10 @@
   "speciesBrowserTitle": "Soorten",
   "speciesBrowserSearchHint": "Zoek op naam",
   "speciesBrowserEmpty": "Geen resultaten",
+  "trainingTitle": "Leren",
+  "trainingBestScore": "Beste score",
+  "trainingAttempts": "Pogingen",
+  "trainingCheckAnswers": "Nakijken",
+  "trainingScore": "Score",
   "safetyNotice": "Veiligheidswaarschuwing: eet nooit een paddenstoel uitsluitend op basis van identificatie door deze app. Vergissingen kunnen ernstige vergiftiging of overlijden veroorzaken. Laat eetbare paddenstoelen altijd controleren door een gekwalificeerde lokale deskundige."
 }
