@@ -62,6 +62,53 @@ void main() {
     await db.close();
   });
 
+  test('valid training content accepts required languages plus extras', () async {
+    final valid = <String, dynamic>{
+      'lessons': [
+        {
+          'id': 1,
+          'slug': 'valid-lesson',
+          'texts': {
+            'nl': {'title': 'Les', 'body': 'Tekst'},
+            'en': {'title': 'Lesson', 'body': 'Text'},
+            'de': {'title': 'Lektion', 'body': 'Text'},
+            'fr': {'title': 'Leçon', 'body': 'Texte'},
+          },
+          'questions': [
+            {
+              'id': 10,
+              'texts': {
+                'nl': {'prompt': 'Vraag?'},
+                'en': {'prompt': 'Question?'},
+                'de': {'prompt': 'Frage?'},
+                'fr': {'prompt': 'Question ?'},
+              },
+              'answers': [
+                {
+                  'id': 100,
+                  'correct': true,
+                  'labels': {'nl': 'Ja', 'en': 'Yes', 'de': 'Ja', 'fr': 'Oui'},
+                },
+                {
+                  'id': 101,
+                  'correct': false,
+                  'labels': {'nl': 'Nee', 'en': 'No', 'de': 'Nein', 'fr': 'Non'},
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    await TrainingManifestImporter.syncDecoded(db, valid);
+
+    expect(await db.query('lesson', where: 'id = 1'), hasLength(1));
+    expect(await db.query('lesson_text', where: 'lesson_id = 1'), hasLength(4));
+    expect(await db.query('question', where: 'id = 10'), hasLength(1));
+    expect(await db.query('answer_option', where: 'question_id = 10'), hasLength(2));
+  });
+
   test('invalid training content does not mutate lessons or progress', () async {
     await db.insert('lesson', {
       'id': 99,
@@ -104,20 +151,12 @@ void main() {
                 {
                   'id': 100,
                   'correct': true,
-                  'labels': {
-                    'nl': 'Ja',
-                    'en': 'Yes',
-                    'de': 'Ja',
-                  },
+                  'labels': {'nl': 'Ja', 'en': 'Yes', 'de': 'Ja'},
                 },
                 {
                   'id': 101,
                   'correct': true,
-                  'labels': {
-                    'nl': 'Nee',
-                    'en': 'No',
-                    'de': 'Nein',
-                  },
+                  'labels': {'nl': 'Nee', 'en': 'No', 'de': 'Nein'},
                 },
               ],
             },
