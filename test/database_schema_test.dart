@@ -64,6 +64,54 @@ void main() {
     expect(region['notnull'], 1);
   });
 
+  test('v1 to v5 creates localization and field schema', () async {
+    await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
+    await db.execute('CREATE TABLE trait (id INTEGER PRIMARY KEY)');
+
+    await DatabaseSchema.upgrade(db, 1, DatabaseSchema.currentVersion);
+
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table'",
+    );
+    expect(
+      tables.map((row) => row['name']),
+      containsAll(<String>{
+        'trait_text',
+        'species_measurement',
+        'species_season',
+      }),
+    );
+
+    final traitTextColumns = await db.rawQuery('PRAGMA table_info(trait_text)');
+    expect(
+      traitTextColumns.map((row) => row['name']),
+      containsAll(<String>{'trait_id', 'language_code', 'label', 'help_text'}),
+    );
+
+    final seasonColumns = await db.rawQuery('PRAGMA table_info(species_season)');
+    final primaryKey = {
+      for (final row in seasonColumns) row['name']: row['pk'],
+    };
+    expect(primaryKey['species_id'], 1);
+    expect(primaryKey['region_code'], 2);
+    expect(primaryKey['month'], 3);
+    expect(
+      seasonColumns.singleWhere((row) => row['name'] == 'region_code')['notnull'],
+      1,
+    );
+
+    final indexes = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='index'",
+    );
+    expect(
+      indexes.map((row) => row['name']),
+      containsAll(<String>{
+        'idx_species_measurement_lookup',
+        'idx_species_season_region_month',
+      }),
+    );
+  });
+
   test('v2 to v5 creates field tables with current regional season key', () async {
     await db.execute('CREATE TABLE species (id INTEGER PRIMARY KEY)');
 
