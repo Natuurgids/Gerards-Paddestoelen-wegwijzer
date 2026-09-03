@@ -8,11 +8,11 @@ Offline-first Flutter application for mushroom identification and mycology educa
 - Offline SQLite database; no network is needed for species browsing, identification or training.
 - Dutch (`nl`), English (`en`) and German (`de`) content foundation.
 - Developer-editable species/taxonomy, identification-trait, field-data, gallery and training manifests synchronized into SQLite.
-- Normalized taxonomy, translated species content, localized identification traits, measurements, seasonality, image metadata, lessons/questions and training progress.
+- Normalized taxonomy, translated species content, localized identification traits, measurements, region-tagged seasonality, image metadata, lessons/questions and training progress.
 - Indexed scientific/common-name lookup, localized trait lookup, species-trait filtering, numeric measurement lookup, month/season lookup, image ordering and lesson/question joins.
 - Offline species catalogue with local search.
 - Trait-based identification with weighted candidate ranking using one aggregate SQLite query.
-- Species detail pages backed by SQLite, including measurements and fruiting season.
+- Species detail pages backed by SQLite, including measurements and region-labelled fruiting season.
 - About five swipeable image slots per species, with automatic placeholder fallback when an image is not packaged yet.
 - Offline lessons and quizzes with best score and attempt count persisted locally.
 - Permanent mushroom safety disclaimer at the bottom of relevant screens.
@@ -33,7 +33,7 @@ The bootstrap script generates standard Android/iOS Flutter platform scaffolding
 
 ## Database design
 
-The schema is in `lib/src/data/app_database.dart`. The app is currently schema version 3. Developer-editable manifests are synchronized into SQLite whenever the database opens.
+The schema is in `lib/src/data/app_database.dart`. The app is currently schema version 4. Developer-editable manifests are synchronized into SQLite whenever the database opens.
 
 The normalized model separates:
 
@@ -41,7 +41,7 @@ The normalized model separates:
 - species translations: `species_text`
 - identification: `trait`, `trait_text`, `trait_option`, `trait_option_text`, `species_trait`
 - quantitative field characters: `species_measurement`
-- fruiting season: `species_season`
+- fruiting season with regional provenance: `species_season`
 - galleries: `species_image`
 - education: `lesson`, `lesson_text`, `question`, `question_text`, `answer_option`, `answer_option_text`
 - user learning state: `training_progress`
@@ -54,7 +54,7 @@ The application keeps content maintenance separate from Flutter UI source code:
 
 - `assets/data/species_catalog.json` — taxonomy, species metadata and NL/EN/DE species text.
 - `assets/data/identification_traits.json` — localized determination traits/options and weighted species mappings.
-- `assets/data/field_data.json` — normalized numeric measurements and month-by-month fruiting season data.
+- `assets/data/field_data.json` — normalized numeric measurements and month-by-month fruiting season data with a `season_region` provenance code.
 - `assets/data/species_images.json` — gallery paths, angle/order, primary image and optional attribution/licence metadata.
 - `assets/data/training_content.json` — multilingual lessons, questions, answers and explanations.
 
@@ -65,7 +65,7 @@ Stable numeric IDs should not be reused for a different biological or educationa
 1. Add the required genus/species taxonomy rows to `assets/data/species_catalog.json` using stable numeric IDs.
 2. Add the species record and complete `nl`, `en` and `de` text objects.
 3. Add identifying trait relations in `assets/data/identification_traits.json`.
-4. Add cap/stem measurements and season months in `assets/data/field_data.json` where known.
+4. Add cap/stem measurements and season months in `assets/data/field_data.json` where known, together with the region the season data describes.
 5. Add about five gallery slots in `assets/data/species_images.json`.
 
 The import order is catalogue → traits → field data → images → training, so dependent manifests can safely reference newly added species.
@@ -82,9 +82,9 @@ The current starter vocabulary includes cap colour/shape/surface, hymenium type,
 
 `assets/data/field_data.json` stores quantitative data separately from prose. Each measurement has a machine-readable code, minimum, maximum and unit. Current examples include `cap_diameter`, `stem_height` and `stem_diameter`.
 
-Fruiting periods are stored as individual month rows with likelihood 1–3. This allows future identification filters such as "observed in October" to use an indexed relation instead of parsing descriptive text.
+Fruiting periods are stored as individual month rows with likelihood 1–3. Every non-empty season dataset must also provide `season_region`. This prevents a regional fruiting calendar from being presented as universally valid. The starter season records currently use `GB-IE`, and the species screen labels that regional reference explicitly.
 
-The species detail screen renders these measurements and season months offline.
+This model allows future region-specific data for the Netherlands, Germany or other areas without overwriting another region's published season information.
 
 ## Adding species pictures
 
@@ -126,7 +126,7 @@ Results display a percentage and number of matched selected traits. This score i
 - unique trait and option IDs with all three translations
 - valid species-trait references and positive weights
 - valid measurement ranges and units
-- unique season months in the range 1–12 and likelihood in the range 1–3
+- unique season months in the range 1–12, likelihood in the range 1–3 and required regional provenance
 - five ordered image slots and exactly one primary image per seeded species
 - complete multilingual training text
 - globally unique question/answer IDs and exactly one correct answer per single-choice question
