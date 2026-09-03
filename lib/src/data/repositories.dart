@@ -72,24 +72,57 @@ class IdentificationRepository {
   }
 
   Future<List<IdentificationCandidate>> identify(String languageCode, Map<int,int> selected) async {
-    final species = await SpeciesRepository().search(languageCode);
-    if (selected.isEmpty) return species.take(20).map((s) => IdentificationCandidate(species:s, score:0, matched:0, requested:0)).toList();
-    final db = await AppDatabase.instance.database;
-    final candidates = <IdentificationCandidate>[];
-    for (final s in species) {
-      double matchedWeight = 0;
-      double totalWeight = 0;
-      var matched = 0;
-      for (final entry in selected.entries) {
-        final rows = await db.query('species_trait', columns:['option_id','weight'], where:'species_id=? AND trait_id=?', whereArgs:[s.id, entry.key]);
-        final weight = rows.isEmpty ? 1.0 : (rows.first['weight'] as num).toDouble();
-        totalWeight += weight;
-        if (rows.any((r) => r['option_id'] == entry.value)) { matched++; matchedWeight += weight; }
-      }
-      candidates.add(IdentificationCandidate(species:s, score: totalWeight == 0 ? 0 : matchedWeight / totalWeight, matched:matched, requested:selected.length));
+    if (selected.isEmpty) {
+      final species = await SpeciesRepository().search(languageCode);
+      return species.take(20).map((s) => IdentificationCandidate(species:s, score:0, matched:0, requested:0)).toList();
     }
-    candidates.sort((a,b) => b.score.compareTo(a.score));
-    return candidates.where((c) => c.score > 0).toList();
+
+    final db = await AppDatabase.instance.database;
+    final valueSql = List.filled(selected.length, '(?, ?)').join(', ');
+    final args = <Object?>[];
+    for (final entry in selected.entries) {
+      args..add(entry.key)..add(entry.value);
+    }
+    args.add(languageCode);
+
+    final rows = await db.rawQuery('''
+      WITH selected(trait_id, option_id) AS (VALUES $valueSql),
+      scores AS (
+        SELECT s.id species_id,
+          SUM(CASE WHEN st.option_id = sel.option_id THEN COALESCE(st.weight, 1.0) ELSE 0 END) matched_weight,
+          SUM(COALESCE(st.weight, 1.0)) total_weight,
+          SUM(CASE WHEN st.option_id = sel.option_id THEN 1 ELSE 0 END) matched_count
+        FROM species s
+        CROSS JOIN selected sel
+        LEFT JOIN species_trait st
+          ON st.species_id = s.id AND st.trait_id = sel.trait_id
+        GROUP BY s.id
+      )
+      SELECT s.id, t.scientific_name, txt.common_name, txt.summary,
+        (SELECT asset_path FROM species_image si WHERE si.species_id=s.id ORDER BY si.is_primary DESC, si.sort_order LIMIT 1) image_path,
+        scores.matched_weight / NULLIF(scores.total_weight, 0) score,
+        scores.matched_count
+      FROM scores
+      JOIN species s ON s.id=scores.species_id
+      JOIN taxon t ON t.id=s.taxon_id
+      JOIN species_text txt ON txt.species_id=s.id AND txt.language_code=?
+      WHERE scores.matched_weight > 0
+      ORDER BY score DESC, scores.matched_count DESC, txt.common_name COLLATE NOCASE
+      LIMIT 50
+    ''', args);
+
+    return rows.map((r) => IdentificationCandidate(
+      species: SpeciesSummary(
+        id:r['id'] as int,
+        scientificName:r['scientific_name'] as String,
+        commonName:r['common_name'] as String,
+        summary:r['summary'] as String?,
+        imagePath:r['image_path'] as String?,
+      ),
+      score:(r['score'] as num).toDouble(),
+      matched:(r['matched_count'] as num).toInt(),
+      requested:selected.length,
+    )).toList();
   }
 }
 
