@@ -176,7 +176,7 @@ void main() {
     ) as Map<String, dynamic>;
     for (final rawSpecies in images['species'] as List<dynamic>) {
       final item = rawSpecies as Map<String, dynamic>;
-      expect(catalogueIds, contains(item['species_id']),
+      expect(catalogueIds, contains(item['speciesId']),
           reason: 'Image galleries must reference catalogue species');
     }
   });
