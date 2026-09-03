@@ -8,5 +8,10 @@
   "speciesBrowserTitle": "Species",
   "speciesBrowserSearchHint": "Search by name",
   "speciesBrowserEmpty": "No results",
+  "trainingTitle": "Learn",
+  "trainingBestScore": "Best score",
+  "trainingAttempts": "Attempts",
+  "trainingCheckAnswers": "Check answers",
+  "trainingScore": "Score",
   "safetyNotice": "Safety notice: Never consume a mushroom based solely on identification by this app. Mistakes may cause serious poisoning or death. Always have edible mushrooms verified by a qualified local expert."
 }
