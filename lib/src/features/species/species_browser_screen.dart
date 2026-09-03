@@ -107,7 +107,7 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
                 },
               ),
             ),
-            SafetyNotice(locale: widget.locale),
+            const SafetyNotice(),
           ],
         ),
       ),
