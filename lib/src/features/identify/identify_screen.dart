@@ -16,6 +16,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
   final _repo = IdentificationRepository();
   final _capController = TextEditingController();
   final _stemController = TextEditingController();
+  final _stemDiameterController = TextEditingController();
   late Future<List<TraitChoice>> _choices;
   final Map<int, int> _selected = {};
   List<IdentificationCandidate>? _results;
@@ -32,6 +33,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
   void dispose() {
     _capController.dispose();
     _stemController.dispose();
+    _stemDiameterController.dispose();
     super.dispose();
   }
 
@@ -56,6 +58,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
       seasonRegionCode: _seasonRegion,
       capDiameterCm: _number(_capController),
       stemHeightCm: _number(_stemController),
+      stemDiameterCm: _number(_stemDiameterController),
     );
     if (mounted) setState(() => _results = result);
   }
@@ -157,6 +160,14 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   decoration: InputDecoration(
                                     labelText: t('Steel-/stielhoogte (cm)', 'Stem height (cm)', 'Stielhöhe (cm)'),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _stemDiameterController,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  decoration: InputDecoration(
+                                    labelText: t('Steeldiameter (cm)', 'Stem diameter (cm)', 'Stieldurchmesser (cm)'),
                                   ),
                                 ),
                                 const SizedBox(height: 12),
