@@ -32,6 +32,41 @@ void main() {
     await db.close();
   });
 
+  Future<void> insertExistingRows() async {
+    await db.insert('species_measurement', {
+      'species_id': 999,
+      'measurement_code': 'existing_measurement',
+      'min_value': 1.0,
+      'max_value': 2.0,
+      'unit': 'cm',
+    });
+    await db.insert('species_season', {
+      'species_id': 999,
+      'region_code': 'NL',
+      'month': 1,
+      'likelihood': 3,
+    });
+  }
+
+  Future<void> expectExistingRowsPreserved() async {
+    expect(
+      await db.query(
+        'species_measurement',
+        where: 'species_id = ?',
+        whereArgs: [999],
+      ),
+      hasLength(1),
+    );
+    expect(
+      await db.query(
+        'species_season',
+        where: 'species_id = ?',
+        whereArgs: [999],
+      ),
+      hasLength(1),
+    );
+  }
+
   test('sync removes stale field rows before importing manifest', () async {
     await db.insert('species_measurement', {
       'species_id': 999,
@@ -78,19 +113,7 @@ void main() {
 
   test('invalid region content fails before authoritative rows are deleted',
       () async {
-    await db.insert('species_measurement', {
-      'species_id': 999,
-      'measurement_code': 'existing_measurement',
-      'min_value': 1.0,
-      'max_value': 2.0,
-      'unit': 'cm',
-    });
-    await db.insert('species_season', {
-      'species_id': 999,
-      'region_code': 'NL',
-      'month': 1,
-      'likelihood': 3,
-    });
+    await insertExistingRows();
 
     final malformed = <String, dynamic>{
       'season_regions': [
@@ -120,22 +143,70 @@ void main() {
       FieldDataImporter.syncDecoded(db, malformed),
       throwsA(isA<FormatException>()),
     );
+    await expectExistingRowsPreserved();
+  });
 
-    expect(
-      await db.query(
-        'species_measurement',
-        where: 'species_id = ?',
-        whereArgs: [999],
-      ),
-      hasLength(1),
+  test('invalid measurement range fails before authoritative rows are deleted',
+      () async {
+    await insertExistingRows();
+
+    final malformed = <String, dynamic>{
+      'season_regions': const [],
+      'species': [
+        {
+          'species_id': 1,
+          'measurements': [
+            {
+              'code': 'cap_diameter_cm',
+              'min': 20.0,
+              'max': 10.0,
+              'unit': 'cm',
+            },
+          ],
+          'season_datasets': const [],
+        },
+      ],
+    };
+
+    await expectLater(
+      FieldDataImporter.syncDecoded(db, malformed),
+      throwsA(isA<FormatException>()),
     );
-    expect(
-      await db.query(
-        'species_season',
-        where: 'species_id = ?',
-        whereArgs: [999],
-      ),
-      hasLength(1),
+    await expectExistingRowsPreserved();
+  });
+
+  test('invalid season month fails before authoritative rows are deleted',
+      () async {
+    await insertExistingRows();
+
+    final malformed = <String, dynamic>{
+      'season_regions': [
+        {
+          'code': 'NL',
+          'labels': {'nl': 'Nederland', 'en': 'Netherlands', 'de': 'Niederlande'},
+          'notes': {'nl': 'Test', 'en': 'Test', 'de': 'Test'},
+        },
+      ],
+      'species': [
+        {
+          'species_id': 1,
+          'measurements': const [],
+          'season_datasets': [
+            {
+              'region_code': 'NL',
+              'months': [
+                {'month': 13, 'likelihood': 3},
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    await expectLater(
+      FieldDataImporter.syncDecoded(db, malformed),
+      throwsA(isA<FormatException>()),
     );
+    await expectExistingRowsPreserved();
   });
 }
