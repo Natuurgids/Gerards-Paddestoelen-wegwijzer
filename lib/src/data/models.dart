@@ -43,6 +43,13 @@ class SpeciesSeasonMonth {
   final String? regionCode;
 }
 
+class SeasonRegionOption {
+  const SeasonRegionOption({required this.code, required this.label, required this.note});
+  final String code;
+  final String label;
+  final String note;
+}
+
 class TraitChoice {
   const TraitChoice({required this.traitId, required this.traitCode, required this.traitLabel, required this.optionId, required this.optionLabel});
   final int traitId;
