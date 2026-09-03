@@ -1,5 +1,6 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'database_seeder.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -22,6 +23,7 @@ class AppDatabase {
           for (final statement in _schema) {
             await txn.execute(statement);
           }
+          await DatabaseSeeder.seed(txn);
         });
       },
     );
