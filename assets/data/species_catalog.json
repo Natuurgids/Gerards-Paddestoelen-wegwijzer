@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "taxa": [
+    {"id":1,"parent_id":null,"rank":"kingdom","scientific_name":"Fungi"},
+    {"id":10,"parent_id":1,"rank":"genus","scientific_name":"Amanita"},
+    {"id":11,"parent_id":10,"rank":"species","scientific_name":"Amanita muscaria"},
+    {"id":12,"parent_id":10,"rank":"species","scientific_name":"Amanita phalloides"},
+    {"id":20,"parent_id":1,"rank":"genus","scientific_name":"Boletus"},
+    {"id":21,"parent_id":20,"rank":"species","scientific_name":"Boletus edulis"}
+  ],
+  "species": [
+    {
+      "id":1,
+      "taxon_id":11,
+      "edible_status":"not_recommended",
+      "toxicity_level":"poisonous",
+      "texts":{
+        "nl":{"common_name":"Vliegenzwam","summary":"Rode hoed met vaak witte wratten.","description":"Bekende amaniet met witte plaatjes, ring en meestal een knolvormige voet met resten van de beurs.","habitat":"Bossen, vaak bij berk, spar en den.","lookalikes":"Kan worden verward met andere Amanita-soorten."},
+        "en":{"common_name":"Fly agaric","summary":"Red cap, often with white warts.","description":"Distinctive Amanita with white gills, a ring and typically a bulbous base with veil remnants.","habitat":"Woodland, often associated with birch, spruce and pine.","lookalikes":"Can be confused with other Amanita species."},
+        "de":{"common_name":"Fliegenpilz","summary":"Roter Hut, häufig mit weißen Flocken.","description":"Markanter Wulstling mit weißen Lamellen, Ring und meist knolliger Basis mit Hüllresten.","habitat":"Wälder, häufig bei Birke, Fichte und Kiefer.","lookalikes":"Verwechslungen mit anderen Amanita-Arten sind möglich."}
+      }
+    },
+    {
+      "id":2,
+      "taxon_id":12,
+      "edible_status":"deadly",
+      "toxicity_level":"deadly",
+      "texts":{
+        "nl":{"common_name":"Groene knolamaniet","summary":"Zeer giftige amaniet, vaak groenig met witte plaatjes.","description":"Heeft vrije witte plaatjes, ring en een duidelijke zakvormige beurs rond de steelbasis.","habitat":"Loofbossen, vaak bij eik en beuk.","lookalikes":"Verwarring met eetbare soorten kan dodelijk zijn."},
+        "en":{"common_name":"Death cap","summary":"Deadly Amanita, often greenish with white gills.","description":"Has free white gills, a ring and a distinct sack-like volva around the stem base.","habitat":"Deciduous woodland, often with oak and beech.","lookalikes":"Confusion with edible mushrooms can be fatal."},
+        "de":{"common_name":"Grüner Knollenblätterpilz","summary":"Tödlich giftiger Wulstling, oft grünlich mit weißen Lamellen.","description":"Weiße freie Lamellen, Ring und deutliche sackartige Volva an der Stielbasis.","habitat":"Laubwald, häufig bei Eiche und Buche.","lookalikes":"Verwechslungen mit Speisepilzen können tödlich enden."}
+      }
+    },
+    {
+      "id":3,
+      "taxon_id":21,
+      "edible_status":"edible_with_expert_confirmation",
+      "toxicity_level":"low",
+      "texts":{
+        "nl":{"common_name":"Gewoon eekhoorntjesbrood","summary":"Bruine boleet met buisjes in plaats van plaatjes.","description":"Stevige steel, bruine hoed en witte tot olijfkleurige poriën naarmate het vruchtlichaam ouder wordt.","habitat":"Bossen bij onder andere beuk, eik, spar en den.","lookalikes":"Diverse boleten lijken erop; controleer alle kenmerken."},
+        "en":{"common_name":"Penny bun","summary":"Brown bolete with pores rather than gills.","description":"Stout stem, brown cap and pores changing from white toward olive as the fruit body ages.","habitat":"Woodland with beech, oak, spruce and pine among other trees.","lookalikes":"Several boletes look similar; check all characters."},
+        "de":{"common_name":"Steinpilz","summary":"Brauner Röhrling mit Poren statt Lamellen.","description":"Kräftiger Stiel, brauner Hut und Poren, die von weiß zu oliv wechseln können.","habitat":"Wälder unter anderem bei Buche, Eiche, Fichte und Kiefer.","lookalikes":"Mehrere Röhrlinge sind ähnlich; alle Merkmale prüfen."}
+      }
+    }
+  ]
+}
