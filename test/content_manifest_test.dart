@@ -125,12 +125,19 @@ void main() {
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     final species = decoded['species'] as List<dynamic>;
     final declaredRegions = <String>{};
+    final regionCodePattern = RegExp(r'^[A-Z]{2}(?:-[A-Z]{2})*$');
 
     for (final rawRegion
         in decoded['season_regions'] as List<dynamic>? ?? const []) {
       final region = rawRegion as Map<String, dynamic>;
-      final code = (region['code'] as String).trim();
+      final rawCode = region['code'] as String;
+      final code = rawCode.trim();
       expect(code, isNotEmpty);
+      expect(rawCode, code,
+          reason: 'Season region codes must not contain surrounding whitespace');
+      expect(code, matches(regionCodePattern),
+          reason:
+              'Season region codes must use canonical uppercase two-letter segments');
       expect(declaredRegions.add(code), isTrue,
           reason: 'Season region codes must be unique');
       _expectLanguages(region['labels'] as Map<String, dynamic>);
@@ -157,7 +164,14 @@ void main() {
       final regionCodes = <String>{};
       for (final rawDataset in datasets) {
         final dataset = rawDataset as Map<String, dynamic>;
-        final regionCode = dataset['region_code'] as String;
+        final rawRegionCode = dataset['region_code'] as String;
+        final regionCode = rawRegionCode.trim();
+        expect(rawRegionCode, regionCode,
+            reason:
+                'Season dataset region codes must not contain surrounding whitespace');
+        expect(regionCode, matches(regionCodePattern),
+            reason:
+                'Season dataset region codes must use canonical uppercase two-letter segments');
         expect(declaredRegions, contains(regionCode),
             reason: 'Every season dataset must reference a declared region');
         expect(regionCodes.add(regionCode), isTrue,
