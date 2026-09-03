@@ -66,17 +66,13 @@ void main() {
       isEmpty,
     );
 
-    expect(
-      Sqflite.firstIntValue(
-        await db.rawQuery('SELECT COUNT(*) FROM species_measurement'),
-      ),
-      greaterThan(0),
+    final measurementCount = await db.rawQuery(
+      'SELECT COUNT(*) AS count FROM species_measurement',
     );
-    expect(
-      Sqflite.firstIntValue(
-        await db.rawQuery('SELECT COUNT(*) FROM species_season'),
-      ),
-      greaterThan(0),
+    final seasonCount = await db.rawQuery(
+      'SELECT COUNT(*) AS count FROM species_season',
     );
+    expect(measurementCount.single['count'] as int, greaterThan(0));
+    expect(seasonCount.single['count'] as int, greaterThan(0));
   });
 }
