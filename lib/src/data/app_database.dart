@@ -18,7 +18,7 @@ class AppDatabase {
     final path = join(await getDatabasesPath(), 'mycology.sqlite');
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
         await db.execute('PRAGMA journal_mode = WAL');
@@ -62,6 +62,22 @@ class AppDatabase {
         }
         if (oldVersion >= 3 && oldVersion < 4) {
           await db.execute('ALTER TABLE species_season ADD COLUMN region_code TEXT');
+        }
+        if (oldVersion < 5) {
+          await db.transaction((txn) async {
+            await txn.execute('''CREATE TABLE species_season_v5 (
+              species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+              region_code TEXT NOT NULL,
+              month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
+              likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
+              PRIMARY KEY(species_id, region_code, month)
+            )''');
+            await txn.execute('''INSERT OR IGNORE INTO species_season_v5(species_id, region_code, month, likelihood)
+              SELECT species_id, COALESCE(region_code, 'UNSPECIFIED'), month, likelihood FROM species_season''');
+            await txn.execute('DROP TABLE species_season');
+            await txn.execute('ALTER TABLE species_season_v5 RENAME TO species_season');
+            await txn.execute('CREATE INDEX idx_species_season_region_month ON species_season(region_code, month, likelihood, species_id)');
+          });
         }
       },
       onOpen: (db) async {
@@ -147,10 +163,10 @@ class AppDatabase {
     )''',
     '''CREATE TABLE species_season (
       species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+      region_code TEXT NOT NULL,
       month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
       likelihood INTEGER NOT NULL DEFAULT 1 CHECK(likelihood BETWEEN 1 AND 3),
-      region_code TEXT,
-      PRIMARY KEY(species_id, month)
+      PRIMARY KEY(species_id, region_code, month)
     )''',
     '''CREATE TABLE species_image (
       id INTEGER PRIMARY KEY,
@@ -217,7 +233,7 @@ class AppDatabase {
     '''CREATE INDEX idx_trait_text_language_label ON trait_text(language_code, label COLLATE NOCASE)''',
     '''CREATE INDEX idx_species_trait_filter ON species_trait(trait_id, option_id, species_id)''',
     '''CREATE INDEX idx_species_measurement_lookup ON species_measurement(measurement_code, min_value, max_value, species_id)''',
-    '''CREATE INDEX idx_species_season_month ON species_season(month, likelihood, species_id)''',
+    '''CREATE INDEX idx_species_season_region_month ON species_season(region_code, month, likelihood, species_id)''',
     '''CREATE INDEX idx_species_image_gallery ON species_image(species_id, sort_order)''',
     '''CREATE INDEX idx_question_lesson ON question(lesson_id, sort_order)''',
     '''CREATE INDEX idx_answer_question ON answer_option(question_id, sort_order)''',
