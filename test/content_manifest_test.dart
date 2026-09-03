@@ -91,11 +91,92 @@ void main() {
           reason: 'Each seeded species should have exactly one primary image');
     }
   });
+
+  test('field data has valid numeric ranges and season months', () async {
+    final raw = await rootBundle.loadString('assets/data/field_data.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final species = decoded['species'] as List<dynamic>;
+
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      final measurementCodes = <String>{};
+      for (final rawMeasurement
+          in item['measurements'] as List<dynamic>? ?? const []) {
+        final measurement = rawMeasurement as Map<String, dynamic>;
+        final code = measurement['code'] as String;
+        expect(measurementCodes.add(code), isTrue,
+            reason: 'Measurement codes must be unique per species');
+        final min = (measurement['min'] as num).toDouble();
+        final max = (measurement['max'] as num).toDouble();
+        expect(min, greaterThanOrEqualTo(0));
+        expect(max, greaterThanOrEqualTo(min));
+        expect((measurement['unit'] as String).trim(), isNotEmpty);
+      }
+
+      final months = <int>{};
+      for (final rawMonth in item['season'] as List<dynamic>? ?? const []) {
+        final month = rawMonth as Map<String, dynamic>;
+        final value = month['month'] as int;
+        expect(months.add(value), isTrue,
+            reason: 'Season months must be unique per species');
+        expect(value, inInclusiveRange(1, 12));
+        expect(month['likelihood'] as int, inInclusiveRange(1, 3));
+      }
+    }
+  });
+
+  test('training content has complete translations and one correct answer',
+      () async {
+    final raw = await rootBundle.loadString('assets/data/training_content.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final lessons = decoded['lessons'] as List<dynamic>;
+    final lessonIds = <int>{};
+    final questionIds = <int>{};
+    final answerIds = <int>{};
+
+    for (final rawLesson in lessons) {
+      final lesson = rawLesson as Map<String, dynamic>;
+      expect(lessonIds.add(lesson['id'] as int), isTrue);
+      _expectLocalizedObjects(
+          lesson['texts'] as Map<String, dynamic>, ['title', 'body']);
+
+      for (final rawQuestion in lesson['questions'] as List<dynamic>) {
+        final question = rawQuestion as Map<String, dynamic>;
+        expect(questionIds.add(question['id'] as int), isTrue);
+        _expectLocalizedObjects(
+            question['texts'] as Map<String, dynamic>, ['prompt']);
+
+        final answers = question['answers'] as List<dynamic>;
+        expect(answers.length, greaterThanOrEqualTo(2));
+        var correctCount = 0;
+        for (final rawAnswer in answers) {
+          final answer = rawAnswer as Map<String, dynamic>;
+          expect(answerIds.add(answer['id'] as int), isTrue);
+          _expectLanguages(answer['labels'] as Map<String, dynamic>);
+          if (answer['correct'] == true) correctCount++;
+        }
+        expect(correctCount, 1,
+            reason: 'Single-choice questions need exactly one correct answer');
+      }
+    }
+  });
 }
 
 void _expectLanguages(Map<String, dynamic> labels) {
   for (final language in const ['nl', 'en', 'de']) {
     expect(labels[language], isA<String>());
     expect((labels[language] as String).trim(), isNotEmpty);
+  }
+}
+
+void _expectLocalizedObjects(
+    Map<String, dynamic> values, List<String> requiredFields) {
+  for (final language in const ['nl', 'en', 'de']) {
+    expect(values, contains(language));
+    final object = values[language] as Map<String, dynamic>;
+    for (final field in requiredFields) {
+      expect(object[field], isA<String>());
+      expect((object[field] as String).trim(), isNotEmpty);
+    }
   }
 }
