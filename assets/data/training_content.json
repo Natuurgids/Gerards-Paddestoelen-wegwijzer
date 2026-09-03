@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "lessons": [
+    {
+      "id": 1,
+      "slug": "safe-identification-basics",
+      "difficulty": 1,
+      "sort_order": 1,
+      "texts": {
+        "nl": {"title": "Veilig determineren", "body": "Bekijk hoed, onderzijde, steel en steelbasis systematisch. Noteer alleen kenmerken die je echt kunt waarnemen. Een app-identificatie is nooit bewijs dat een paddenstoel veilig eetbaar is."},
+        "en": {"title": "Safe identification basics", "body": "Examine cap, underside, stem and stem base systematically. Record only characteristics you can genuinely observe. An app identification is never proof that a mushroom is safe to eat."},
+        "de": {"title": "Grundlagen der sicheren Bestimmung", "body": "Untersuche Hut, Unterseite, Stiel und Stielbasis systematisch. Erfasse nur Merkmale, die du wirklich beobachten kannst. Eine App-Bestimmung ist niemals ein Beweis für sichere Essbarkeit."}
+      },
+      "questions": [
+        {
+          "id": 1,
+          "sort_order": 1,
+          "texts": {
+            "nl": {"prompt": "Wat moet je doen voordat je een wilde paddenstoel eet?", "explanation": "App-identificatie is onvoldoende voor consumptieveiligheid."},
+            "en": {"prompt": "What should you do before eating a wild mushroom?", "explanation": "App identification is insufficient for consumption safety."},
+            "de": {"prompt": "Was solltest du tun, bevor du einen Wildpilz isst?", "explanation": "Eine App-Bestimmung reicht für die Verzehrsicherheit nicht aus."}
+          },
+          "answers": [
+            {"id": 1, "correct": true, "sort_order": 1, "labels": {"nl": "Laat hem controleren door een gekwalificeerde lokale deskundige", "en": "Have it verified by a qualified local expert", "de": "Von einer qualifizierten örtlichen Fachperson prüfen lassen"}},
+            {"id": 2, "correct": false, "sort_order": 2, "labels": {"nl": "Vertrouw alleen op de hoogste app-score", "en": "Trust only the highest app score", "de": "Nur dem höchsten App-Ergebnis vertrauen"}}
+          ]
+        },
+        {
+          "id": 2,
+          "sort_order": 2,
+          "texts": {
+            "nl": {"prompt": "Welke steelzone moet je bij een amaniet altijd volledig bekijken?", "explanation": "Een beurs of knol aan de steelbasis kan een essentieel determinatiekenmerk zijn."},
+            "en": {"prompt": "Which part of an Amanita stem should always be fully exposed?", "explanation": "A volva or bulb at the stem base can be a critical identification character."},
+            "de": {"prompt": "Welcher Bereich des Stiels eines Wulstlings sollte immer vollständig freigelegt werden?", "explanation": "Volva oder Knolle an der Stielbasis können entscheidende Bestimmungsmerkmale sein."}
+          },
+          "answers": [
+            {"id": 3, "correct": true, "sort_order": 1, "labels": {"nl": "De volledige steelbasis", "en": "The complete stem base", "de": "Die vollständige Stielbasis"}},
+            {"id": 4, "correct": false, "sort_order": 2, "labels": {"nl": "Alleen het midden van de steel", "en": "Only the middle of the stem", "de": "Nur die Mitte des Stiels"}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "slug": "underside-and-spores",
+      "difficulty": 2,
+      "sort_order": 2,
+      "texts": {
+        "nl": {"title": "Onderzijde en sporen", "body": "De onderzijde is vaak diagnostischer dan de hoedkleur. Let op plaatjes, buisjes of stekels, hun aanhechting en de kleur van een sporenafdruk."},
+        "en": {"title": "Underside and spores", "body": "The underside is often more diagnostic than cap colour. Observe gills, pores or teeth, their attachment, and the colour of a spore print."},
+        "de": {"title": "Unterseite und Sporen", "body": "Die Unterseite ist oft diagnostischer als die Hutfarbe. Achte auf Lamellen, Poren oder Stacheln, ihren Ansatz und die Farbe des Sporenpulvers."}
+      },
+      "questions": [
+        {
+          "id": 3,
+          "sort_order": 1,
+          "texts": {
+            "nl": {"prompt": "Wat zit er onder de hoed van Boletus edulis?", "explanation": "Eekhoorntjesbrood is een boleet met buisjes die als poriën zichtbaar zijn."},
+            "en": {"prompt": "What is found beneath the cap of Boletus edulis?", "explanation": "Boletus edulis is a bolete with tubes visible as pores."},
+            "de": {"prompt": "Was befindet sich unter dem Hut von Boletus edulis?", "explanation": "Der Steinpilz ist ein Röhrling mit als Poren sichtbaren Röhren."}
+          },
+          "answers": [
+            {"id": 5, "correct": true, "sort_order": 1, "labels": {"nl": "Buisjes/poriën", "en": "Tubes/pores", "de": "Röhren/Poren"}},
+            {"id": 6, "correct": false, "sort_order": 2, "labels": {"nl": "Vrije witte plaatjes", "en": "Free white gills", "de": "Freie weiße Lamellen"}}
+          ]
+        }
+      ]
+    }
+  ]
+}
