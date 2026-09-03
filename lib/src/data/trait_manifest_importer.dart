@@ -25,16 +25,12 @@ class TraitManifestImporter {
       for (final item in traits) {
         final trait = item as Map<String, dynamic>;
         final traitId = trait['id'] as int;
-        await txn.insert(
-          'trait',
-          {
-            'id': traitId,
-            'code': trait['code'] as String,
-            'category': trait['category'] as String,
-            'value_type': 'choice',
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await _upsertById(txn, 'trait', {
+          'id': traitId,
+          'code': trait['code'] as String,
+          'category': trait['category'] as String,
+          'value_type': 'choice',
+        });
 
         final labels = trait['labels'] as Map<String, dynamic>;
         for (final entry in labels.entries) {
@@ -53,16 +49,12 @@ class TraitManifestImporter {
         for (final optionItem in options) {
           final option = optionItem as Map<String, dynamic>;
           final optionId = option['id'] as int;
-          await txn.insert(
-            'trait_option',
-            {
-              'id': optionId,
-              'trait_id': traitId,
-              'code': option['code'] as String,
-              'sort_order': option['sort_order'] as int? ?? 0,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+          await _upsertById(txn, 'trait_option', {
+            'id': optionId,
+            'trait_id': traitId,
+            'code': option['code'] as String,
+            'sort_order': option['sort_order'] as int? ?? 0,
+          });
 
           final optionLabels = option['labels'] as Map<String, dynamic>;
           for (final entry in optionLabels.entries) {
@@ -93,6 +85,23 @@ class TraitManifestImporter {
         );
       }
     });
+  }
+
+  static Future<void> _upsertById(
+    Transaction txn,
+    String table,
+    Map<String, Object?> values,
+  ) async {
+    final id = values['id'];
+    final updated = await txn.update(
+      table,
+      values,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (updated == 0) {
+      await txn.insert(table, values);
+    }
   }
 
   static void _validate(List<dynamic> traits, List<dynamic> speciesTraits) {
