@@ -45,6 +45,34 @@ void main() {
     expect(candidate.score, closeTo(1.0, 0.0001));
   });
 
+  test('missing reference data is unknown and does not dilute field score', () async {
+    final candidates = await repository.identify(
+      'en',
+      {1: 101},
+      capDiameterCm: 12,
+      stemHeightCm: 14,
+    );
+    expect(candidates, hasLength(1));
+    final candidate = candidates.first;
+    expect(candidate.species.id, 1);
+    expect(candidate.fieldRequested, 1,
+        reason: 'Only the available cap reference should be evaluated');
+    expect(candidate.fieldMatched, 1);
+    expect(candidate.fieldScore, closeTo(1.0, 0.0001));
+    expect(candidate.score, closeTo(1.0, 0.0001));
+  });
+
+  test('known out-of-range measurement remains negative evidence', () async {
+    final candidates = await repository.identify('en', {1: 101}, capDiameterCm: 18);
+    expect(candidates, hasLength(1));
+    final candidate = candidates.first;
+    expect(candidate.species.id, 1);
+    expect(candidate.fieldRequested, 1);
+    expect(candidate.fieldMatched, 0);
+    expect(candidate.fieldScore, closeTo(0.0, 0.0001));
+    expect(candidate.score, closeTo(0.8, 0.0001));
+  });
+
   test('regional season lookup does not borrow another region calendar', () async {
     final nl = await repository.identify('en', {}, observationMonth: 10, seasonRegionCode: 'NL');
     final gb = await repository.identify('en', {}, observationMonth: 10, seasonRegionCode: 'GB-IE');
