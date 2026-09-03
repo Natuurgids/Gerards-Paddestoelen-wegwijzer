@@ -75,4 +75,67 @@ void main() {
     expect(measurementCount.single['count'] as int, greaterThan(0));
     expect(seasonCount.single['count'] as int, greaterThan(0));
   });
+
+  test('invalid region content fails before authoritative rows are deleted',
+      () async {
+    await db.insert('species_measurement', {
+      'species_id': 999,
+      'measurement_code': 'existing_measurement',
+      'min_value': 1.0,
+      'max_value': 2.0,
+      'unit': 'cm',
+    });
+    await db.insert('species_season', {
+      'species_id': 999,
+      'region_code': 'NL',
+      'month': 1,
+      'likelihood': 3,
+    });
+
+    final malformed = <String, dynamic>{
+      'season_regions': [
+        {
+          'code': 'nl',
+          'labels': {'nl': 'Nederland', 'en': 'Netherlands', 'de': 'Niederlande'},
+          'notes': {'nl': 'Test', 'en': 'Test', 'de': 'Test'},
+        },
+      ],
+      'species': [
+        {
+          'species_id': 1,
+          'measurements': const [],
+          'season_datasets': [
+            {
+              'region_code': 'nl',
+              'months': [
+                {'month': 1, 'likelihood': 3},
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    await expectLater(
+      FieldDataImporter.syncDecoded(db, malformed),
+      throwsA(isA<FormatException>()),
+    );
+
+    expect(
+      await db.query(
+        'species_measurement',
+        where: 'species_id = ?',
+        whereArgs: [999],
+      ),
+      hasLength(1),
+    );
+    expect(
+      await db.query(
+        'species_season',
+        where: 'species_id = ?',
+        whereArgs: [999],
+      ),
+      hasLength(1),
+    );
+  });
 }
