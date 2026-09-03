@@ -92,7 +92,8 @@ void main() {
     }
   });
 
-  test('field data has valid numeric ranges and regional season months', () async {
+  test('field data has valid numeric ranges and regional season datasets',
+      () async {
     final raw = await rootBundle.loadString('assets/data/field_data.json');
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     final species = decoded['species'] as List<dynamic>;
@@ -113,20 +114,24 @@ void main() {
         expect((measurement['unit'] as String).trim(), isNotEmpty);
       }
 
-      final season = item['season'] as List<dynamic>? ?? const [];
-      if (season.isNotEmpty) {
-        expect(item['season_region'], isA<String>());
-        expect((item['season_region'] as String).trim(), isNotEmpty,
-            reason: 'Season data must state the regional reference');
-      }
-      final months = <int>{};
-      for (final rawMonth in season) {
-        final month = rawMonth as Map<String, dynamic>;
-        final value = month['month'] as int;
-        expect(months.add(value), isTrue,
-            reason: 'Season months must be unique per species');
-        expect(value, inInclusiveRange(1, 12));
-        expect(month['likelihood'] as int, inInclusiveRange(1, 3));
+      final datasets = item['season_datasets'] as List<dynamic>? ?? const [];
+      final regionCodes = <String>{};
+      for (final rawDataset in datasets) {
+        final dataset = rawDataset as Map<String, dynamic>;
+        final regionCode = dataset['region_code'] as String;
+        expect(regionCode.trim(), isNotEmpty);
+        expect(regionCodes.add(regionCode), isTrue,
+            reason: 'A species can only define one calendar per region');
+
+        final months = <int>{};
+        for (final rawMonth in dataset['months'] as List<dynamic>? ?? const []) {
+          final month = rawMonth as Map<String, dynamic>;
+          final value = month['month'] as int;
+          expect(months.add(value), isTrue,
+              reason: 'Season months must be unique within a region');
+          expect(value, inInclusiveRange(1, 12));
+          expect(month['likelihood'] as int, inInclusiveRange(1, 3));
+        }
       }
     }
   });
