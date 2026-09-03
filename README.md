@@ -49,6 +49,8 @@ Important lookup columns are indexed, including taxonomy parents, scientific/com
 
 Keep compressed image files as application assets rather than SQLite BLOBs. SQLite stores paths and metadata, which keeps the database small and gallery queries fast.
 
+The developer-editable gallery manifest is `assets/data/species_images.json`. It is synchronized into the normalized `species_image` table whenever the database opens, so developers can add or reorder photographs without editing Dart source code.
+
 1. Create a directory such as `assets/images/species/amanita_muscaria/`.
 2. Aim for five useful identification perspectives:
    - cap/top
@@ -56,13 +58,14 @@ Keep compressed image files as application assets rather than SQLite BLOBs. SQLi
    - complete side view/stem
    - stem base, volva or another diagnostic structure
    - habitat or another important detail
-3. Add image rows for that species in the content seed/import source with `asset_path`, `sort_order`, `angle_code`, and optionally `photographer`, `license` and `thumbnail_path`.
-4. Mark the preferred cover image with `is_primary = 1`.
-5. Ensure the directory remains under the `assets/images/` tree declared in `pubspec.yaml`.
+3. Add the files to `assets/data/species_images.json` for the correct `speciesId`.
+4. Set `path`, `angle` and `order`; optionally add `photographer`, `license` and `thumbnailPath`.
+5. Set `primary: true` on the preferred cover image.
+6. Ensure the image files remain under the `assets/images/` tree declared in `pubspec.yaml`.
 
 The gallery reads images in `sort_order`. Missing files never result in a broken UI: the application displays the localized **image not available yet** placeholder instead. This means developers can add species records before all photography has been collected.
 
-For a production catalogue, the next content tooling step should move the seed records into validated JSON/CSV import files and automatically generate thumbnails while checking that every declared asset exists and that photographer/licence fields are complete.
+For a production catalogue, the next content tooling step should move the remaining species/trait/training seed data into validated JSON/CSV import files and automatically generate thumbnails while checking that every declared asset exists and that photographer/licence fields are complete.
 
 ## Identification scoring
 
