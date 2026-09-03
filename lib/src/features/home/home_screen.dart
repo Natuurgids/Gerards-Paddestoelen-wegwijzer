@@ -79,7 +79,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            SafetyNotice(locale: locale),
+            const SafetyNotice(),
           ],
         ),
       ),
