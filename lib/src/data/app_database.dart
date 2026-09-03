@@ -11,8 +11,18 @@ class AppDatabase {
   AppDatabase._();
   static final instance = AppDatabase._();
   Database? _db;
+  Future<Database>? _opening;
 
-  Future<Database> get database async => _db ??= await _open();
+  Future<Database> get database {
+    final existing = _db;
+    if (existing != null) return Future.value(existing);
+    return _opening ??= _open().then((db) {
+      _db = db;
+      return db;
+    }).whenComplete(() {
+      _opening = null;
+    });
+  }
 
   Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'mycology.sqlite');
@@ -22,6 +32,7 @@ class AppDatabase {
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
         await db.execute('PRAGMA journal_mode = WAL');
+        await db.execute('PRAGMA busy_timeout = 5000');
       },
       onCreate: (db, version) async {
         await db.transaction((txn) async {
