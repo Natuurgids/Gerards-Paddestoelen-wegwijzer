@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../data/models.dart';
+import '../../data/repositories.dart';
+import '../../widgets/safety_notice.dart';
 
 class SpeciesScreen extends StatefulWidget {
-  const SpeciesScreen({super.key, required this.locale});
-
+  const SpeciesScreen({super.key, required this.locale, required this.speciesId});
   final Locale locale;
+  final int speciesId;
 
   @override
   State<SpeciesScreen> createState() => _SpeciesScreenState();
@@ -11,25 +14,13 @@ class SpeciesScreen extends StatefulWidget {
 
 class _SpeciesScreenState extends State<SpeciesScreen> {
   final _controller = PageController();
+  late Future<SpeciesDetail?> _future;
   int _page = 0;
 
-  static const _imageSlots = [
-    'assets/images/example_species_top.jpg',
-    'assets/images/example_species_underside.jpg',
-    'assets/images/example_species_side.jpg',
-    'assets/images/example_species_base.jpg',
-    'assets/images/example_species_habitat.jpg',
-  ];
-
-  String get _safety {
-    switch (widget.locale.languageCode) {
-      case 'nl':
-        return 'Veiligheidswaarschuwing: Eet nooit een paddenstoel uitsluitend op basis van identificatie door deze app. Laat eetbare paddenstoelen altijd controleren door een gekwalificeerde lokale deskundige.';
-      case 'de':
-        return 'Sicherheitshinweis: Verzehren Sie niemals einen Pilz ausschließlich aufgrund einer Bestimmung durch diese App. Lassen Sie essbare Pilze immer von einer qualifizierten örtlichen Fachperson überprüfen.';
-      default:
-        return 'Safety notice: Never consume a mushroom based solely on identification by this app. Always have edible mushrooms verified by a qualified local expert.';
-    }
+  @override
+  void initState() {
+    super.initState();
+    _future = SpeciesRepository().detail(widget.speciesId, widget.locale.languageCode);
   }
 
   @override
@@ -38,74 +29,70 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
     super.dispose();
   }
 
+  String _label(String key) {
+    const values = {
+      'nl': {'habitat':'Habitat','lookalikes':'Gelijkende soorten','status':'Veiligheidsstatus','missing':'Afbeelding nog niet beschikbaar'},
+      'en': {'habitat':'Habitat','lookalikes':'Lookalikes','status':'Safety status','missing':'Image not available yet'},
+      'de': {'habitat':'Lebensraum','lookalikes':'Verwechslungsarten','status':'Sicherheitsstatus','missing':'Bild noch nicht verfügbar'},
+    };
+    return (values[widget.locale.languageCode] ?? values['en']!)[key]!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Amanita muscaria')),
+      appBar: AppBar(),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
-              child: ListView(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: Stack(
-                      children: [
-                        PageView.builder(
-                          controller: _controller,
-                          itemCount: _imageSlots.length,
-                          onPageChanged: (value) => setState(() => _page = value),
-                          itemBuilder: (context, index) => _SpeciesImage(
-                            path: _imageSlots[index],
-                          ),
-                        ),
-                        Positioned(
-                          right: 12,
-                          bottom: 12,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Colors.black54,
-                              borderRadius: BorderRadius.circular(20),
+              child: FutureBuilder<SpeciesDetail?>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final species = snapshot.data;
+                  if (species == null) return const Center(child: Text('Species not found'));
+                  final images = species.images.isEmpty ? List<SpeciesImage>.generate(5, (i) => SpeciesImage(path:'', angleCode:null, sortOrder:i)) : species.images;
+                  return ListView(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 4/3,
+                        child: Stack(
+                          children: [
+                            PageView.builder(
+                              controller: _controller,
+                              itemCount: images.length,
+                              onPageChanged: (value) => setState(() => _page=value),
+                              itemBuilder: (_, index) => _SpeciesImage(path: images[index].path, missingLabel: _label('missing')),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              child: Text(
-                                '${_page + 1} / ${_imageSlots.length}',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
+                            Positioned(right:12,bottom:12,child:DecoratedBox(decoration:BoxDecoration(color:Colors.black54,borderRadius:BorderRadius.circular(20)),child:Padding(padding:const EdgeInsets.symmetric(horizontal:10,vertical:5),child:Text('${_page+1} / ${images.length}',style:const TextStyle(color:Colors.white))))),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Amanita muscaria', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
-                        SizedBox(height: 8),
-                        Text('Example species page. Species content will be loaded from the offline SQLite database.'),
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+                          Text(species.commonName,style:Theme.of(context).textTheme.headlineMedium),
+                          Text(species.scientificName,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontStyle:FontStyle.italic)),
+                          const SizedBox(height:16),
+                          Text(species.description ?? species.summary ?? ''),
+                          const SizedBox(height:20),
+                          Text(_label('habitat'),style:Theme.of(context).textTheme.titleMedium),
+                          Text(species.habitat ?? '-'),
+                          const SizedBox(height:16),
+                          Text(_label('lookalikes'),style:Theme.of(context).textTheme.titleMedium),
+                          Text(species.lookalikes ?? '-'),
+                          const SizedBox(height:16),
+                          Text(_label('status'),style:Theme.of(context).textTheme.titleMedium),
+                          Text('${species.edibleStatus} · ${species.toxicityLevel}'),
+                        ]),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              color: Theme.of(context).colorScheme.errorContainer,
-              child: Text(
-                _safety,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onErrorContainer,
-                  fontSize: 12,
-                ),
-              ),
-            ),
+            SafetyNotice(locale: widget.locale),
           ],
         ),
       ),
@@ -114,26 +101,13 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
 }
 
 class _SpeciesImage extends StatelessWidget {
-  const _SpeciesImage({required this.path});
+  const _SpeciesImage({required this.path,required this.missingLabel});
   final String path;
-
+  final String missingLabel;
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      path,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Container(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        alignment: Alignment.center,
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.image_not_supported_outlined, size: 56),
-            SizedBox(height: 8),
-            Text('Image not available yet'),
-          ],
-        ),
-      ),
-    );
+    Widget fallback() => Container(color:Theme.of(context).colorScheme.surfaceContainerHighest,alignment:Alignment.center,child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.image_not_supported_outlined,size:56),const SizedBox(height:8),Text(missingLabel)]));
+    if(path.isEmpty) return fallback();
+    return Image.asset(path,fit:BoxFit.cover,errorBuilder:(_,__,___)=>fallback());
   }
 }
