@@ -20,8 +20,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await _showResults(tester, 'Show candidates');
-    await tester.scrollUntilVisible(find.text('Porcini'), 200);
-    await tester.pumpAndSettle();
+    await _scrollResultIntoView(tester, find.text('Porcini'));
 
     expect(find.text('Porcini'), findsOneWidget);
     expect(
@@ -46,13 +45,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await _showResults(tester, 'Toon kandidaten');
-    await tester.scrollUntilVisible(
-      find.textContaining('matchscore 90%'),
-      200,
-    );
-    await tester.pumpAndSettle();
+    final score = find.textContaining('matchscore 90%');
+    await _scrollResultIntoView(tester, score);
 
-    expect(find.textContaining('matchscore 90%'), findsOneWidget);
+    expect(score, findsOneWidget);
   });
 
   testWidgets('German result uses localized match score wording',
@@ -69,16 +65,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await _showResults(tester, 'Kandidaten anzeigen');
-    await tester.scrollUntilVisible(
-      find.textContaining('Übereinstimmungswert 90%'),
-      200,
-    );
-    await tester.pumpAndSettle();
+    final score = find.textContaining('Übereinstimmungswert 90%');
+    await _scrollResultIntoView(tester, score);
 
-    expect(
-      find.textContaining('Übereinstimmungswert 90%'),
-      findsOneWidget,
-    );
+    expect(score, findsOneWidget);
   });
 }
 
@@ -86,6 +76,18 @@ Future<void> _showResults(WidgetTester tester, String buttonLabel) async {
   final button = find.widgetWithText(FilledButton, buttonLabel);
   await tester.ensureVisible(button);
   await tester.tap(button);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _scrollResultIntoView(
+  WidgetTester tester,
+  Finder target,
+) async {
+  await tester.scrollUntilVisible(
+    target,
+    200,
+    scrollable: find.byType(ListView),
+  );
   await tester.pumpAndSettle();
 }
 
