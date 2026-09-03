@@ -37,9 +37,10 @@ class SpeciesMeasurement {
 }
 
 class SpeciesSeasonMonth {
-  const SpeciesSeasonMonth({required this.month, required this.likelihood});
+  const SpeciesSeasonMonth({required this.month, required this.likelihood, this.regionCode});
   final int month;
   final int likelihood;
+  final String? regionCode;
 }
 
 class TraitChoice {
