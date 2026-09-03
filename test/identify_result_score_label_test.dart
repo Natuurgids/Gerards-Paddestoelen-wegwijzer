@@ -83,12 +83,11 @@ Future<void> _scrollResultIntoView(
   WidgetTester tester,
   Finder target,
 ) async {
-  await tester.scrollUntilVisible(
-    target,
-    200,
-    scrollable: find.byType(ListView),
-  );
-  await tester.pumpAndSettle();
+  final list = find.byType(ListView);
+  for (var attempt = 0; attempt < 4 && target.evaluate().isEmpty; attempt++) {
+    await tester.drag(list, const Offset(0, -300));
+    await tester.pumpAndSettle();
+  }
 }
 
 class _ResultIdentificationRepository extends IdentificationRepository {
