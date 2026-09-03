@@ -5,12 +5,21 @@ import 'package:sqflite/sqflite.dart';
 
 class TraitManifestImporter {
   static const _assetPath = 'assets/data/identification_traits.json';
+  static const _languages = {'nl', 'en', 'de'};
 
   static Future<void> sync(Database db) async {
     final raw = await rootBundle.loadString(_assetPath);
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    await syncDecoded(db, decoded);
+  }
+
+  static Future<void> syncDecoded(
+    Database db,
+    Map<String, dynamic> decoded,
+  ) async {
     final traits = decoded['traits'] as List<dynamic>? ?? const [];
     final speciesTraits = decoded['species_traits'] as List<dynamic>? ?? const [];
+    _validate(traits, speciesTraits);
 
     await db.transaction((txn) async {
       for (final item in traits) {
@@ -27,7 +36,7 @@ class TraitManifestImporter {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
-        final labels = trait['labels'] as Map<String, dynamic>? ?? const {};
+        final labels = trait['labels'] as Map<String, dynamic>;
         for (final entry in labels.entries) {
           await txn.insert(
             'trait_text',
@@ -40,7 +49,7 @@ class TraitManifestImporter {
           );
         }
 
-        final options = trait['options'] as List<dynamic>? ?? const [];
+        final options = trait['options'] as List<dynamic>;
         for (final optionItem in options) {
           final option = optionItem as Map<String, dynamic>;
           final optionId = option['id'] as int;
@@ -55,7 +64,7 @@ class TraitManifestImporter {
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
 
-          final optionLabels = option['labels'] as Map<String, dynamic>? ?? const {};
+          final optionLabels = option['labels'] as Map<String, dynamic>;
           for (final entry in optionLabels.entries) {
             await txn.insert(
               'trait_option_text',
@@ -84,5 +93,82 @@ class TraitManifestImporter {
         );
       }
     });
+  }
+
+  static void _validate(List<dynamic> traits, List<dynamic> speciesTraits) {
+    final traitIds = <int>{};
+    final traitCodes = <String>{};
+    final optionIds = <int>{};
+    final optionTraitById = <int, int>{};
+
+    for (final rawTrait in traits) {
+      final trait = rawTrait as Map<String, dynamic>;
+      final traitId = trait['id'];
+      if (traitId is! int || !traitIds.add(traitId)) {
+        throw FormatException('Trait ids must be unique integers: $traitId');
+      }
+      final code = trait['code'];
+      if (code is! String || code.trim().isEmpty || code.trim() != code ||
+          !traitCodes.add(code)) {
+        throw FormatException('Trait codes must be unique and non-empty: $code');
+      }
+      _validateLabels(trait['labels'], 'trait $traitId');
+      final options = trait['options'];
+      if (options is! List<dynamic> || options.isEmpty) {
+        throw FormatException('Trait $traitId must declare options');
+      }
+      final optionCodes = <String>{};
+      for (final rawOption in options) {
+        final option = rawOption as Map<String, dynamic>;
+        final optionId = option['id'];
+        if (optionId is! int || !optionIds.add(optionId)) {
+          throw FormatException('Trait option ids must be unique integers: $optionId');
+        }
+        final optionCode = option['code'];
+        if (optionCode is! String || optionCode.trim().isEmpty ||
+            optionCode.trim() != optionCode || !optionCodes.add(optionCode)) {
+          throw FormatException(
+            'Option codes must be unique per trait and non-empty: $optionCode',
+          );
+        }
+        optionTraitById[optionId] = traitId;
+        _validateLabels(option['labels'], 'option $optionId');
+      }
+    }
+
+    for (final rawRelation in speciesTraits) {
+      final relation = rawRelation as Map<String, dynamic>;
+      final traitId = relation['trait_id'];
+      final optionId = relation['option_id'];
+      if (traitId is! int || !traitIds.contains(traitId)) {
+        throw FormatException('Species trait references unknown trait: $traitId');
+      }
+      if (optionId is! int || optionTraitById[optionId] != traitId) {
+        throw FormatException(
+          'Species trait references option $optionId outside trait $traitId',
+        );
+      }
+      final weight = relation['weight'] ?? 1.0;
+      if (weight is! num || !weight.toDouble().isFinite || weight <= 0) {
+        throw FormatException('Species trait weight must be positive: $weight');
+      }
+      if (relation['species_id'] is! int) {
+        throw FormatException(
+          'Species trait species_id must be an integer: ${relation['species_id']}',
+        );
+      }
+    }
+  }
+
+  static void _validateLabels(Object? value, String context) {
+    if (value is! Map<String, dynamic> || value.keys.toSet() != _languages) {
+      throw FormatException('$context must have nl, en and de labels');
+    }
+    for (final language in _languages) {
+      final label = value[language];
+      if (label is! String || label.trim().isEmpty) {
+        throw FormatException('$context has an invalid $language label');
+      }
+    }
   }
 }
