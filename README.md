@@ -13,6 +13,7 @@ Offline-first Flutter application for mushroom identification and mycology educa
 - Offline species catalogue with local search.
 - Trait-based identification with weighted candidate ranking using one aggregate morphology query plus one optional field-evidence query.
 - Optional observation evidence: cap diameter, stem height, stem diameter and explicitly selected regional observation month.
+- Region choices and explanatory notes are loaded dynamically from `field_data.json`; Flutter UI code does not hard-code GB/IE, NL or DE choices.
 - Species detail pages backed by SQLite, including measurements and region-labelled fruiting season.
 - About five swipeable image slots per species, with automatic placeholder fallback when an image is not packaged yet.
 - Offline lessons and quizzes with best score and attempt count persisted locally.
@@ -55,7 +56,7 @@ The application keeps content maintenance separate from Flutter UI source code:
 
 - `assets/data/species_catalog.json` — taxonomy, species metadata and NL/EN/DE species text.
 - `assets/data/identification_traits.json` — localized determination traits/options and weighted species mappings.
-- `assets/data/field_data.json` — normalized numeric measurements and one or more `season_datasets` per species, each with its own `region_code`.
+- `assets/data/field_data.json` — localized `season_regions`, normalized numeric measurements and one or more `season_datasets` per species, each with its own `region_code`.
 - `assets/data/species_images.json` — gallery paths, angle/order, primary image and optional attribution/licence metadata.
 - `assets/data/training_content.json` — multilingual lessons, questions, answers and explanations.
 
@@ -83,7 +84,9 @@ The current starter vocabulary includes cap colour/shape/surface, hymenium type,
 
 `assets/data/field_data.json` stores quantitative data separately from prose. Each measurement has a machine-readable code, minimum, maximum and unit. Current examples include `cap_diameter`, `stem_height` and `stem_diameter`.
 
-Fruiting periods are grouped into `season_datasets`. Each dataset has a `region_code` and individual month rows with likelihood 1–3. The same species may therefore have GB/IE, NL and DE calendars at the same time without one overwriting another. The starter season records currently use `GB-IE`, and both the species screen and identification form label that regional reference explicitly.
+The manifest also declares `season_regions`. Each region has a stable code plus NL/EN/DE labels and explanatory notes. The determination screen discovers these options at runtime, so adding a validated Netherlands or Germany calendar does not require a Flutter UI change.
+
+Fruiting periods are grouped into `season_datasets`. Each dataset has a `region_code` and individual month rows with likelihood 1–3. The same species may therefore have GB/IE, NL and DE calendars at the same time without one overwriting another.
 
 Schema v5 migrates the previous single-region key to `(species_id, region_code, month)`. The importer still accepts the old `season_region` + `season` shape for backward compatibility, but new content should use `season_datasets`.
 
@@ -116,7 +119,7 @@ Single-choice questions must have exactly one correct answer. CI verifies this c
 
 The identification screen stores selected observable trait options. Morphological candidates are scored from the normalized `species_trait` table using each relation's diagnostic weight in one indexed aggregate query.
 
-Users may optionally add cap diameter, stem height, stem diameter and an observation month. Month evidence is only enabled after the user explicitly selects a regional season reference. The current starter calendar is `GB-IE`; it is never silently applied to Dutch or German observations.
+Users may optionally add cap diameter, stem height, stem diameter and an observation month. Month evidence is only enabled after the user explicitly selects a regional season reference loaded from the manifest.
 
 When at least one morphological trait is selected, morphology contributes **80%** of the combined ranking and optional field evidence contributes **20%**. If no morphology is selected, available field evidence may rank the catalogue by itself. Results expose morphology matches and field-data matches separately so the combined percentage is not mistaken for a direct identification probability.
 
@@ -126,19 +129,13 @@ The result score is a narrowing/ranking aid only. It is deliberately **not an ed
 
 ## Tests
 
-`test/content_manifest_test.dart` validates the developer-editable content contracts, including:
-
-- unique taxonomy/species IDs and valid taxon references
-- complete Dutch, English and German species text
-- unique trait and option IDs with all three translations
-- valid species-trait references and positive weights
-- valid measurement ranges and units
-- unique region codes per species, unique months within each regional calendar, month range 1–12 and likelihood range 1–3
-- five ordered image slots and exactly one primary image per seeded species
-- complete multilingual training text
-- globally unique question/answer IDs and exactly one correct answer per single-choice question
+`test/content_manifest_test.dart` validates the developer-editable content contracts, including unique IDs/references, complete NL/EN/DE text, trait mappings, measurement ranges, declared localized season regions, valid per-region calendars, gallery slots and quiz correctness.
 
 `test/identification_scoring_test.dart` verifies morphology dominance, field-only ranking behavior, score clamping, inclusive measurement ranges and exact regional season matching.
+
+`test/field_data_repository_test.dart` verifies localized region discovery and English fallback for unsupported locales.
+
+`test/season_database_test.dart` uses in-memory SQLite to verify that the v5 regional key allows the same species/month in different regions while preserving uniqueness within one region.
 
 CI runs both analysis and tests on pushes to the feature/main branches and on pull requests to `main`.
 
