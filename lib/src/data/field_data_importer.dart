@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'field_measurement_contract.dart';
+
 class FieldDataImporter {
   static const _assetPath = 'assets/data/field_data.json';
   static final RegExp _regionCodePattern = RegExp(r'^[A-Z]{2}(?:-[A-Z]{2})*$');
@@ -46,6 +48,12 @@ class FieldDataImporter {
             'Invalid measurement code for species $speciesId: $code',
           );
         }
+        final expectedUnit = expectedFieldMeasurementUnit(code);
+        if (expectedUnit == null) {
+          throw FormatException(
+            'Unsupported measurement code for species $speciesId: $code',
+          );
+        }
         if (!measurementCodes.add(code)) {
           throw FormatException(
             'Duplicate measurement code for species $speciesId: $code',
@@ -68,6 +76,12 @@ class FieldDataImporter {
         if (unit is! String || unit.trim().isEmpty || unit.trim() != unit) {
           throw FormatException(
             'Invalid measurement unit for species $speciesId, $code: $unit',
+          );
+        }
+        if (unit != expectedUnit) {
+          throw FormatException(
+            'Unsupported measurement unit for species $speciesId, $code: '
+            '$unit (expected $expectedUnit)',
           );
         }
       }
