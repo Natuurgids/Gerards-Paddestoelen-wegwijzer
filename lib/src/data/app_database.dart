@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database_seeder.dart';
 import 'image_manifest_importer.dart';
+import 'species_catalog_importer.dart';
 import 'trait_manifest_importer.dart';
 
 class AppDatabase {
@@ -40,8 +41,9 @@ class AppDatabase {
         }
       },
       onOpen: (db) async {
-        await ImageManifestImporter.sync(db);
+        await SpeciesCatalogImporter.sync(db);
         await TraitManifestImporter.sync(db);
+        await ImageManifestImporter.sync(db);
       },
     );
   }
