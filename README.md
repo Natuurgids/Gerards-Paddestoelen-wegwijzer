@@ -9,7 +9,7 @@ Offline-first Flutter application for mushroom identification and mycology educa
 - Dutch (`nl`), English (`en`) and German (`de`) content foundation.
 - Developer-editable species/taxonomy, identification-trait, field-data, gallery and training manifests synchronized into SQLite.
 - Normalized taxonomy, translated species content, localized identification traits, measurements, region-tagged seasonality, image metadata, lessons/questions and training progress.
-- Indexed scientific/common-name lookup, localized trait lookup, species-trait filtering, numeric measurement lookup, month/season lookup, image ordering and lesson/question joins.
+- Indexed scientific/common-name lookup, localized trait lookup, species-trait filtering, numeric measurement lookup, regional month/season lookup, image ordering and lesson/question joins.
 - Offline species catalogue with local search.
 - Trait-based identification with weighted candidate ranking using one aggregate morphology query plus one optional field-evidence query.
 - Optional observation evidence: cap diameter, stem height, stem diameter and explicitly selected regional observation month.
@@ -34,7 +34,7 @@ The bootstrap script generates standard Android/iOS Flutter platform scaffolding
 
 ## Database design
 
-The schema is in `lib/src/data/app_database.dart`. The app is currently schema version 4. Developer-editable manifests are synchronized into SQLite whenever the database opens.
+The schema is in `lib/src/data/app_database.dart`. The app is currently schema version 5. Developer-editable manifests are synchronized into SQLite whenever the database opens.
 
 The normalized model separates:
 
@@ -42,12 +42,12 @@ The normalized model separates:
 - species translations: `species_text`
 - identification: `trait`, `trait_text`, `trait_option`, `trait_option_text`, `species_trait`
 - quantitative field characters: `species_measurement`
-- fruiting season with regional provenance: `species_season`
+- fruiting season with regional provenance: `species_season`, keyed by `(species_id, region_code, month)`
 - galleries: `species_image`
 - education: `lesson`, `lesson_text`, `question`, `question_text`, `answer_option`, `answer_option_text`
 - user learning state: `training_progress`
 
-Important lookup columns are indexed, including taxonomy parents, scientific/common names, translated trait labels, species traits, measurement ranges, season months, gallery order and training relations. Foreign keys are enabled and SQLite runs in WAL mode.
+Important lookup columns are indexed, including taxonomy parents, scientific/common names, translated trait labels, species traits, measurement ranges, regional season months, gallery order and training relations. Foreign keys are enabled and SQLite runs in WAL mode.
 
 ## Content manifests
 
@@ -55,7 +55,7 @@ The application keeps content maintenance separate from Flutter UI source code:
 
 - `assets/data/species_catalog.json` — taxonomy, species metadata and NL/EN/DE species text.
 - `assets/data/identification_traits.json` — localized determination traits/options and weighted species mappings.
-- `assets/data/field_data.json` — normalized numeric measurements and month-by-month fruiting season data with a `season_region` provenance code.
+- `assets/data/field_data.json` — normalized numeric measurements and one or more `season_datasets` per species, each with its own `region_code`.
 - `assets/data/species_images.json` — gallery paths, angle/order, primary image and optional attribution/licence metadata.
 - `assets/data/training_content.json` — multilingual lessons, questions, answers and explanations.
 
@@ -66,7 +66,7 @@ Stable numeric IDs should not be reused for a different biological or educationa
 1. Add the required genus/species taxonomy rows to `assets/data/species_catalog.json` using stable numeric IDs.
 2. Add the species record and complete `nl`, `en` and `de` text objects.
 3. Add identifying trait relations in `assets/data/identification_traits.json`.
-4. Add cap/stem measurements and season months in `assets/data/field_data.json` where known, together with the region the season data describes.
+4. Add cap/stem measurements and any validated regional calendars in `assets/data/field_data.json`.
 5. Add about five gallery slots in `assets/data/species_images.json`.
 
 The import order is catalogue → traits → field data → images → training, so dependent manifests can safely reference newly added species.
@@ -83,9 +83,9 @@ The current starter vocabulary includes cap colour/shape/surface, hymenium type,
 
 `assets/data/field_data.json` stores quantitative data separately from prose. Each measurement has a machine-readable code, minimum, maximum and unit. Current examples include `cap_diameter`, `stem_height` and `stem_diameter`.
 
-Fruiting periods are stored as individual month rows with likelihood 1–3. Every non-empty season dataset must also provide `season_region`. This prevents a regional fruiting calendar from being presented as universally valid. The starter season records currently use `GB-IE`, and both the species screen and identification form label that regional reference explicitly.
+Fruiting periods are grouped into `season_datasets`. Each dataset has a `region_code` and individual month rows with likelihood 1–3. The same species may therefore have GB/IE, NL and DE calendars at the same time without one overwriting another. The starter season records currently use `GB-IE`, and both the species screen and identification form label that regional reference explicitly.
 
-This model allows future region-specific data for the Netherlands, Germany or other areas without overwriting another region's published season information.
+Schema v5 migrates the previous single-region key to `(species_id, region_code, month)`. The importer still accepts the old `season_region` + `season` shape for backward compatibility, but new content should use `season_datasets`.
 
 ## Adding species pictures
 
@@ -120,7 +120,7 @@ Users may optionally add cap diameter, stem height, stem diameter and an observa
 
 When at least one morphological trait is selected, morphology contributes **80%** of the combined ranking and optional field evidence contributes **20%**. If no morphology is selected, available field evidence may rank the catalogue by itself. Results expose morphology matches and field-data matches separately so the combined percentage is not mistaken for a direct identification probability.
 
-Field evidence is evaluated in one additional SQLite query using indexed measurement and season tables, rather than querying once per species.
+The weighting and field-match rules are implemented in pure helper functions in `lib/src/data/identification_scoring.dart` and covered by unit tests. Field evidence is evaluated in one additional SQLite query using indexed measurement and regional season tables, rather than querying once per species.
 
 The result score is a narrowing/ranking aid only. It is deliberately **not an edibility confidence score** and is not a statistical probability that a mushroom has been identified correctly.
 
@@ -133,10 +133,12 @@ The result score is a narrowing/ranking aid only. It is deliberately **not an ed
 - unique trait and option IDs with all three translations
 - valid species-trait references and positive weights
 - valid measurement ranges and units
-- unique season months in the range 1–12, likelihood in the range 1–3 and required regional provenance
+- unique region codes per species, unique months within each regional calendar, month range 1–12 and likelihood range 1–3
 - five ordered image slots and exactly one primary image per seeded species
 - complete multilingual training text
 - globally unique question/answer IDs and exactly one correct answer per single-choice question
+
+`test/identification_scoring_test.dart` verifies morphology dominance, field-only ranking behavior, score clamping, inclusive measurement ranges and exact regional season matching.
 
 CI runs both analysis and tests on pushes to the feature/main branches and on pull requests to `main`.
 
