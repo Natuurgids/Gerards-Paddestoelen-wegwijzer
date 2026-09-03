@@ -17,8 +17,26 @@ class ManifestSyncCoordinator {
   ) async {
     final unavailable = <String>{};
     final knownSteps = <String>{};
+    final nameCounts = <String, int>{};
+    for (final step in steps) {
+      nameCounts.update(step.name, (count) => count + 1, ifAbsent: () => 1);
+    }
+    final duplicateNames = nameCounts.entries
+        .where((entry) => entry.value > 1)
+        .map((entry) => entry.key)
+        .toSet();
 
     for (final step in steps) {
+      if (duplicateNames.contains(step.name)) {
+        if (unavailable.add(step.name)) {
+          debugPrint(
+            'Manifest sync skipped for ${step.name}: duplicate step name',
+          );
+        }
+        knownSteps.add(step.name);
+        continue;
+      }
+
       final missingDependencies = step.dependsOn
           .where((dependency) => !knownSteps.contains(dependency))
           .toList();
