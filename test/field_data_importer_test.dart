@@ -157,10 +157,66 @@ void main() {
           'species_id': 1,
           'measurements': [
             {
-              'code': 'cap_diameter_cm',
+              'code': 'cap_diameter',
               'min': 20.0,
               'max': 10.0,
               'unit': 'cm',
+            },
+          ],
+          'season_datasets': const [],
+        },
+      ],
+    };
+
+    await expectLater(
+      FieldDataImporter.syncDecoded(db, malformed),
+      throwsA(isA<FormatException>()),
+    );
+    await expectExistingRowsPreserved();
+  });
+
+  test('unsupported measurement code preserves existing rows', () async {
+    await insertExistingRows();
+
+    final malformed = <String, dynamic>{
+      'season_regions': const [],
+      'species': [
+        {
+          'species_id': 1,
+          'measurements': [
+            {
+              'code': 'cap_diamter',
+              'min': 1.0,
+              'max': 2.0,
+              'unit': 'cm',
+            },
+          ],
+          'season_datasets': const [],
+        },
+      ],
+    };
+
+    await expectLater(
+      FieldDataImporter.syncDecoded(db, malformed),
+      throwsA(isA<FormatException>()),
+    );
+    await expectExistingRowsPreserved();
+  });
+
+  test('wrong measurement unit preserves existing rows', () async {
+    await insertExistingRows();
+
+    final malformed = <String, dynamic>{
+      'season_regions': const [],
+      'species': [
+        {
+          'species_id': 1,
+          'measurements': [
+            {
+              'code': 'cap_diameter',
+              'min': 10.0,
+              'max': 20.0,
+              'unit': 'mm',
             },
           ],
           'season_datasets': const [],
