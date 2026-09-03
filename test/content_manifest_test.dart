@@ -145,6 +145,42 @@ void main() {
     }
   });
 
+  test('all species references resolve to catalogue species', () async {
+    final catalogue = jsonDecode(
+      await rootBundle.loadString('assets/data/species_catalog.json'),
+    ) as Map<String, dynamic>;
+    final catalogueIds = (catalogue['species'] as List<dynamic>)
+        .map((item) => (item as Map<String, dynamic>)['id'] as int)
+        .toSet();
+
+    final traits = jsonDecode(
+      await rootBundle.loadString('assets/data/identification_traits.json'),
+    ) as Map<String, dynamic>;
+    for (final rawRelation in traits['species_traits'] as List<dynamic>) {
+      final relation = rawRelation as Map<String, dynamic>;
+      expect(catalogueIds, contains(relation['species_id']),
+          reason: 'Trait relations must reference catalogue species');
+    }
+
+    final fieldData = jsonDecode(
+      await rootBundle.loadString('assets/data/field_data.json'),
+    ) as Map<String, dynamic>;
+    for (final rawSpecies in fieldData['species'] as List<dynamic>) {
+      final item = rawSpecies as Map<String, dynamic>;
+      expect(catalogueIds, contains(item['species_id']),
+          reason: 'Field data must reference catalogue species');
+    }
+
+    final images = jsonDecode(
+      await rootBundle.loadString('assets/data/species_images.json'),
+    ) as Map<String, dynamic>;
+    for (final rawSpecies in images['species'] as List<dynamic>) {
+      final item = rawSpecies as Map<String, dynamic>;
+      expect(catalogueIds, contains(item['species_id']),
+          reason: 'Image galleries must reference catalogue species');
+    }
+  });
+
   test('training content has complete translations and one correct answer',
       () async {
     final raw = await rootBundle.loadString('assets/data/training_content.json');
