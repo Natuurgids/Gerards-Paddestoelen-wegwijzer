@@ -1,22 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:gerards_paddestoelen_wegwijzer/l10n/app_localizations.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/models.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/repositories.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/identify_screen.dart';
 
 void main() {
+  Widget localizedIdentifyApp({
+    required Locale locale,
+    required IdentificationRepository repository,
+    required FieldDataRepository fieldDataRepository,
+  }) =>
+      MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: IdentifyScreen(
+          locale: locale,
+          repository: repository,
+          fieldDataRepository: fieldDataRepository,
+        ),
+      );
+
   testWidgets('invalid measurement shows inline error and blocks ranking',
       (tester) async {
     final repository = _FakeIdentificationRepository();
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: IdentifyScreen(
-          locale: const Locale('en'),
-          repository: repository,
-          fieldDataRepository: _FakeFieldDataRepository(),
-        ),
+      localizedIdentifyApp(
+        locale: const Locale('en'),
+        repository: repository,
+        fieldDataRepository: _FakeFieldDataRepository(),
       ),
     );
     await tester.pumpAndSettle();
@@ -42,12 +57,10 @@ void main() {
   testWidgets('non-positive measurement uses localized German error',
       (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: IdentifyScreen(
-          locale: const Locale('de'),
-          repository: _FakeIdentificationRepository(),
-          fieldDataRepository: _FakeFieldDataRepository(),
-        ),
+      localizedIdentifyApp(
+        locale: const Locale('de'),
+        repository: _FakeIdentificationRepository(),
+        fieldDataRepository: _FakeFieldDataRepository(),
       ),
     );
     await tester.pumpAndSettle();
@@ -72,12 +85,10 @@ void main() {
     final repository = _FakeIdentificationRepository();
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: IdentifyScreen(
-          locale: const Locale('en'),
-          repository: repository,
-          fieldDataRepository: _RegionFieldDataRepository(),
-        ),
+      localizedIdentifyApp(
+        locale: const Locale('en'),
+        repository: repository,
+        fieldDataRepository: _RegionFieldDataRepository(),
       ),
     );
     await tester.pumpAndSettle();
@@ -106,12 +117,10 @@ void main() {
     final repository = _FakeIdentificationRepository();
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: IdentifyScreen(
-          locale: const Locale('en'),
-          repository: repository,
-          fieldDataRepository: _RegionFieldDataRepository(),
-        ),
+      localizedIdentifyApp(
+        locale: const Locale('en'),
+        repository: repository,
+        fieldDataRepository: _RegionFieldDataRepository(),
       ),
     );
     await tester.pumpAndSettle();
