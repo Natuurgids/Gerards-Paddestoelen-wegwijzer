@@ -33,6 +33,27 @@ void main() {
     expect(find.textContaining('1/2 field'), findsOneWidget);
   });
 
+  testWidgets('Dutch result uses localized match score wording',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: IdentifyScreen(
+          locale: const Locale('nl'),
+          repository: _ResultIdentificationRepository(),
+          fieldDataRepository: _EmptyFieldDataRepository(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final button = find.widgetWithText(FilledButton, 'Toon kandidaten');
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('matchscore 90%'), findsOneWidget);
+  });
+
   testWidgets('German result uses localized match score wording',
       (tester) async {
     await tester.pumpWidget(
