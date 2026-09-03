@@ -15,12 +15,16 @@ class SpeciesScreen extends StatefulWidget {
 class _SpeciesScreenState extends State<SpeciesScreen> {
   final _controller = PageController();
   late Future<SpeciesDetail?> _future;
+  List<SeasonRegionOption> _regionOptions = const [];
   int _page = 0;
 
   @override
   void initState() {
     super.initState();
     _future = SpeciesRepository().detail(widget.speciesId, widget.locale.languageCode);
+    FieldDataRepository().seasonRegions(widget.locale.languageCode).then((regions) {
+      if (mounted) setState(() => _regionOptions = regions);
+    });
   }
 
   @override
@@ -31,9 +35,9 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
 
   String _label(String key) {
     const values = {
-      'nl': {'habitat':'Habitat','lookalikes':'Gelijkende soorten','status':'Veiligheidsstatus','missing':'Afbeelding nog niet beschikbaar','measurements':'Afmetingen','season':'Seizoen','seasonRegion':'Regionale referentie','cap_diameter':'Hoeddiameter','stem_height':'Steelhoogte','stem_diameter':'Steeldiameter'},
-      'en': {'habitat':'Habitat','lookalikes':'Lookalikes','status':'Safety status','missing':'Image not available yet','measurements':'Measurements','season':'Season','seasonRegion':'Regional reference','cap_diameter':'Cap diameter','stem_height':'Stem height','stem_diameter':'Stem diameter'},
-      'de': {'habitat':'Lebensraum','lookalikes':'Verwechslungsarten','status':'Sicherheitsstatus','missing':'Bild noch nicht verfügbar','measurements':'Maße','season':'Saison','seasonRegion':'Regionale Referenz','cap_diameter':'Hutdurchmesser','stem_height':'Stielhöhe','stem_diameter':'Stieldurchmesser'},
+      'nl': {'habitat':'Habitat','lookalikes':'Gelijkende soorten','status':'Veiligheidsstatus','missing':'Afbeelding nog niet beschikbaar','measurements':'Afmetingen','season':'Seizoen','cap_diameter':'Hoeddiameter','stem_height':'Steelhoogte','stem_diameter':'Steeldiameter'},
+      'en': {'habitat':'Habitat','lookalikes':'Lookalikes','status':'Safety status','missing':'Image not available yet','measurements':'Measurements','season':'Season','cap_diameter':'Cap diameter','stem_height':'Stem height','stem_diameter':'Stem diameter'},
+      'de': {'habitat':'Lebensraum','lookalikes':'Verwechslungsarten','status':'Sicherheitsstatus','missing':'Bild noch nicht verfügbar','measurements':'Maße','season':'Saison','cap_diameter':'Hutdurchmesser','stem_height':'Stielhöhe','stem_diameter':'Stieldurchmesser'},
     };
     return (values[widget.locale.languageCode] ?? values['en']!)[key] ?? key;
   }
@@ -58,14 +62,26 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
   }
 
   String _regionName(String code) {
-    if (code == 'GB-IE') {
-      return widget.locale.languageCode == 'nl'
-          ? 'Groot-Brittannië en Ierland'
-          : widget.locale.languageCode == 'de'
-              ? 'Großbritannien und Irland'
-              : 'Britain and Ireland';
+    for (final region in _regionOptions) {
+      if (region.code == code) return region.label;
     }
     return code;
+  }
+
+  String? _regionNote(String code) {
+    for (final region in _regionOptions) {
+      if (region.code == code) return region.note;
+    }
+    return null;
+  }
+
+  Map<String, List<SpeciesSeasonMonth>> _seasonByRegion(List<SpeciesSeasonMonth> months) {
+    final result = <String, List<SpeciesSeasonMonth>>{};
+    for (final month in months) {
+      final code = month.regionCode ?? 'UNSPECIFIED';
+      result.putIfAbsent(code, () => []).add(month);
+    }
+    return result;
   }
 
   @override
@@ -83,7 +99,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                   final species = snapshot.data;
                   if (species == null) return const Center(child: Text('Species not found'));
                   final images = species.images.isEmpty ? List<SpeciesImage>.generate(5, (i) => SpeciesImage(path:'', angleCode:null, sortOrder:i)) : species.images;
-                  final seasonRegion = species.season.map((m)=>m.regionCode).whereType<String>().where((v)=>v.isNotEmpty).toSet();
+                  final seasonByRegion = _seasonByRegion(species.season);
                   return ListView(
                     children: [
                       AspectRatio(
@@ -116,8 +132,26 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                           if(species.season.isNotEmpty)...[
                             const SizedBox(height:20),
                             Text(_label('season'),style:Theme.of(context).textTheme.titleMedium),
-                            if(seasonRegion.isNotEmpty)Padding(padding:const EdgeInsets.only(top:2,bottom:6),child:Text('${_label('seasonRegion')}: ${seasonRegion.map(_regionName).join(', ')}',style:Theme.of(context).textTheme.bodySmall)),
-                            Wrap(spacing:6,runSpacing:6,children:species.season.map((m)=>Chip(label:Text(_monthName(m.month)),avatar:Icon(m.likelihood>=3?Icons.circle:Icons.circle_outlined,size:m.likelihood>=3?14:m.likelihood==2?11:8))).toList()),
+                            const SizedBox(height:6),
+                            ...seasonByRegion.entries.map((entry) {
+                              final note = _regionNote(entry.key);
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom:12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(_regionName(entry.key), style: Theme.of(context).textTheme.labelLarge),
+                                    if (note != null && note.isNotEmpty)
+                                      Padding(padding: const EdgeInsets.only(top:2,bottom:4), child: Text(note, style: Theme.of(context).textTheme.bodySmall)),
+                                    Wrap(
+                                      spacing:6,
+                                      runSpacing:6,
+                                      children: entry.value.map((m)=>Chip(label:Text(_monthName(m.month)),avatar:Icon(m.likelihood>=3?Icons.circle:Icons.circle_outlined,size:m.likelihood>=3?14:m.likelihood==2?11:8))).toList(),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
                           ],
                           const SizedBox(height:20),
                           Text(_label('habitat'),style:Theme.of(context).textTheme.titleMedium),
