@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:gerards_paddestoelen_wegwijzer/l10n/app_localizations.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/home/home_screen.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/widgets/safety_notice.dart';
 
 void main() {
+  Widget localizedApp(Locale locale, Widget home) => MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: home,
+      );
+
   Future<void> pumpNotice(WidgetTester tester, Locale locale) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SafetyNotice(locale: locale),
-        ),
+      localizedApp(
+        locale,
+        Scaffold(body: SafetyNotice(locale: locale)),
       ),
     );
   }
@@ -35,8 +42,9 @@ void main() {
 
   testWidgets('home screen renders localized navigation copy', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: HomeScreen(
+      localizedApp(
+        const Locale('de'),
+        HomeScreen(
           locale: const Locale('de'),
           onLocaleChanged: (_) {},
         ),
@@ -53,8 +61,9 @@ void main() {
   testWidgets('home language selector emits the selected locale', (tester) async {
     Locale? selectedLocale;
     await tester.pumpWidget(
-      MaterialApp(
-        home: HomeScreen(
+      localizedApp(
+        const Locale('nl'),
+        HomeScreen(
           locale: const Locale('nl'),
           onLocaleChanged: (locale) => selectedLocale = locale,
         ),
