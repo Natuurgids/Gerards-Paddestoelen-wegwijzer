@@ -209,4 +209,31 @@ void main() {
     );
     await expectExistingRowsPreserved();
   });
+
+  test('duplicate species entry fails before authoritative rows are deleted',
+      () async {
+    await insertExistingRows();
+
+    final malformed = <String, dynamic>{
+      'season_regions': const [],
+      'species': [
+        {
+          'species_id': 1,
+          'measurements': const [],
+          'season_datasets': const [],
+        },
+        {
+          'species_id': 1,
+          'measurements': const [],
+          'season_datasets': const [],
+        },
+      ],
+    };
+
+    await expectLater(
+      FieldDataImporter.syncDecoded(db, malformed),
+      throwsA(isA<FormatException>()),
+    );
+    await expectExistingRowsPreserved();
+  });
 }
