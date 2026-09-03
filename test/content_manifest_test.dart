@@ -1,0 +1,281 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('species catalogue has valid taxonomy and all translations', () async {
+    final raw = await rootBundle.loadString('assets/data/species_catalog.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final taxa = decoded['taxa'] as List<dynamic>;
+    final species = decoded['species'] as List<dynamic>;
+    final taxonIds = <int>{};
+    final speciesIds = <int>{};
+
+    for (final rawTaxon in taxa) {
+      final taxon = rawTaxon as Map<String, dynamic>;
+      expect(taxonIds.add(taxon['id'] as int), isTrue,
+          reason: 'Taxon ids must be unique');
+      expect((taxon['scientific_name'] as String).trim(), isNotEmpty);
+    }
+
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      expect(speciesIds.add(item['id'] as int), isTrue,
+          reason: 'Species ids must be unique');
+      expect(taxonIds, contains(item['taxon_id']));
+      final texts = item['texts'] as Map<String, dynamic>;
+      for (final language in const ['nl', 'en', 'de']) {
+        expect(texts, contains(language));
+        final text = texts[language] as Map<String, dynamic>;
+        expect((text['common_name'] as String).trim(), isNotEmpty);
+        expect((text['description'] as String).trim(), isNotEmpty);
+      }
+    }
+  });
+
+  test('identification traits have unique ids and all translations', () async {
+    final raw = await rootBundle.loadString('assets/data/identification_traits.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final traits = decoded['traits'] as List<dynamic>;
+    final speciesTraits = decoded['species_traits'] as List<dynamic>;
+    final traitIds = <int>{};
+    final optionIds = <int>{};
+
+    for (final item in traits) {
+      final trait = item as Map<String, dynamic>;
+      expect(traitIds.add(trait['id'] as int), isTrue,
+          reason: 'Trait ids must be unique');
+      _expectLanguages(trait['labels'] as Map<String, dynamic>);
+      for (final rawOption in trait['options'] as List<dynamic>) {
+        final option = rawOption as Map<String, dynamic>;
+        expect(optionIds.add(option['id'] as int), isTrue,
+            reason: 'Trait option ids must be unique');
+        _expectLanguages(option['labels'] as Map<String, dynamic>);
+      }
+    }
+
+    for (final rawRelation in speciesTraits) {
+      final relation = rawRelation as Map<String, dynamic>;
+      expect(traitIds, contains(relation['trait_id']));
+      expect(optionIds, contains(relation['option_id']));
+      expect((relation['weight'] as num).toDouble(), greaterThan(0));
+    }
+  });
+
+  test('species galleries declare five validated image slots', () async {
+    final raw = await rootBundle.loadString('assets/data/species_images.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final species = decoded['species'] as List<dynamic>;
+    final allPaths = <String>{};
+    const requiredAngles = {'top', 'underside', 'side', 'base', 'habitat'};
+    const requiredOrders = {0, 1, 2, 3, 4};
+
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      final images = item['images'] as List<dynamic>;
+      expect(images.length, 5,
+          reason: 'Each species should expose five gallery slots');
+      final orders = <int>{};
+      final angles = <String>{};
+      var primaryCount = 0;
+      for (final rawImage in images) {
+        final image = rawImage as Map<String, dynamic>;
+        final path = (image['path'] as String).trim();
+        final angle = (image['angle'] as String).trim();
+
+        expect(orders.add(image['order'] as int), isTrue,
+            reason: 'Gallery sort orders must be unique per species');
+        expect(allPaths.add(path), isTrue,
+            reason: 'Gallery asset paths must be unique');
+        expect(path, startsWith('assets/images/species/'));
+        expect(requiredAngles, contains(angle),
+            reason: 'Gallery angle codes must use the supported vocabulary');
+        expect(angles.add(angle), isTrue,
+            reason: 'Each gallery angle should appear once per species');
+
+        final thumbnailPath = image['thumbnailPath'] as String?;
+        if (thumbnailPath != null) {
+          expect(thumbnailPath.trim(), isNotEmpty);
+          expect(thumbnailPath, startsWith('assets/images/'));
+        }
+        final photographer = image['photographer'] as String?;
+        if (photographer != null) {
+          expect(photographer.trim(), isNotEmpty);
+        }
+        final license = image['license'] as String?;
+        if (license != null) {
+          expect(license.trim(), isNotEmpty);
+        }
+        if (image['primary'] == true) primaryCount++;
+      }
+      expect(orders, requiredOrders,
+          reason: 'Each species gallery must use sort positions 0 through 4');
+      expect(angles, requiredAngles,
+          reason: 'Each species gallery must cover all five standard angles');
+      expect(primaryCount, 1,
+          reason: 'Each species should have exactly one primary image');
+    }
+  });
+
+  test('field data has valid localized regions, ranges and calendars', () async {
+    final raw = await rootBundle.loadString('assets/data/field_data.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final species = decoded['species'] as List<dynamic>;
+    final declaredRegions = <String>{};
+    final regionCodePattern = RegExp(r'^[A-Z]{2}(?:-[A-Z]{2})*$');
+
+    for (final rawRegion
+        in decoded['season_regions'] as List<dynamic>? ?? const []) {
+      final region = rawRegion as Map<String, dynamic>;
+      final rawCode = region['code'] as String;
+      final code = rawCode.trim();
+      expect(code, isNotEmpty);
+      expect(rawCode, code,
+          reason: 'Season region codes must not contain surrounding whitespace');
+      expect(code, matches(regionCodePattern),
+          reason:
+              'Season region codes must use canonical uppercase two-letter segments');
+      expect(declaredRegions.add(code), isTrue,
+          reason: 'Season region codes must be unique');
+      _expectLanguages(region['labels'] as Map<String, dynamic>);
+      _expectLanguages(region['notes'] as Map<String, dynamic>);
+    }
+
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      final measurementCodes = <String>{};
+      for (final rawMeasurement
+          in item['measurements'] as List<dynamic>? ?? const []) {
+        final measurement = rawMeasurement as Map<String, dynamic>;
+        final code = measurement['code'] as String;
+        expect(measurementCodes.add(code), isTrue,
+            reason: 'Measurement codes must be unique per species');
+        final min = (measurement['min'] as num).toDouble();
+        final max = (measurement['max'] as num).toDouble();
+        expect(min, greaterThanOrEqualTo(0));
+        expect(max, greaterThanOrEqualTo(min));
+        expect((measurement['unit'] as String).trim(), isNotEmpty);
+      }
+
+      final datasets = item['season_datasets'] as List<dynamic>? ?? const [];
+      final regionCodes = <String>{};
+      for (final rawDataset in datasets) {
+        final dataset = rawDataset as Map<String, dynamic>;
+        final rawRegionCode = dataset['region_code'] as String;
+        final regionCode = rawRegionCode.trim();
+        expect(rawRegionCode, regionCode,
+            reason:
+                'Season dataset region codes must not contain surrounding whitespace');
+        expect(regionCode, matches(regionCodePattern),
+            reason:
+                'Season dataset region codes must use canonical uppercase two-letter segments');
+        expect(declaredRegions, contains(regionCode),
+            reason: 'Every season dataset must reference a declared region');
+        expect(regionCodes.add(regionCode), isTrue,
+            reason: 'A species can only define one calendar per region');
+
+        final months = <int>{};
+        for (final rawMonth in dataset['months'] as List<dynamic>? ?? const []) {
+          final month = rawMonth as Map<String, dynamic>;
+          final value = month['month'] as int;
+          expect(months.add(value), isTrue,
+              reason: 'Season months must be unique within a region');
+          expect(value, inInclusiveRange(1, 12));
+          expect(month['likelihood'] as int, inInclusiveRange(1, 3));
+        }
+      }
+    }
+  });
+
+  test('all species references resolve to catalogue species', () async {
+    final catalogue = jsonDecode(
+      await rootBundle.loadString('assets/data/species_catalog.json'),
+    ) as Map<String, dynamic>;
+    final catalogueIds = (catalogue['species'] as List<dynamic>)
+        .map((item) => (item as Map<String, dynamic>)['id'] as int)
+        .toSet();
+
+    final traits = jsonDecode(
+      await rootBundle.loadString('assets/data/identification_traits.json'),
+    ) as Map<String, dynamic>;
+    for (final rawRelation in traits['species_traits'] as List<dynamic>) {
+      final relation = rawRelation as Map<String, dynamic>;
+      expect(catalogueIds, contains(relation['species_id']),
+          reason: 'Trait relations must reference catalogue species');
+    }
+
+    final fieldData = jsonDecode(
+      await rootBundle.loadString('assets/data/field_data.json'),
+    ) as Map<String, dynamic>;
+    for (final rawSpecies in fieldData['species'] as List<dynamic>) {
+      final item = rawSpecies as Map<String, dynamic>;
+      expect(catalogueIds, contains(item['species_id']),
+          reason: 'Field data must reference catalogue species');
+    }
+
+    final images = jsonDecode(
+      await rootBundle.loadString('assets/data/species_images.json'),
+    ) as Map<String, dynamic>;
+    for (final rawSpecies in images['species'] as List<dynamic>) {
+      final item = rawSpecies as Map<String, dynamic>;
+      expect(catalogueIds, contains(item['speciesId']),
+          reason: 'Image galleries must reference catalogue species');
+    }
+  });
+
+  test('training content has complete translations and one correct answer',
+      () async {
+    final raw = await rootBundle.loadString('assets/data/training_content.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final lessons = decoded['lessons'] as List<dynamic>;
+    final lessonIds = <int>{};
+    final questionIds = <int>{};
+    final answerIds = <int>{};
+
+    for (final rawLesson in lessons) {
+      final lesson = rawLesson as Map<String, dynamic>;
+      expect(lessonIds.add(lesson['id'] as int), isTrue);
+      _expectLocalizedObjects(
+          lesson['texts'] as Map<String, dynamic>, ['title', 'body']);
+      for (final rawQuestion in lesson['questions'] as List<dynamic>) {
+        final question = rawQuestion as Map<String, dynamic>;
+        expect(questionIds.add(question['id'] as int), isTrue);
+        _expectLocalizedObjects(
+            question['texts'] as Map<String, dynamic>, ['prompt']);
+        final answers = question['answers'] as List<dynamic>;
+        expect(answers.length, greaterThanOrEqualTo(2));
+        var correctCount = 0;
+        for (final rawAnswer in answers) {
+          final answer = rawAnswer as Map<String, dynamic>;
+          expect(answerIds.add(answer['id'] as int), isTrue);
+          _expectLanguages(answer['labels'] as Map<String, dynamic>);
+          if (answer['correct'] == true) correctCount++;
+        }
+        expect(correctCount, 1,
+            reason: 'Single-choice questions need exactly one correct answer');
+      }
+    }
+  });
+}
+
+void _expectLanguages(Map<String, dynamic> labels) {
+  for (final language in const ['nl', 'en', 'de']) {
+    expect(labels[language], isA<String>());
+    expect((labels[language] as String).trim(), isNotEmpty);
+  }
+}
+
+void _expectLocalizedObjects(
+    Map<String, dynamic> values, List<String> requiredFields) {
+  for (final language in const ['nl', 'en', 'de']) {
+    expect(values, contains(language));
+    final object = values[language] as Map<String, dynamic>;
+    for (final field in requiredFields) {
+      expect(object[field], isA<String>());
+      expect((object[field] as String).trim(), isNotEmpty);
+    }
+  }
+}
