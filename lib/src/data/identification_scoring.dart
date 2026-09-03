@@ -34,7 +34,16 @@ double measurementMatchScore({
 }) {
   if (observedValue == null || minValue == null || maxValue == null) return 0;
   if (minValue > maxValue) return 0;
-  return observedValue >= minValue && observedValue <= maxValue ? 1 : 0;
+  if (observedValue >= minValue && observedValue <= maxValue) return 1;
+
+  final width = maxValue - minValue;
+  if (width <= 0) return 0;
+  final shoulder = width * 0.25;
+  final distance = observedValue < minValue
+      ? minValue - observedValue
+      : observedValue - maxValue;
+  if (distance >= shoulder) return 0;
+  return (1 - (distance / shoulder)).clamp(0.0, 1.0).toDouble();
 }
 
 double seasonLikelihoodScore({
