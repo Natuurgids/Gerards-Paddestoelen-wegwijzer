@@ -11,7 +11,8 @@ Offline-first Flutter application for mushroom identification and mycology educa
 - Normalized taxonomy, translated species content, localized identification traits, measurements, region-tagged seasonality, image metadata, lessons/questions and training progress.
 - Indexed scientific/common-name lookup, localized trait lookup, species-trait filtering, numeric measurement lookup, month/season lookup, image ordering and lesson/question joins.
 - Offline species catalogue with local search.
-- Trait-based identification with weighted candidate ranking using one aggregate SQLite query.
+- Trait-based identification with weighted candidate ranking using one aggregate morphology query plus one optional field-evidence query.
+- Optional observation evidence: cap diameter, stem height, stem diameter and explicitly selected regional observation month.
 - Species detail pages backed by SQLite, including measurements and region-labelled fruiting season.
 - About five swipeable image slots per species, with automatic placeholder fallback when an image is not packaged yet.
 - Offline lessons and quizzes with best score and attempt count persisted locally.
@@ -82,7 +83,7 @@ The current starter vocabulary includes cap colour/shape/surface, hymenium type,
 
 `assets/data/field_data.json` stores quantitative data separately from prose. Each measurement has a machine-readable code, minimum, maximum and unit. Current examples include `cap_diameter`, `stem_height` and `stem_diameter`.
 
-Fruiting periods are stored as individual month rows with likelihood 1–3. Every non-empty season dataset must also provide `season_region`. This prevents a regional fruiting calendar from being presented as universally valid. The starter season records currently use `GB-IE`, and the species screen labels that regional reference explicitly.
+Fruiting periods are stored as individual month rows with likelihood 1–3. Every non-empty season dataset must also provide `season_region`. This prevents a regional fruiting calendar from being presented as universally valid. The starter season records currently use `GB-IE`, and both the species screen and identification form label that regional reference explicitly.
 
 This model allows future region-specific data for the Netherlands, Germany or other areas without overwriting another region's published season information.
 
@@ -113,9 +114,15 @@ Single-choice questions must have exactly one correct answer. CI verifies this c
 
 ## Identification scoring
 
-The identification screen stores selected observable trait options. Candidate species are scored from the normalized `species_trait` table using each relation’s diagnostic weight. Ranking uses one indexed aggregate query rather than a query for every species/trait pair.
+The identification screen stores selected observable trait options. Morphological candidates are scored from the normalized `species_trait` table using each relation's diagnostic weight in one indexed aggregate query.
 
-Results display a percentage and number of matched selected traits. This score is a narrowing/ranking aid only. It is deliberately **not an edibility confidence score**.
+Users may optionally add cap diameter, stem height, stem diameter and an observation month. Month evidence is only enabled after the user explicitly selects a regional season reference. The current starter calendar is `GB-IE`; it is never silently applied to Dutch or German observations.
+
+When at least one morphological trait is selected, morphology contributes **80%** of the combined ranking and optional field evidence contributes **20%**. If no morphology is selected, available field evidence may rank the catalogue by itself. Results expose morphology matches and field-data matches separately so the combined percentage is not mistaken for a direct identification probability.
+
+Field evidence is evaluated in one additional SQLite query using indexed measurement and season tables, rather than querying once per species.
+
+The result score is a narrowing/ranking aid only. It is deliberately **not an edibility confidence score** and is not a statistical probability that a mushroom has been identified correctly.
 
 ## Tests
 
