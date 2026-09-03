@@ -1,115 +1,21 @@
 {
   "traits": [
-    {
-      "id": 5,
-      "code": "cap_shape",
-      "category": "cap",
-      "labels": {"nl": "Hoedvorm", "en": "Cap shape", "de": "Hutform"},
-      "options": [
-        {"id": 10, "code": "convex_flat", "sort_order": 1, "labels": {"nl": "Bol tot vlak", "en": "Convex to flat", "de": "Gewölbt bis flach"}},
-        {"id": 11, "code": "broad_convex", "sort_order": 2, "labels": {"nl": "Breed bol", "en": "Broadly convex", "de": "Breit gewölbt"}}
-      ]
-    },
-    {
-      "id": 6,
-      "code": "cap_surface",
-      "category": "cap",
-      "labels": {"nl": "Hoedoppervlak", "en": "Cap surface", "de": "Hutoberfläche"},
-      "options": [
-        {"id": 12, "code": "warts_or_patches", "sort_order": 1, "labels": {"nl": "Wratten of velumresten", "en": "Warts or veil patches", "de": "Warzen oder Hüllreste"}},
-        {"id": 13, "code": "smooth", "sort_order": 2, "labels": {"nl": "Glad", "en": "Smooth", "de": "Glatt"}}
-      ]
-    },
-    {
-      "id": 7,
-      "code": "gill_attachment",
-      "category": "underside",
-      "labels": {"nl": "Aanhechting plaatjes", "en": "Gill attachment", "de": "Lamellenansatz"},
-      "options": [
-        {"id": 14, "code": "free", "sort_order": 1, "labels": {"nl": "Vrij", "en": "Free", "de": "Frei"}},
-        {"id": 15, "code": "not_applicable", "sort_order": 2, "labels": {"nl": "Niet van toepassing", "en": "Not applicable", "de": "Nicht zutreffend"}}
-      ]
-    },
-    {
-      "id": 8,
-      "code": "stem_base_shape",
-      "category": "stem_base",
-      "labels": {"nl": "Vorm steelbasis", "en": "Stem base shape", "de": "Stielbasis"},
-      "options": [
-        {"id": 16, "code": "bulbous", "sort_order": 1, "labels": {"nl": "Knolvormig", "en": "Bulbous", "de": "Knollig"}},
-        {"id": 17, "code": "sack_volva", "sort_order": 2, "labels": {"nl": "Zakvormige beurs", "en": "Sack-like volva", "de": "Sackartige Volva"}},
-        {"id": 18, "code": "club_barrel", "sort_order": 3, "labels": {"nl": "Knots- of tonvormig", "en": "Club or barrel shaped", "de": "Keulen- oder tonnenförmig"}}
-      ]
-    },
-    {
-      "id": 9,
-      "code": "bruising",
-      "category": "flesh",
-      "labels": {"nl": "Verkleuring bij kneuzing", "en": "Bruising reaction", "de": "Verfärbung bei Druck"},
-      "options": [
-        {"id": 19, "code": "none", "sort_order": 1, "labels": {"nl": "Geen duidelijke verkleuring", "en": "No clear colour change", "de": "Keine deutliche Verfärbung"}},
-        {"id": 20, "code": "yellowing", "sort_order": 2, "labels": {"nl": "Geel verkleurend", "en": "Yellowing", "de": "Gilbend"}},
-        {"id": 21, "code": "blueing", "sort_order": 3, "labels": {"nl": "Blauw verkleurend", "en": "Blueing", "de": "Blauend"}}
-      ]
-    },
-    {
-      "id": 10,
-      "code": "substrate",
-      "category": "ecology",
-      "labels": {"nl": "Substraat", "en": "Substrate", "de": "Substrat"},
-      "options": [
-        {"id": 22, "code": "soil_with_trees", "sort_order": 1, "labels": {"nl": "Bodem bij bomen", "en": "Soil near trees", "de": "Boden bei Bäumen"}},
-        {"id": 23, "code": "wood", "sort_order": 2, "labels": {"nl": "Hout", "en": "Wood", "de": "Holz"}}
-      ]
-    },
-    {
-      "id": 11,
-      "code": "spore_print",
-      "category": "microscopy",
-      "labels": {"nl": "Sporenafdruk", "en": "Spore print", "de": "Sporenpulver"},
-      "options": [
-        {"id": 24, "code": "white", "sort_order": 1, "labels": {"nl": "Wit", "en": "White", "de": "Weiß"}},
-        {"id": 25, "code": "olive_brown", "sort_order": 2, "labels": {"nl": "Olijfbruin", "en": "Olive-brown", "de": "Olivbraun"}}
-      ]
-    },
-    {
-      "id": 12,
-      "code": "habitat_tree_group",
-      "category": "ecology",
-      "labels": {"nl": "Boomgroep in habitat", "en": "Tree group in habitat", "de": "Baumgruppe im Habitat"},
-      "options": [
-        {"id": 26, "code": "birch_conifers", "sort_order": 1, "labels": {"nl": "Berk en/of naaldbomen", "en": "Birch and/or conifers", "de": "Birke und/oder Nadelbäume"}},
-        {"id": 27, "code": "hardwoods_oak_beech", "sort_order": 2, "labels": {"nl": "Loofbomen, vooral eik/beuk", "en": "Hardwoods, especially oak/beech", "de": "Laubbäume, besonders Eiche/Buche"}},
-        {"id": 28, "code": "mixed_woodland", "sort_order": 3, "labels": {"nl": "Gemengd bos", "en": "Mixed woodland", "de": "Mischwald"}}
-      ]
-    }
+    {"id":1,"code":"cap_color","category":"cap","labels":{"nl":"Hoedkleur","en":"Cap colour","de":"Hutfarbe"},"options":[{"id":1,"code":"red","sort_order":1,"labels":{"nl":"Rood","en":"Red","de":"Rot"}},{"id":2,"code":"green","sort_order":2,"labels":{"nl":"Groen","en":"Green","de":"Grün"}},{"id":3,"code":"brown","sort_order":3,"labels":{"nl":"Bruin","en":"Brown","de":"Braun"}}]},
+    {"id":2,"code":"hymenium","category":"underside","labels":{"nl":"Onderzijde","en":"Underside","de":"Unterseite"},"options":[{"id":4,"code":"gills","sort_order":1,"labels":{"nl":"Plaatjes","en":"Gills","de":"Lamellen"}},{"id":5,"code":"pores","sort_order":2,"labels":{"nl":"Buisjes/poriën","en":"Pores","de":"Röhren/Poren"}}]},
+    {"id":3,"code":"ring","category":"stem","labels":{"nl":"Ring aan de steel","en":"Stem ring","de":"Stielring"},"options":[{"id":6,"code":"present","sort_order":1,"labels":{"nl":"Ring aanwezig","en":"Ring present","de":"Ring vorhanden"}},{"id":7,"code":"absent","sort_order":2,"labels":{"nl":"Geen ring","en":"No ring","de":"Kein Ring"}}]},
+    {"id":4,"code":"volva","category":"stem_base","labels":{"nl":"Beurs / volva","en":"Volva","de":"Volva"},"options":[{"id":8,"code":"present","sort_order":1,"labels":{"nl":"Beurs/volva aanwezig","en":"Volva present","de":"Volva vorhanden"}},{"id":9,"code":"absent","sort_order":2,"labels":{"nl":"Geen beurs/volva","en":"No volva","de":"Keine Volva"}}]},
+    {"id":5,"code":"cap_shape","category":"cap","labels":{"nl":"Hoedvorm","en":"Cap shape","de":"Hutform"},"options":[{"id":10,"code":"convex_flat","sort_order":1,"labels":{"nl":"Bol tot vlak","en":"Convex to flat","de":"Gewölbt bis flach"}},{"id":11,"code":"broad_convex","sort_order":2,"labels":{"nl":"Breed bol","en":"Broadly convex","de":"Breit gewölbt"}}]},
+    {"id":6,"code":"cap_surface","category":"cap","labels":{"nl":"Hoedoppervlak","en":"Cap surface","de":"Hutoberfläche"},"options":[{"id":12,"code":"warts_or_patches","sort_order":1,"labels":{"nl":"Wratten of velumresten","en":"Warts or veil patches","de":"Warzen oder Hüllreste"}},{"id":13,"code":"smooth","sort_order":2,"labels":{"nl":"Glad","en":"Smooth","de":"Glatt"}}]},
+    {"id":7,"code":"gill_attachment","category":"underside","labels":{"nl":"Aanhechting plaatjes","en":"Gill attachment","de":"Lamellenansatz"},"options":[{"id":14,"code":"free","sort_order":1,"labels":{"nl":"Vrij","en":"Free","de":"Frei"}},{"id":15,"code":"not_applicable","sort_order":2,"labels":{"nl":"Niet van toepassing","en":"Not applicable","de":"Nicht zutreffend"}}]},
+    {"id":8,"code":"stem_base_shape","category":"stem_base","labels":{"nl":"Vorm steelbasis","en":"Stem base shape","de":"Stielbasis"},"options":[{"id":16,"code":"bulbous","sort_order":1,"labels":{"nl":"Knolvormig","en":"Bulbous","de":"Knollig"}},{"id":17,"code":"sack_volva","sort_order":2,"labels":{"nl":"Zakvormige beurs","en":"Sack-like volva","de":"Sackartige Volva"}},{"id":18,"code":"club_barrel","sort_order":3,"labels":{"nl":"Knots- of tonvormig","en":"Club or barrel shaped","de":"Keulen- oder tonnenförmig"}}]},
+    {"id":9,"code":"bruising","category":"flesh","labels":{"nl":"Verkleuring bij kneuzing","en":"Bruising reaction","de":"Verfärbung bei Druck"},"options":[{"id":19,"code":"none","sort_order":1,"labels":{"nl":"Geen duidelijke verkleuring","en":"No clear colour change","de":"Keine deutliche Verfärbung"}},{"id":20,"code":"yellowing","sort_order":2,"labels":{"nl":"Geel verkleurend","en":"Yellowing","de":"Gilbend"}},{"id":21,"code":"blueing","sort_order":3,"labels":{"nl":"Blauw verkleurend","en":"Blueing","de":"Blauend"}}]},
+    {"id":10,"code":"substrate","category":"ecology","labels":{"nl":"Substraat","en":"Substrate","de":"Substrat"},"options":[{"id":22,"code":"soil_with_trees","sort_order":1,"labels":{"nl":"Bodem bij bomen","en":"Soil near trees","de":"Boden bei Bäumen"}},{"id":23,"code":"wood","sort_order":2,"labels":{"nl":"Hout","en":"Wood","de":"Holz"}}]},
+    {"id":11,"code":"spore_print","category":"microscopy","labels":{"nl":"Sporenafdruk","en":"Spore print","de":"Sporenpulver"},"options":[{"id":24,"code":"white","sort_order":1,"labels":{"nl":"Wit","en":"White","de":"Weiß"}},{"id":25,"code":"olive_brown","sort_order":2,"labels":{"nl":"Olijfbruin","en":"Olive-brown","de":"Olivbraun"}}]},
+    {"id":12,"code":"habitat_tree_group","category":"ecology","labels":{"nl":"Boomgroep in habitat","en":"Tree group in habitat","de":"Baumgruppe im Habitat"},"options":[{"id":26,"code":"birch_conifers","sort_order":1,"labels":{"nl":"Berk en/of naaldbomen","en":"Birch and/or conifers","de":"Birke und/oder Nadelbäume"}},{"id":27,"code":"hardwoods_oak_beech","sort_order":2,"labels":{"nl":"Loofbomen, vooral eik/beuk","en":"Hardwoods, especially oak/beech","de":"Laubbäume, besonders Eiche/Buche"}},{"id":28,"code":"mixed_woodland","sort_order":3,"labels":{"nl":"Gemengd bos","en":"Mixed woodland","de":"Mischwald"}}]}
   ],
   "species_traits": [
-    {"species_id": 1, "trait_id": 5, "option_id": 10, "weight": 0.8},
-    {"species_id": 1, "trait_id": 6, "option_id": 12, "weight": 1.3},
-    {"species_id": 1, "trait_id": 7, "option_id": 14, "weight": 1.0},
-    {"species_id": 1, "trait_id": 8, "option_id": 16, "weight": 1.1},
-    {"species_id": 1, "trait_id": 9, "option_id": 20, "weight": 0.5},
-    {"species_id": 1, "trait_id": 10, "option_id": 22, "weight": 0.8},
-    {"species_id": 1, "trait_id": 11, "option_id": 24, "weight": 1.0},
-    {"species_id": 1, "trait_id": 12, "option_id": 26, "weight": 1.0},
-
-    {"species_id": 2, "trait_id": 5, "option_id": 10, "weight": 0.8},
-    {"species_id": 2, "trait_id": 6, "option_id": 13, "weight": 0.8},
-    {"species_id": 2, "trait_id": 7, "option_id": 14, "weight": 1.0},
-    {"species_id": 2, "trait_id": 8, "option_id": 17, "weight": 1.8},
-    {"species_id": 2, "trait_id": 9, "option_id": 19, "weight": 0.5},
-    {"species_id": 2, "trait_id": 10, "option_id": 22, "weight": 0.8},
-    {"species_id": 2, "trait_id": 11, "option_id": 24, "weight": 1.0},
-    {"species_id": 2, "trait_id": 12, "option_id": 27, "weight": 1.0},
-
-    {"species_id": 3, "trait_id": 5, "option_id": 11, "weight": 0.6},
-    {"species_id": 3, "trait_id": 6, "option_id": 13, "weight": 0.5},
-    {"species_id": 3, "trait_id": 7, "option_id": 15, "weight": 0.3},
-    {"species_id": 3, "trait_id": 8, "option_id": 18, "weight": 1.0},
-    {"species_id": 3, "trait_id": 9, "option_id": 19, "weight": 1.4},
-    {"species_id": 3, "trait_id": 10, "option_id": 22, "weight": 0.8},
-    {"species_id": 3, "trait_id": 11, "option_id": 25, "weight": 1.2},
-    {"species_id": 3, "trait_id": 12, "option_id": 28, "weight": 0.7}
+    {"species_id":1,"trait_id":1,"option_id":1,"weight":1.3},{"species_id":1,"trait_id":2,"option_id":4,"weight":1.4},{"species_id":1,"trait_id":3,"option_id":6,"weight":1.2},{"species_id":1,"trait_id":4,"option_id":8,"weight":1.5},{"species_id":1,"trait_id":5,"option_id":10,"weight":0.8},{"species_id":1,"trait_id":6,"option_id":12,"weight":1.3},{"species_id":1,"trait_id":7,"option_id":14,"weight":1.0},{"species_id":1,"trait_id":8,"option_id":16,"weight":1.1},{"species_id":1,"trait_id":9,"option_id":20,"weight":0.5},{"species_id":1,"trait_id":10,"option_id":22,"weight":0.8},{"species_id":1,"trait_id":11,"option_id":24,"weight":1.0},{"species_id":1,"trait_id":12,"option_id":26,"weight":1.0},
+    {"species_id":2,"trait_id":1,"option_id":2,"weight":1.3},{"species_id":2,"trait_id":2,"option_id":4,"weight":1.4},{"species_id":2,"trait_id":3,"option_id":6,"weight":1.2},{"species_id":2,"trait_id":4,"option_id":8,"weight":1.7},{"species_id":2,"trait_id":5,"option_id":10,"weight":0.8},{"species_id":2,"trait_id":6,"option_id":13,"weight":0.8},{"species_id":2,"trait_id":7,"option_id":14,"weight":1.0},{"species_id":2,"trait_id":8,"option_id":17,"weight":1.8},{"species_id":2,"trait_id":9,"option_id":19,"weight":0.5},{"species_id":2,"trait_id":10,"option_id":22,"weight":0.8},{"species_id":2,"trait_id":11,"option_id":24,"weight":1.0},{"species_id":2,"trait_id":12,"option_id":27,"weight":1.0},
+    {"species_id":3,"trait_id":1,"option_id":3,"weight":1.2},{"species_id":3,"trait_id":2,"option_id":5,"weight":1.8},{"species_id":3,"trait_id":3,"option_id":7,"weight":1.1},{"species_id":3,"trait_id":4,"option_id":9,"weight":1.4},{"species_id":3,"trait_id":5,"option_id":11,"weight":0.6},{"species_id":3,"trait_id":6,"option_id":13,"weight":0.5},{"species_id":3,"trait_id":7,"option_id":15,"weight":0.3},{"species_id":3,"trait_id":8,"option_id":18,"weight":1.0},{"species_id":3,"trait_id":9,"option_id":19,"weight":1.4},{"species_id":3,"trait_id":10,"option_id":22,"weight":0.8},{"species_id":3,"trait_id":11,"option_id":25,"weight":1.2},{"species_id":3,"trait_id":12,"option_id":28,"weight":0.7}
   ]
 }
