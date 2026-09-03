@@ -278,7 +278,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                 },
               ),
             ),
-            SafetyNotice(locale: widget.locale),
+            const SafetyNotice(),
           ],
         ),
       ),
