@@ -50,12 +50,12 @@ void main() {
       'season_region_text': 3,
       'species_season': 14,
       'species_image': 15,
-      'lesson': 2,
-      'lesson_text': 6,
-      'question': 3,
-      'question_text': 9,
-      'answer_option': 6,
-      'answer_option_text': 18,
+      'lesson': 12,
+      'lesson_text': 36,
+      'question': 60,
+      'question_text': 180,
+      'answer_option': 180,
+      'answer_option_text': 540,
     };
 
     for (final entry in expectedCounts.entries) {
