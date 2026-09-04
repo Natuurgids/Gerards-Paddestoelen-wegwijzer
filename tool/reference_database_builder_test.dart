@@ -92,6 +92,11 @@ void main() {
         (await db.rawQuery('SELECT COUNT(*) n FROM reference_source')).single['n'],
         greaterThanOrEqualTo(2),
       );
+      final conservationCount = (await db.rawQuery(
+        "SELECT COUNT(*) n FROM species_conservation_status WHERE system='iucn_red_list' AND scope='global' AND source_id='iucn-red-list'",
+      ))
+          .single['n'] as int;
+      expect(conservationCount, greaterThanOrEqualTo(100));
       expect((await db.rawQuery('SELECT COUNT(*) n FROM lesson')).single['n'], 12);
       expect(await db.query('training_progress'), isEmpty);
     } finally {

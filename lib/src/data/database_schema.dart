@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 class DatabaseSchema {
   const DatabaseSchema._();
 
-  static const currentVersion = 8;
+  static const currentVersion = 9;
 
   static Future<void> create(DatabaseExecutor db) async {
     for (final statement in statements) {
@@ -124,6 +124,21 @@ class DatabaseSchema {
       await _addColumnIfMissing(db, 'species_image', 'creator', 'TEXT');
       await _addColumnIfMissing(db, 'species_image', 'license_url', 'TEXT');
     }
+    if (oldVersion < 9) {
+      await db.execute(_conservationStatusTableSql);
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_species_conservation_lookup ON species_conservation_status(system, scope, jurisdiction_code, status, species_id)',
+      );
+      final speciesColumns = await db.rawQuery('PRAGMA table_info(species)');
+      if (speciesColumns.any((row) => row['name'] == 'conservation_status')) {
+        await db.execute('''INSERT OR IGNORE INTO species_conservation_status(
+          species_id, system, scope, jurisdiction_code, status, source_id, source_record_id
+        )
+        SELECT id, 'iucn_red_list', 'global', '', conservation_status, NULL, NULL
+        FROM species
+        WHERE conservation_status IS NOT NULL AND LENGTH(TRIM(conservation_status)) > 0''');
+      }
+    }
   }
 
   static Future<void> _addColumnIfMissing(
@@ -136,6 +151,17 @@ class DatabaseSchema {
     if (columns.isEmpty || columns.any((row) => row['name'] == column)) return;
     await db.execute('ALTER TABLE $table ADD COLUMN $column $type');
   }
+
+  static const _conservationStatusTableSql = '''CREATE TABLE IF NOT EXISTS species_conservation_status (
+    species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
+    system TEXT NOT NULL,
+    scope TEXT NOT NULL,
+    jurisdiction_code TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL,
+    source_id TEXT REFERENCES reference_source(id),
+    source_record_id TEXT,
+    PRIMARY KEY(species_id, system, scope, jurisdiction_code)
+  )''';
 
   static const statements = <String>[
     '''CREATE TABLE reference_source (
@@ -165,6 +191,7 @@ class DatabaseSchema {
       source_id TEXT,
       source_record_id TEXT
     )''',
+    _conservationStatusTableSql,
     '''CREATE TABLE species_text (
       species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
       language_code TEXT NOT NULL CHECK(language_code IN ('nl','en','de')),
@@ -310,6 +337,7 @@ class DatabaseSchema {
     'CREATE INDEX idx_taxon_parent ON taxon(parent_id)',
     'CREATE INDEX idx_taxon_scientific_name ON taxon(scientific_name COLLATE NOCASE)',
     'CREATE INDEX idx_species_text_language_name ON species_text(language_code, common_name COLLATE NOCASE)',
+    'CREATE INDEX idx_species_conservation_lookup ON species_conservation_status(system, scope, jurisdiction_code, status, species_id)',
     'CREATE INDEX idx_trait_text_language_label ON trait_text(language_code, label COLLATE NOCASE)',
     'CREATE INDEX idx_species_trait_filter ON species_trait(trait_id, option_id, species_id)',
     'CREATE INDEX idx_species_measurement_lookup ON species_measurement(measurement_code, min_value, max_value, species_id)',
