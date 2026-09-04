@@ -5,6 +5,7 @@ import '../../widgets/safety_notice.dart';
 import '../identify/identify_screen.dart';
 import '../species/species_browser_screen.dart';
 import '../training/training_screen.dart';
+import 'sources_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, required this.locale, required this.onLocaleChanged});
@@ -75,6 +76,14 @@ class HomeScreen extends StatelessWidget {
                     ),
                     icon: const Icon(Icons.eco_outlined),
                     label: Text(l10n.homeBrowseSpecies),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SourcesScreen()),
+                    ),
+                    icon: const Icon(Icons.info_outline),
+                    label: Text(l10n.homeSourcesLicenses),
                   ),
                 ],
               ),
