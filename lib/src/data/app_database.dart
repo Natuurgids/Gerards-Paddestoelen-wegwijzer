@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -20,6 +21,7 @@ class AppDatabase {
 
   Database? _db;
   Future<Database>? _opening;
+  Future<void>? _contentSync;
   List<String> _lastManifestSyncFailures = const [];
 
   List<String> get lastManifestSyncFailures =>
@@ -30,6 +32,7 @@ class AppDatabase {
     if (existing != null) return Future.value(existing);
     return _opening ??= _open().then((db) {
       _db = db;
+      _startContentSync(db);
       return db;
     }).whenComplete(() {
       _opening = null;
@@ -44,45 +47,58 @@ class AppDatabase {
       version: DatabaseSchema.currentVersion,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
-        await db.execute('PRAGMA journal_mode = WAL');
         await db.execute('PRAGMA busy_timeout = 5000');
       },
       onCreate: (db, version) => DatabaseSchema.create(db),
       onUpgrade: (db, oldVersion, newVersion) =>
           DatabaseSchema.upgrade(db, oldVersion, newVersion),
-      onOpen: (db) async {
-        _lastManifestSyncFailures = await BundledContentSync.runIfNeeded(
-          db,
-          () => ManifestSyncCoordinator.run(db, [
-            (
-              name: 'species-catalogue',
-              sync: SpeciesCatalogImporter.sync,
-              dependsOn: const [],
-            ),
-            (
-              name: 'identification-traits',
-              sync: TraitManifestImporter.sync,
-              dependsOn: const ['species-catalogue'],
-            ),
-            (
-              name: 'field-data',
-              sync: FieldDataImporter.sync,
-              dependsOn: const ['species-catalogue'],
-            ),
-            (
-              name: 'species-images',
-              sync: ImageManifestImporter.sync,
-              dependsOn: const ['species-catalogue'],
-            ),
-            (
-              name: 'training-content',
-              sync: TrainingManifestImporter.sync,
-              dependsOn: const [],
-            ),
-          ]),
-        );
-      },
     );
+  }
+
+  void _startContentSync(Database db) {
+    if (_contentSync != null) return;
+    final sync = _syncBundledContent(db).whenComplete(() {
+      _contentSync = null;
+    });
+    _contentSync = sync;
+    unawaited(sync);
+  }
+
+  Future<void> _syncBundledContent(Database db) async {
+    try {
+      _lastManifestSyncFailures = await BundledContentSync.runIfNeeded(
+        db,
+        () => ManifestSyncCoordinator.run(db, [
+          (
+            name: 'species-catalogue',
+            sync: SpeciesCatalogImporter.sync,
+            dependsOn: const [],
+          ),
+          (
+            name: 'identification-traits',
+            sync: TraitManifestImporter.sync,
+            dependsOn: const ['species-catalogue'],
+          ),
+          (
+            name: 'field-data',
+            sync: FieldDataImporter.sync,
+            dependsOn: const ['species-catalogue'],
+          ),
+          (
+            name: 'species-images',
+            sync: ImageManifestImporter.sync,
+            dependsOn: const ['species-catalogue'],
+          ),
+          (
+            name: 'training-content',
+            sync: TrainingManifestImporter.sync,
+            dependsOn: const [],
+          ),
+        ]),
+      );
+    } catch (_) {
+      _lastManifestSyncFailures = const ['bundled-content-sync'];
+    }
   }
 
   Future<void> _installReferenceDatabaseIfNeeded(String path) async {
