@@ -17,6 +17,7 @@ import tempfile
 import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -90,6 +91,17 @@ def _download(url: str) -> Path:
     return Path(temp.name)
 
 
+def _diagnostic(core_rows: list[dict[str, str]]) -> str:
+    keys = sorted({key for row in core_rows[:100] for key in row})
+    def values(field: str) -> list[tuple[str, int]]:
+        return Counter(row.get(field, "") for row in core_rows if row.get(field, "")).most_common(12)
+    return (
+        f"fields={keys}; kingdom={values('kingdom')}; taxonRank={values('taxonRank')}; "
+        f"taxonomicStatus={values('taxonomicStatus')}; nameStatus={values('nameStatus')}; "
+        f"occurrenceStatus={values('occurrenceStatus')}"
+    )
+
+
 def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int) -> int:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     existing_names = {
@@ -144,7 +156,8 @@ def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int
     generated.sort(key=lambda item: (item[0].casefold(), item[1]))
     if len(generated) + len(existing_names) < min_species:
         raise ValueError(
-            f"NSR Fungi species count is unexpectedly low: {len(generated) + len(existing_names)} < {min_species}"
+            f"NSR Fungi species count is unexpectedly low: {len(generated) + len(existing_names)} < {min_species}; "
+            f"{_diagnostic(core_rows)}"
         )
 
     sources = [s for s in catalog.get("sources", []) if s.get("id") != SOURCE_ID]
