@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 class DatabaseSchema {
   const DatabaseSchema._();
 
-  static const currentVersion = 7;
+  static const currentVersion = 8;
 
   static Future<void> create(DatabaseExecutor db) async {
     for (final statement in statements) {
@@ -95,9 +95,58 @@ class DatabaseSchema {
         synced_at TEXT NOT NULL
       )''');
     }
+    if (oldVersion < 8) {
+      await db.execute('''CREATE TABLE IF NOT EXISTS reference_source (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        version TEXT,
+        url TEXT NOT NULL,
+        license TEXT,
+        citation TEXT,
+        retrieved_at TEXT NOT NULL
+      )''');
+      await _addColumnIfMissing(db, 'species', 'source_id', 'TEXT');
+      await _addColumnIfMissing(db, 'species', 'source_record_id', 'TEXT');
+      await _addColumnIfMissing(db, 'species_trait', 'source_id', 'TEXT');
+      await _addColumnIfMissing(
+        db,
+        'species_trait',
+        'source_record_id',
+        'TEXT',
+      );
+      await _addColumnIfMissing(db, 'species_image', 'source_url', 'TEXT');
+      await _addColumnIfMissing(
+        db,
+        'species_image',
+        'source_record_id',
+        'TEXT',
+      );
+      await _addColumnIfMissing(db, 'species_image', 'creator', 'TEXT');
+      await _addColumnIfMissing(db, 'species_image', 'license_url', 'TEXT');
+    }
+  }
+
+  static Future<void> _addColumnIfMissing(
+    DatabaseExecutor db,
+    String table,
+    String column,
+    String type,
+  ) async {
+    final columns = await db.rawQuery('PRAGMA table_info($table)');
+    if (columns.isEmpty || columns.any((row) => row['name'] == column)) return;
+    await db.execute('ALTER TABLE $table ADD COLUMN $column $type');
   }
 
   static const statements = <String>[
+    '''CREATE TABLE reference_source (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      version TEXT,
+      url TEXT NOT NULL,
+      license TEXT,
+      citation TEXT,
+      retrieved_at TEXT NOT NULL
+    )''',
     '''CREATE TABLE taxon (
       id INTEGER PRIMARY KEY,
       parent_id INTEGER REFERENCES taxon(id),
@@ -112,7 +161,9 @@ class DatabaseSchema {
       edible_status TEXT NOT NULL DEFAULT 'unknown',
       toxicity_level TEXT NOT NULL DEFAULT 'unknown',
       conservation_status TEXT,
-      notes_key TEXT
+      notes_key TEXT,
+      source_id TEXT,
+      source_record_id TEXT
     )''',
     '''CREATE TABLE species_text (
       species_id INTEGER NOT NULL REFERENCES species(id) ON DELETE CASCADE,
@@ -158,6 +209,8 @@ class DatabaseSchema {
       numeric_max REAL,
       text_value TEXT,
       weight REAL NOT NULL DEFAULT 1.0,
+      source_id TEXT,
+      source_record_id TEXT,
       PRIMARY KEY(species_id, trait_id, option_id)
     )''',
     '''CREATE TABLE species_measurement (
@@ -194,6 +247,10 @@ class DatabaseSchema {
       caption_key TEXT,
       photographer TEXT,
       license TEXT,
+      source_url TEXT,
+      source_record_id TEXT,
+      creator TEXT,
+      license_url TEXT,
       sort_order INTEGER NOT NULL DEFAULT 0,
       is_primary INTEGER NOT NULL DEFAULT 0 CHECK(is_primary IN (0,1)),
       is_placeholder INTEGER NOT NULL DEFAULT 1 CHECK(is_placeholder IN (0,1)),
