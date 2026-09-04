@@ -44,20 +44,19 @@ class SpeciesCatalogImporter {
 
       for (final rawTaxon in taxa) {
         final taxon = rawTaxon as Map<String, dynamic>;
-        final values = <String, Object?>{
+        _queueUpsertById(batch, 'taxon', <String, Object?>{
           'id': taxon['id'],
           'parent_id': taxon['parent_id'],
           'rank': taxon['rank'],
           'scientific_name': taxon['scientific_name'],
           'author_citation': taxon['author_citation'],
-        };
-        _queueUpsertById(batch, 'taxon', values);
+        });
       }
 
       for (final rawSpecies in species) {
         final item = rawSpecies as Map<String, dynamic>;
         final speciesId = item['id'] as int;
-        final values = <String, Object?>{
+        _queueUpsertById(batch, 'species', <String, Object?>{
           'id': speciesId,
           'taxon_id': item['taxon_id'],
           'edible_status': item['edible_status'] ?? 'unknown',
@@ -65,8 +64,7 @@ class SpeciesCatalogImporter {
           'conservation_status': item['conservation_status'],
           'source_id': item['source_id'],
           'source_record_id': item['source_record_id'],
-        };
-        _queueUpsertById(batch, 'species', values);
+        });
 
         final texts = item['texts'] as Map<String, dynamic>;
         for (final entry in texts.entries) {
@@ -170,10 +168,10 @@ class SpeciesCatalogImporter {
     if (value is! Map<String, dynamic> || value.isEmpty) {
       throw FormatException('$context must have at least one localized text');
     }
+    if (!_languages.any(value.containsKey)) {
+      throw FormatException('$context needs at least one nl, en or de text');
+    }
     for (final entry in value.entries) {
-      if (!_languages.contains(entry.key)) {
-        throw FormatException('$context has unsupported language ${entry.key}');
-      }
       final text = entry.value;
       if (text is! Map<String, dynamic>) {
         throw FormatException('$context has invalid ${entry.key} text');
