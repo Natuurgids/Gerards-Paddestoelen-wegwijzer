@@ -160,10 +160,28 @@ class SpeciesCatalogImporter {
           (sourceId is! String || !sourceIds.contains(sourceId))) {
         throw FormatException('Species $id references unknown source: $sourceId');
       }
+      final catalogOnly = item['catalog_only'] == true;
+      if (catalogOnly) {
+        if (sourceId is! String || sourceId.trim().isEmpty) {
+          throw FormatException('Catalog-only species $id requires source_id');
+        }
+        final sourceRecordId = item['source_record_id'];
+        if (sourceRecordId is! String || sourceRecordId.trim().isEmpty) {
+          throw FormatException(
+            'Catalog-only species $id requires source_record_id',
+          );
+        }
+        if (item['edible_status'] != 'unknown' ||
+            item['toxicity_level'] != 'unknown') {
+          throw FormatException(
+            'Catalog-only species $id must keep safety metadata unknown',
+          );
+        }
+      }
       _validateTexts(
         item['texts'],
         'species $id',
-        requireDescription: item['catalog_only'] != true,
+        requireDescription: !catalogOnly,
       );
     }
   }
