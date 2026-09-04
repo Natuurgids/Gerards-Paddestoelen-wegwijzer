@@ -22,7 +22,7 @@ void main() {
       fail('REFERENCE_DATABASE_OUTPUT must point to the generated SQLite file');
     }
 
-    final file = File(output);
+    final file = File(output).absolute;
     await file.parent.create(recursive: true);
     if (await file.exists()) await file.delete();
 
@@ -77,6 +77,7 @@ void main() {
       await db.close();
     }
 
+    expect(await file.exists(), isTrue);
     expect(await file.length(), greaterThan(0));
   });
 }
