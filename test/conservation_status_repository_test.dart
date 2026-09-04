@@ -63,4 +63,37 @@ void main() {
 
     expect(await ConservationStatusRepository.loadIucnStatus(db, 1), 'EN');
   });
+
+  test('loadStatuses preserves distinct global and national systems', () async {
+    await db.insert('species_conservation_status', {
+      'species_id': 1,
+      'system': 'iucn_red_list',
+      'scope': 'global',
+      'jurisdiction_code': '',
+      'status': 'VU',
+      'source_id': null,
+      'source_record_id': null,
+    });
+    await db.insert('species_conservation_status', {
+      'species_id': 1,
+      'system': 'nl_red_list',
+      'scope': 'national',
+      'jurisdiction_code': 'NL',
+      'status': 'BE',
+      'source_id': null,
+      'source_record_id': null,
+    });
+
+    final records = await ConservationStatusRepository.loadStatuses(db, 1);
+    expect(records, hasLength(2));
+    expect(
+      records.singleWhere((record) => record.isGlobalIucn).status,
+      'VU',
+    );
+    expect(
+      records.singleWhere((record) => record.isDutchRedList).status,
+      'BE',
+    );
+    expect(records.where((record) => record.status == 'EN'), isEmpty);
+  });
 }
