@@ -3,8 +3,8 @@
 
 Matches only exact scientific names. Existing non-scientific localized names always
 win. This deliberately imports vernacular names only, never descriptive biology.
-Both sources are read through GBIF's indexed Species API so CI is independent of
-publisher archive endpoints that reject automated downloads.
+Both sources are read through GBIF's indexed Species API and restricted server-side
+to accepted species in Fungi (GBIF higher taxon key 5).
 """
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+FUNGI_GBIF_KEY = 5
 SOURCES = {
     "de": {
         "id": "dgfm-german-fungi",
@@ -51,7 +52,15 @@ def _request_json(url: str) -> dict:
 
 def _page(dataset_key: str, offset: int, limit: int) -> dict:
     query = urllib.parse.urlencode(
-        {"datasetKey": dataset_key, "limit": limit, "offset": offset}
+        {
+            "datasetKey": dataset_key,
+            "highertaxon_key": FUNGI_GBIF_KEY,
+            "rank": "SPECIES",
+            "status": "ACCEPTED",
+            "origin": "SOURCE",
+            "limit": limit,
+            "offset": offset,
+        }
     )
     return _request_json(f"https://api.gbif.org/v1/species/search?{query}")
 
@@ -70,7 +79,7 @@ def _collect_names(payload: dict, languages: set[str], result: dict[str, str]) -
 
 
 def _names_from_gbif(dataset_key: str, languages: set[str]) -> dict[str, str]:
-    """Enumerate one GBIF checklist and retain its indexed vernacular names."""
+    """Enumerate accepted fungal species in one GBIF checklist."""
     limit = 1000
     first = _page(dataset_key, 0, limit)
     result: dict[str, str] = {}
@@ -78,14 +87,14 @@ def _names_from_gbif(dataset_key: str, languages: set[str]) -> dict[str, str]:
     count = int(first.get("count") or len(first.get("results", [])))
     if count > 100_000:
         raise ValueError(
-            f"GBIF checklist has {count} records, above the safe search-pagination bound"
+            f"Filtered GBIF checklist has {count} records, above safe pagination bound"
         )
     offsets = list(range(limit, count, limit))
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(_page, dataset_key, offset, limit) for offset in offsets]
         for future in concurrent.futures.as_completed(futures):
             _collect_names(future.result(), languages, result)
-    print(f"GBIF checklist {dataset_key}: records={count}; vernacular species={len(result)}")
+    print(f"GBIF fungal checklist {dataset_key}: records={count}; vernacular species={len(result)}")
     return result
 
 
