@@ -28,7 +28,8 @@ class ConservationWarning extends StatelessWidget {
     );
     if (rows.isEmpty) return null;
     final value = rows.single['conservation_status'] as String?;
-    return value?.trim().isEmpty ?? true ? null : value!.trim();
+    if (value == null || value.trim().isEmpty) return null;
+    return value.trim();
   }
 
   bool _isConcern(String status) {
