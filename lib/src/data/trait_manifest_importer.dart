@@ -22,10 +22,11 @@ class TraitManifestImporter {
     _validate(traits, speciesTraits);
 
     await db.transaction((txn) async {
+      final batch = txn.batch();
       for (final item in traits) {
         final trait = item as Map<String, dynamic>;
         final traitId = trait['id'] as int;
-        await _upsertById(txn, 'trait', {
+        _batchUpsertById(batch, 'trait', {
           'id': traitId,
           'code': trait['code'] as String,
           'category': trait['category'] as String,
@@ -34,7 +35,7 @@ class TraitManifestImporter {
 
         final labels = trait['labels'] as Map<String, dynamic>;
         for (final entry in labels.entries) {
-          await txn.insert(
+          batch.insert(
             'trait_text',
             {
               'trait_id': traitId,
@@ -49,7 +50,7 @@ class TraitManifestImporter {
         for (final optionItem in options) {
           final option = optionItem as Map<String, dynamic>;
           final optionId = option['id'] as int;
-          await _upsertById(txn, 'trait_option', {
+          _batchUpsertById(batch, 'trait_option', {
             'id': optionId,
             'trait_id': traitId,
             'code': option['code'] as String,
@@ -58,7 +59,7 @@ class TraitManifestImporter {
 
           final optionLabels = option['labels'] as Map<String, dynamic>;
           for (final entry in optionLabels.entries) {
-            await txn.insert(
+            batch.insert(
               'trait_option_text',
               {
                 'option_id': optionId,
@@ -73,7 +74,7 @@ class TraitManifestImporter {
 
       for (final item in speciesTraits) {
         final relation = item as Map<String, dynamic>;
-        await txn.insert(
+        batch.insert(
           'species_trait',
           {
             'species_id': relation['species_id'],
@@ -84,24 +85,27 @@ class TraitManifestImporter {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
+      await batch.commit(noResult: true);
     });
   }
 
-  static Future<void> _upsertById(
-    Transaction txn,
+  static void _batchUpsertById(
+    Batch batch,
     String table,
     Map<String, Object?> values,
-  ) async {
+  ) {
     final id = values['id'];
-    final updated = await txn.update(
+    batch.update(
       table,
       values,
       where: 'id = ?',
       whereArgs: [id],
     );
-    if (updated == 0) {
-      await txn.insert(table, values);
-    }
+    batch.insert(
+      table,
+      values,
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   static void _validate(List<dynamic> traits, List<dynamic> speciesTraits) {
