@@ -31,10 +31,19 @@ void main() {
         isTrue,
         reason: 'Each species needs at least one app-language source text',
       );
+      final catalogOnly = item['catalog_only'] == true;
       for (final entry in texts.entries) {
         final text = entry.value as Map<String, dynamic>;
         expect((text['common_name'] as String).trim(), isNotEmpty);
-        expect((text['description'] as String).trim(), isNotEmpty);
+        if (!catalogOnly) {
+          expect((text['description'] as String).trim(), isNotEmpty);
+        }
+      }
+      if (catalogOnly) {
+        expect((item['source_id'] as String).trim(), isNotEmpty);
+        expect((item['source_record_id'] as String).trim(), isNotEmpty);
+        expect(item['edible_status'], 'unknown');
+        expect(item['toxicity_level'], 'unknown');
       }
     }
   });

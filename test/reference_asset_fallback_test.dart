@@ -20,9 +20,15 @@ void main() {
     final all = await repo.searchPage('nl', limit: 10);
     expect(all, hasLength(10));
 
-    final filtered = await repo.searchPage('nl', query: 'vlieg', limit: 10);
-    expect(filtered, hasLength(1));
-    expect(filtered.single.scientificName, 'Amanita muscaria');
+    final filtered = await repo.searchPage(
+      'nl',
+      query: 'Amanita muscaria',
+      limit: 10,
+    );
+    expect(
+      filtered.any((species) => species.scientificName == 'Amanita muscaria'),
+      isTrue,
+    );
   });
 
   test('bundled species detail contains gallery and field data', () async {

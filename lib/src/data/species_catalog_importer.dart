@@ -160,11 +160,37 @@ class SpeciesCatalogImporter {
           (sourceId is! String || !sourceIds.contains(sourceId))) {
         throw FormatException('Species $id references unknown source: $sourceId');
       }
-      _validateTexts(item['texts'], 'species $id');
+      final catalogOnly = item['catalog_only'] == true;
+      if (catalogOnly) {
+        if (sourceId is! String || sourceId.trim().isEmpty) {
+          throw FormatException('Catalog-only species $id requires source_id');
+        }
+        final sourceRecordId = item['source_record_id'];
+        if (sourceRecordId is! String || sourceRecordId.trim().isEmpty) {
+          throw FormatException(
+            'Catalog-only species $id requires source_record_id',
+          );
+        }
+        if (item['edible_status'] != 'unknown' ||
+            item['toxicity_level'] != 'unknown') {
+          throw FormatException(
+            'Catalog-only species $id must keep safety metadata unknown',
+          );
+        }
+      }
+      _validateTexts(
+        item['texts'],
+        'species $id',
+        requireDescription: !catalogOnly,
+      );
     }
   }
 
-  static void _validateTexts(Object? value, String context) {
+  static void _validateTexts(
+    Object? value,
+    String context, {
+    required bool requireDescription,
+  }) {
     if (value is! Map<String, dynamic> || value.isEmpty) {
       throw FormatException('$context must have at least one localized text');
     }
@@ -176,10 +202,14 @@ class SpeciesCatalogImporter {
       if (text is! Map<String, dynamic>) {
         throw FormatException('$context has invalid ${entry.key} text');
       }
-      for (final field in const ['common_name', 'description']) {
-        final content = text[field];
-        if (content is! String || content.trim().isEmpty) {
-          throw FormatException('$context has invalid ${entry.key} $field');
+      final commonName = text['common_name'];
+      if (commonName is! String || commonName.trim().isEmpty) {
+        throw FormatException('$context has invalid ${entry.key} common_name');
+      }
+      if (requireDescription) {
+        final description = text['description'];
+        if (description is! String || description.trim().isEmpty) {
+          throw FormatException('$context has invalid ${entry.key} description');
         }
       }
     }

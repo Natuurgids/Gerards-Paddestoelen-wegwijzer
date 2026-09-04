@@ -36,10 +36,27 @@ void main() {
     });
     await syncAll();
 
+    final speciesCount =
+        (await db.rawQuery('SELECT COUNT(*) AS count FROM species')).single['count']
+            as int;
+    final taxonCount =
+        (await db.rawQuery('SELECT COUNT(*) AS count FROM taxon')).single['count']
+            as int;
+    final speciesTextCount = (await db.rawQuery(
+      'SELECT COUNT(*) AS count FROM species_text',
+    ))
+        .single['count'] as int;
+    final nsrCount = (await db.rawQuery(
+      "SELECT COUNT(*) AS count FROM species WHERE source_id='nsr-dutch-species-register'",
+    ))
+        .single['count'] as int;
+
+    expect(speciesCount, greaterThanOrEqualTo(10000));
+    expect(nsrCount, greaterThan(9000));
+    expect(taxonCount, greaterThanOrEqualTo(speciesCount));
+    expect(speciesTextCount, greaterThanOrEqualTo(speciesCount));
+
     const expectedCounts = <String, int>{
-      'taxon': 31,
-      'species': 16,
-      'species_text': 22,
       'trait': 20,
       'trait_text': 60,
       'trait_option': 139,
