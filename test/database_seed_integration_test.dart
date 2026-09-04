@@ -37,19 +37,19 @@ void main() {
     await syncAll();
 
     const expectedCounts = <String, int>{
-      'taxon': 6,
-      'species': 3,
-      'species_text': 9,
+      'taxon': 31,
+      'species': 16,
+      'species_text': 22,
       'trait': 20,
       'trait_text': 60,
       'trait_option': 139,
       'trait_option_text': 417,
-      'species_trait': 60,
+      'species_trait': 127,
       'species_measurement': 7,
       'season_region': 1,
       'season_region_text': 3,
       'species_season': 14,
-      'species_image': 15,
+      'species_image': 80,
       'lesson': 12,
       'lesson_text': 36,
       'question': 60,
@@ -70,7 +70,7 @@ void main() {
     final placeholders = await db.rawQuery(
       'SELECT COUNT(*) AS count FROM species_image WHERE is_placeholder = 1',
     );
-    expect(placeholders.single['count'], 15);
+    expect(placeholders.single['count'], 80);
 
     final progress = await db.query('training_progress');
     expect(progress, hasLength(1));
