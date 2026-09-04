@@ -18,7 +18,7 @@ void main() {
     final repo = SpeciesBrowserRepository(databaseProvider: failingDatabase);
 
     final all = await repo.searchPage('nl', limit: 10);
-    expect(all, hasLength(3));
+    expect(all, hasLength(10));
 
     final filtered = await repo.searchPage('nl', query: 'vlieg', limit: 10);
     expect(filtered, hasLength(1));
@@ -62,6 +62,19 @@ void main() {
     );
   });
 
+  test('supplemental European mappings participate in asset scoring', () async {
+    final repo = ResilientIdentificationRepository(
+      databaseProvider: failingDatabase,
+    );
+
+    final candidates = await repo.identify('en', {2: 38});
+    expect(
+      candidates.any((candidate) =>
+          candidate.species.scientificName == 'Hydnum repandum'),
+      isTrue,
+    );
+  });
+
   test('training falls back to bundled lessons and questions', () async {
     final repo = TrainingDataRepository(databaseProvider: failingDatabase);
 
@@ -81,7 +94,7 @@ void main() {
     final rows = await repo.searchPage('en', limit: 10);
 
     stopwatch.stop();
-    expect(rows, hasLength(3));
+    expect(rows, hasLength(10));
     expect(stopwatch.elapsed, lessThan(const Duration(seconds: 4)));
   });
 }
