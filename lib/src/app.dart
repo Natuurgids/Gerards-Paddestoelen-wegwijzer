@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
-import 'data/app_database.dart';
 import 'features/home/home_screen.dart';
 
 class MycologyApp extends StatefulWidget {
@@ -13,12 +12,6 @@ class MycologyApp extends StatefulWidget {
 
 class _MycologyAppState extends State<MycologyApp> {
   Locale _locale = const Locale('nl');
-
-  @override
-  void initState() {
-    super.initState();
-    AppDatabase.instance.database;
-  }
 
   void _setLocale(Locale locale) => setState(() => _locale = locale);
 
