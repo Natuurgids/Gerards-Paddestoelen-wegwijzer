@@ -17,12 +17,30 @@ class SpeciesCatalogImporter {
     Database db,
     Map<String, dynamic> decoded,
   ) async {
+    final sources = decoded['sources'] as List<dynamic>? ?? const [];
     final taxa = decoded['taxa'] as List<dynamic>? ?? const [];
     final species = decoded['species'] as List<dynamic>? ?? const [];
-    _validate(taxa, species);
+    _validate(sources, taxa, species);
 
     await db.transaction((txn) async {
       final batch = txn.batch();
+
+      for (final rawSource in sources) {
+        final source = rawSource as Map<String, dynamic>;
+        batch.insert(
+          'reference_source',
+          {
+            'id': source['id'],
+            'title': source['title'],
+            'version': source['version'],
+            'url': source['url'],
+            'license': source['license'],
+            'citation': source['citation'],
+            'retrieved_at': source['retrieved_at'],
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
 
       for (final rawTaxon in taxa) {
         final taxon = rawTaxon as Map<String, dynamic>;
@@ -45,6 +63,8 @@ class SpeciesCatalogImporter {
           'edible_status': item['edible_status'] ?? 'unknown',
           'toxicity_level': item['toxicity_level'] ?? 'unknown',
           'conservation_status': item['conservation_status'],
+          'source_id': item['source_id'],
+          'source_record_id': item['source_record_id'],
         };
         _queueUpsertById(batch, 'species', values);
 
@@ -77,22 +97,32 @@ class SpeciesCatalogImporter {
     Map<String, Object?> values,
   ) {
     final id = values['id'];
-    batch.update(
-      table,
-      values,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    batch.insert(
-      table,
-      values,
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    batch.update(table, values, where: 'id = ?', whereArgs: [id]);
+    batch.insert(table, values, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
-  static void _validate(List<dynamic> taxa, List<dynamic> species) {
+  static void _validate(
+    List<dynamic> sources,
+    List<dynamic> taxa,
+    List<dynamic> species,
+  ) {
+    final sourceIds = <String>{};
     final taxonIds = <int>{};
     final speciesIds = <int>{};
+
+    for (final rawSource in sources) {
+      final source = rawSource as Map<String, dynamic>;
+      final id = source['id'];
+      if (id is! String || id.trim().isEmpty || !sourceIds.add(id)) {
+        throw FormatException('Reference source ids must be unique: $id');
+      }
+      for (final field in const ['title', 'url', 'retrieved_at']) {
+        final value = source[field];
+        if (value is! String || value.trim().isEmpty) {
+          throw FormatException('Reference source $id has invalid $field');
+        }
+      }
+    }
 
     for (final rawTaxon in taxa) {
       final taxon = rawTaxon as Map<String, dynamic>;
@@ -127,24 +157,31 @@ class SpeciesCatalogImporter {
       if (taxonId is! int || !taxonIds.contains(taxonId)) {
         throw FormatException('Species $id references unknown taxon: $taxonId');
       }
+      final sourceId = item['source_id'];
+      if (sourceId != null &&
+          (sourceId is! String || !sourceIds.contains(sourceId))) {
+        throw FormatException('Species $id references unknown source: $sourceId');
+      }
       _validateTexts(item['texts'], 'species $id');
     }
   }
 
   static void _validateTexts(Object? value, String context) {
-    if (value is! Map<String, dynamic> ||
-        !_languages.every(value.containsKey)) {
-      throw FormatException('$context must have nl, en and de text');
+    if (value is! Map<String, dynamic> || value.isEmpty) {
+      throw FormatException('$context must have at least one localized text');
     }
-    for (final language in _languages) {
-      final text = value[language];
+    for (final entry in value.entries) {
+      if (!_languages.contains(entry.key)) {
+        throw FormatException('$context has unsupported language ${entry.key}');
+      }
+      final text = entry.value;
       if (text is! Map<String, dynamic>) {
-        throw FormatException('$context has invalid $language text');
+        throw FormatException('$context has invalid ${entry.key} text');
       }
       for (final field in const ['common_name', 'description']) {
         final content = text[field];
         if (content is! String || content.trim().isEmpty) {
-          throw FormatException('$context has invalid $language $field');
+          throw FormatException('$context has invalid ${entry.key} $field');
         }
       }
     }
