@@ -22,32 +22,36 @@ class SpeciesCatalogImporter {
     _validate(taxa, species);
 
     await db.transaction((txn) async {
+      final batch = txn.batch();
+
       for (final rawTaxon in taxa) {
         final taxon = rawTaxon as Map<String, dynamic>;
-        await _upsertById(txn, 'taxon', {
+        final values = <String, Object?>{
           'id': taxon['id'],
           'parent_id': taxon['parent_id'],
           'rank': taxon['rank'],
           'scientific_name': taxon['scientific_name'],
           'author_citation': taxon['author_citation'],
-        });
+        };
+        _queueUpsertById(batch, 'taxon', values);
       }
 
       for (final rawSpecies in species) {
         final item = rawSpecies as Map<String, dynamic>;
         final speciesId = item['id'] as int;
-        await _upsertById(txn, 'species', {
+        final values = <String, Object?>{
           'id': speciesId,
           'taxon_id': item['taxon_id'],
           'edible_status': item['edible_status'] ?? 'unknown',
           'toxicity_level': item['toxicity_level'] ?? 'unknown',
           'conservation_status': item['conservation_status'],
-        });
+        };
+        _queueUpsertById(batch, 'species', values);
 
         final texts = item['texts'] as Map<String, dynamic>;
         for (final entry in texts.entries) {
           final text = entry.value as Map<String, dynamic>;
-          await txn.insert(
+          batch.insert(
             'species_text',
             {
               'species_id': speciesId,
@@ -62,24 +66,28 @@ class SpeciesCatalogImporter {
           );
         }
       }
+
+      await batch.commit(noResult: true);
     });
   }
 
-  static Future<void> _upsertById(
-    Transaction txn,
+  static void _queueUpsertById(
+    Batch batch,
     String table,
     Map<String, Object?> values,
-  ) async {
+  ) {
     final id = values['id'];
-    final updated = await txn.update(
+    batch.update(
       table,
       values,
       where: 'id = ?',
       whereArgs: [id],
     );
-    if (updated == 0) {
-      await txn.insert(table, values);
-    }
+    batch.insert(
+      table,
+      values,
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   static void _validate(List<dynamic> taxa, List<dynamic> species) {
@@ -101,7 +109,8 @@ class SpeciesCatalogImporter {
     for (final rawTaxon in taxa) {
       final taxon = rawTaxon as Map<String, dynamic>;
       final parentId = taxon['parent_id'];
-      if (parentId != null && (parentId is! int || !taxonIds.contains(parentId))) {
+      if (parentId != null &&
+          (parentId is! int || !taxonIds.contains(parentId))) {
         throw FormatException(
           'Taxon ${taxon['id']} references unknown parent taxon: $parentId',
         );
