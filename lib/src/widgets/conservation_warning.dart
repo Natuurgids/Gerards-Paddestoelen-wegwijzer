@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/app_database.dart';
+import '../data/conservation_status_repository.dart';
 
 typedef ConservationStatusLoader = Future<String?> Function(int speciesId);
 
@@ -19,17 +20,7 @@ class ConservationWarning extends StatelessWidget {
   Future<String?> _load() async {
     if (statusLoader != null) return statusLoader!(speciesId);
     final db = await AppDatabase.instance.database;
-    final rows = await db.query(
-      'species',
-      columns: const ['conservation_status'],
-      where: 'id=?',
-      whereArgs: [speciesId],
-      limit: 1,
-    );
-    if (rows.isEmpty) return null;
-    final value = rows.single['conservation_status'] as String?;
-    if (value == null || value.trim().isEmpty) return null;
-    return value.trim();
+    return ConservationStatusRepository.loadIucnStatus(db, speciesId);
   }
 
   bool _isConcern(String status) {
