@@ -160,11 +160,19 @@ class SpeciesCatalogImporter {
           (sourceId is! String || !sourceIds.contains(sourceId))) {
         throw FormatException('Species $id references unknown source: $sourceId');
       }
-      _validateTexts(item['texts'], 'species $id');
+      _validateTexts(
+        item['texts'],
+        'species $id',
+        requireDescription: item['catalog_only'] != true,
+      );
     }
   }
 
-  static void _validateTexts(Object? value, String context) {
+  static void _validateTexts(
+    Object? value,
+    String context, {
+    required bool requireDescription,
+  }) {
     if (value is! Map<String, dynamic> || value.isEmpty) {
       throw FormatException('$context must have at least one localized text');
     }
@@ -176,10 +184,14 @@ class SpeciesCatalogImporter {
       if (text is! Map<String, dynamic>) {
         throw FormatException('$context has invalid ${entry.key} text');
       }
-      for (final field in const ['common_name', 'description']) {
-        final content = text[field];
-        if (content is! String || content.trim().isEmpty) {
-          throw FormatException('$context has invalid ${entry.key} $field');
+      final commonName = text['common_name'];
+      if (commonName is! String || commonName.trim().isEmpty) {
+        throw FormatException('$context has invalid ${entry.key} common_name');
+      }
+      if (requireDescription) {
+        final description = text['description'];
+        if (description is! String || description.trim().isEmpty) {
+          throw FormatException('$context has invalid ${entry.key} description');
         }
       }
     }
