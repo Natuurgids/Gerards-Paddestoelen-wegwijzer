@@ -48,7 +48,8 @@ class ImageManifestImporter {
       for (final rawImage in images) {
         final image = rawImage as Map<String, dynamic>;
         final path = image['path'];
-        if (path is! String || path.trim() != path ||
+        if (path is! String ||
+            path.trim() != path ||
             !path.startsWith('assets/images/species/') ||
             !allPaths.add(path)) {
           throw FormatException(
@@ -57,7 +58,8 @@ class ImageManifestImporter {
         }
 
         final order = image['order'];
-        if (order is! int || !_requiredOrders.contains(order) ||
+        if (order is! int ||
+            !_requiredOrders.contains(order) ||
             !orders.add(order)) {
           throw FormatException(
             'Invalid or duplicate gallery order for species $speciesId: $order',
@@ -65,7 +67,8 @@ class ImageManifestImporter {
         }
 
         final angle = image['angle'];
-        if (angle is! String || !_requiredAngles.contains(angle) ||
+        if (angle is! String ||
+            !_requiredAngles.contains(angle) ||
             !angles.add(angle)) {
           throw FormatException(
             'Invalid or duplicate gallery angle for species $speciesId: $angle',
@@ -131,13 +134,14 @@ class ImageManifestImporter {
     }
 
     await db.transaction((txn) async {
-      await txn.delete('species_image');
+      final batch = txn.batch();
+      batch.delete('species_image');
       for (final rawSpecies in species) {
         final item = rawSpecies as Map<String, dynamic>;
         final speciesId = item['speciesId'] as int;
         for (final rawImage in item['images'] as List<dynamic>) {
           final image = rawImage as Map<String, dynamic>;
-          await txn.insert('species_image', {
+          batch.insert('species_image', {
             'species_id': speciesId,
             'asset_path': image['path'] as String,
             'thumbnail_path': image['thumbnailPath'] as String?,
@@ -150,6 +154,7 @@ class ImageManifestImporter {
           });
         }
       }
+      await batch.commit(noResult: true);
     });
   }
 }
