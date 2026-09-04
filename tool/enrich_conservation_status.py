@@ -25,6 +25,12 @@ SOURCE_CITATION = (
     "IUCN (2026). The IUCN Red List of Threatened Species. Version 2026-1. "
     "doi:10.15468/0qnb58"
 )
+STATUS_FIELDS = (
+    "threatStatus",
+    "iucnRedListCategory",
+    "redListCategory",
+    "category",
+)
 
 
 def _local(term: str) -> str:
@@ -88,6 +94,14 @@ def _download(url: str) -> Path:
     return Path(temp.name)
 
 
+def _status(row: dict[str, str]) -> str:
+    for field in STATUS_FIELDS:
+        value = row.get(field, "").strip()
+        if value:
+            return value
+    return ""
+
+
 def _statuses(archive: Path) -> dict[str, str]:
     with zipfile.ZipFile(archive) as zf:
         meta = next((name for name in zf.namelist() if name.lower().endswith("meta.xml")), None)
@@ -97,17 +111,54 @@ def _statuses(archive: Path) -> dict[str, str]:
         core = next((e for e in root if e.tag.endswith("core")), None)
         if core is None:
             raise ValueError("Darwin Core archive missing taxon core")
-        result = {}
-        for row in _rows(zf, _spec(core)):
+
+        core_rows = list(_rows(zf, _spec(core)))
+        scientific_by_id: dict[str, str] = {}
+        result: dict[str, str] = {}
+        for row in core_rows:
             scientific = row.get("scientificName", "").strip()
-            status = (
-                row.get("threatStatus", "").strip()
-                or row.get("iucnRedListCategory", "").strip()
-            )
+            taxon_id = row.get("_id", "").strip() or row.get("taxonID", "").strip()
+            if scientific and taxon_id:
+                scientific_by_id[taxon_id] = scientific
+            status = _status(row)
             if scientific and status:
                 result[scientific.casefold()] = status
+
+        # Current IUCN archives may expose conservation terms in an extension rather
+        # than on the taxon core. Resolve extension coreid values back to the core
+        # scientific name and retain only explicit status terms.
+        for extension in (e for e in root if e.tag.endswith("extension")):
+            spec = _spec(extension)
+            field_names = set(spec[4].values())
+            if not any(field in field_names for field in STATUS_FIELDS):
+                continue
+            for row in _rows(zf, spec):
+                status = _status(row)
+                if not status:
+                    continue
+                scientific = row.get("scientificName", "").strip()
+                if not scientific:
+                    scientific = scientific_by_id.get(row.get("_id", "").strip(), "")
+                if scientific:
+                    result[scientific.casefold()] = status
+
         if not result:
-            raise ValueError("IUCN archive contains no threatStatus values")
+            available = sorted(
+                {
+                    field
+                    for table in root
+                    if table.tag.endswith("core") or table.tag.endswith("extension")
+                    for field in _spec(table)[4].values()
+                    if "status" in field.casefold()
+                    or "category" in field.casefold()
+                    or "iucn" in field.casefold()
+                }
+            )
+            raise ValueError(
+                "IUCN archive contains no recognized conservation status values; "
+                f"candidate fields={available}"
+            )
+        print(f"IUCN archive explicit statuses={len(result)}")
         return result
 
 
