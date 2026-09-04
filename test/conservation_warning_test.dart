@@ -5,6 +5,7 @@ import 'package:gerards_paddestoelen_wegwijzer/src/widgets/conservation_warning.
 void main() {
   Widget app(String locale, String? status, {bool compact = false}) => MaterialApp(
         locale: Locale(locale),
+        supportedLocales: const [Locale('nl'), Locale('en'), Locale('de')],
         home: Scaffold(
           body: ConservationWarning(
             speciesId: 42,
