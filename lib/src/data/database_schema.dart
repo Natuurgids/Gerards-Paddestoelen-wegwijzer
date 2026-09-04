@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 class DatabaseSchema {
   const DatabaseSchema._();
 
-  static const currentVersion = 6;
+  static const currentVersion = 7;
 
   static Future<void> create(DatabaseExecutor db) async {
     for (final statement in statements) {
@@ -87,6 +87,13 @@ class DatabaseSchema {
           'ALTER TABLE species_image ADD COLUMN is_placeholder INTEGER NOT NULL DEFAULT 1 CHECK(is_placeholder IN (0,1))',
         );
       }
+    }
+    if (oldVersion < 7) {
+      await db.execute('''CREATE TABLE IF NOT EXISTS bundled_content_state (
+        content_key TEXT PRIMARY KEY,
+        revision INTEGER NOT NULL,
+        synced_at TEXT NOT NULL
+      )''');
     }
   }
 
@@ -237,6 +244,11 @@ class DatabaseSchema {
       best_score REAL NOT NULL DEFAULT 0,
       attempts INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY(lesson_id)
+    )''',
+    '''CREATE TABLE bundled_content_state (
+      content_key TEXT PRIMARY KEY,
+      revision INTEGER NOT NULL,
+      synced_at TEXT NOT NULL
     )''',
     'CREATE INDEX idx_taxon_parent ON taxon(parent_id)',
     'CREATE INDEX idx_taxon_scientific_name ON taxon(scientific_name COLLATE NOCASE)',
