@@ -14,6 +14,12 @@ void main() {
       ('stem_surface', 108, 'Smooth'),
       ('stem_surface', 111, 'Reticulate/netted'),
       ('stem_surface', 114, 'Glandular dots'),
+      ('ring', 6, 'Ring present'),
+      ('ring', 7, 'No ring'),
+      ('ring', 42, 'Uncertain/ring traces'),
+      ('volva', 8, 'Volva present'),
+      ('volva', 9, 'No volva'),
+      ('volva', 43, 'Uncertain/possible remnants'),
     ];
 
     await tester.pumpWidget(
@@ -33,10 +39,7 @@ void main() {
       ),
     );
 
-    expect(
-      find.byType(DeterminationOptionVisual),
-      findsNWidgets(samples.length),
-    );
+    expect(find.byType(DeterminationOptionVisual), findsNWidgets(samples.length));
     expect(tester.takeException(), isNull);
   });
 
