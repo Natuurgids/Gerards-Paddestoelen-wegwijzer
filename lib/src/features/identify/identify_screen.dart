@@ -123,6 +123,217 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
     return values[month - 1];
   }
 
+  Widget _traitCard(
+    BuildContext context,
+    AppLocalizations l10n,
+    List<TraitChoice> items,
+  ) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              items.first.traitLabel,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            RadioGroup<int>(
+              groupValue: _selected[items.first.traitId],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _selected[items.first.traitId] = value);
+              },
+              child: Column(
+                children: items
+                    .map(
+                      (choice) => RadioListTile<int>(
+                        title: Text(choice.optionLabel),
+                        value: choice.optionId,
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+            if (_selected.containsKey(items.first.traitId))
+              TextButton(
+                onPressed: () => setState(
+                  () => _selected.remove(items.first.traitId),
+                ),
+                child: Text(l10n.identifyClear),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _fieldDataCard(AppLocalizations l10n) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.identifyFieldData,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _capController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) {
+                if (_capError != null) setState(() => _capError = null);
+              },
+              decoration: InputDecoration(
+                labelText: l10n.identifyCapDiameter,
+                errorText: _measurementError(l10n, _capError),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _stemController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) {
+                if (_stemError != null) setState(() => _stemError = null);
+              },
+              decoration: InputDecoration(
+                labelText: l10n.identifyStemHeight,
+                errorText: _measurementError(l10n, _stemError),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _stemDiameterController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) {
+                if (_stemDiameterError != null) {
+                  setState(() => _stemDiameterError = null);
+                }
+              },
+              decoration: InputDecoration(
+                labelText: l10n.identifyStemDiameter,
+                errorText: _measurementError(l10n, _stemDiameterError),
+              ),
+            ),
+            const SizedBox(height: 12),
+            FutureBuilder<List<SeasonRegionOption>>(
+              future: _regions,
+              builder: (context, regionSnapshot) {
+                final regions =
+                    regionSnapshot.data ?? const <SeasonRegionOption>[];
+                final selectedRegion = regions
+                    .where((region) => region.code == _seasonRegion)
+                    .firstOrNull;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DropdownButtonFormField<String?>(
+                      key: ValueKey(_seasonRegion),
+                      initialValue: _seasonRegion,
+                      decoration: InputDecoration(
+                        labelText: l10n.identifySeasonReference,
+                      ),
+                      items: [
+                        DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text(l10n.identifyDoNotUse),
+                        ),
+                        ...regions.map(
+                          (region) => DropdownMenuItem<String?>(
+                            value: region.code,
+                            child: Text(region.label),
+                          ),
+                        ),
+                      ],
+                      onChanged: regionSnapshot.hasData
+                          ? (value) => setState(() {
+                                _seasonRegion = value;
+                                _seasonMonthMissing = false;
+                                if (value == null) _observationMonth = null;
+                              })
+                          : null,
+                    ),
+                    if (_seasonRegion != null) ...[
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<int>(
+                        key: ValueKey('$_seasonRegion-$_observationMonth'),
+                        initialValue: _observationMonth,
+                        decoration: InputDecoration(
+                          labelText: l10n.identifyObservationMonth,
+                          errorText: _seasonMonthError(l10n),
+                        ),
+                        items: List.generate(
+                          12,
+                          (index) => DropdownMenuItem(
+                            value: index + 1,
+                            child: Text(_monthName(l10n, index + 1)),
+                          ),
+                        ),
+                        onChanged: (value) => setState(() {
+                          _observationMonth = value;
+                          _seasonMonthMissing = false;
+                        }),
+                      ),
+                      if (selectedRegion != null &&
+                          selectedRegion.note.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          selectedRegion.note,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _resultWidgets(AppLocalizations l10n) {
+    if (_results == null) return const [];
+    return [
+      const SizedBox(height: 20),
+      Text(
+        l10n.identifyResults,
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      if (_results!.isEmpty)
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(l10n.identifyNoMatches),
+        ),
+      ..._results!.map((result) {
+        final morphology = result.requested == 0
+            ? l10n.identifyNoMorphology
+            : '${result.matched}/${result.requested} ${l10n.identifyTraits}';
+        final field = result.fieldRequested == 0
+            ? ''
+            : ' · ${result.fieldMatched}/${result.fieldRequested} ${l10n.identifyField}';
+        return ListTile(
+          title: Text(result.species.commonName),
+          subtitle: Text(
+            '${result.species.scientificName} · ${l10n.identifyMatchScore} ${(result.score * 100).round()}% · $morphology$field',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => SpeciesScreen(
+                locale: widget.locale,
+                speciesId: result.species.id,
+              ),
+            ),
+          ),
+        );
+      }),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -142,240 +353,42 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                   for (final choice in snapshot.data!) {
                     groups.putIfAbsent(choice.traitId, () => []).add(choice);
                   }
-                  return ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      Text(l10n.identifyIntro),
-                      const SizedBox(height: 12),
-                      ...groups.values.map(
-                        (items) => Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  items.first.traitLabel,
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
-                                RadioGroup<int>(
-                                  groupValue: _selected[items.first.traitId],
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    setState(() =>
-                                        _selected[items.first.traitId] = value);
-                                  },
-                                  child: Column(
-                                    children: items
-                                        .map(
-                                          (choice) => RadioListTile<int>(
-                                            title: Text(choice.optionLabel),
-                                            value: choice.optionId,
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
-                                ),
-                                if (_selected.containsKey(items.first.traitId))
-                                  TextButton(
-                                    onPressed: () => setState(
-                                      () => _selected.remove(items.first.traitId),
-                                    ),
-                                    child: Text(l10n.identifyClear),
-                                  ),
-                              ],
-                            ),
+                  final groupList = groups.values.toList(growable: false);
+                  return CustomScrollView(
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate.fixed([
+                            Text(l10n.identifyIntro),
+                            const SizedBox(height: 12),
+                          ]),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) =>
+                                _traitCard(context, l10n, groupList[index]),
+                            childCount: groupList.length,
                           ),
                         ),
                       ),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.identifyFieldData,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: _capController,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
-                                onChanged: (_) {
-                                  if (_capError != null) {
-                                    setState(() => _capError = null);
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                  labelText: l10n.identifyCapDiameter,
-                                  errorText: _measurementError(l10n, _capError),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: _stemController,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
-                                onChanged: (_) {
-                                  if (_stemError != null) {
-                                    setState(() => _stemError = null);
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                  labelText: l10n.identifyStemHeight,
-                                  errorText: _measurementError(l10n, _stemError),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: _stemDiameterController,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
-                                onChanged: (_) {
-                                  if (_stemDiameterError != null) {
-                                    setState(() => _stemDiameterError = null);
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                  labelText: l10n.identifyStemDiameter,
-                                  errorText:
-                                      _measurementError(l10n, _stemDiameterError),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              FutureBuilder<List<SeasonRegionOption>>(
-                                future: _regions,
-                                builder: (context, regionSnapshot) {
-                                  final regions = regionSnapshot.data ??
-                                      const <SeasonRegionOption>[];
-                                  final selectedRegion = regions
-                                      .where((r) => r.code == _seasonRegion)
-                                      .firstOrNull;
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      DropdownButtonFormField<String?>(
-                                        key: ValueKey(_seasonRegion),
-                                        initialValue: _seasonRegion,
-                                        decoration: InputDecoration(
-                                          labelText: l10n.identifySeasonReference,
-                                        ),
-                                        items: [
-                                          DropdownMenuItem<String?>(
-                                            value: null,
-                                            child: Text(l10n.identifyDoNotUse),
-                                          ),
-                                          ...regions.map(
-                                            (region) =>
-                                                DropdownMenuItem<String?>(
-                                              value: region.code,
-                                              child: Text(region.label),
-                                            ),
-                                          ),
-                                        ],
-                                        onChanged: regionSnapshot.hasData
-                                            ? (value) => setState(() {
-                                                  _seasonRegion = value;
-                                                  _seasonMonthMissing = false;
-                                                  if (value == null) {
-                                                    _observationMonth = null;
-                                                  }
-                                                })
-                                            : null,
-                                      ),
-                                      if (_seasonRegion != null) ...[
-                                        const SizedBox(height: 8),
-                                        DropdownButtonFormField<int>(
-                                          key: ValueKey(
-                                            '$_seasonRegion-$_observationMonth',
-                                          ),
-                                          initialValue: _observationMonth,
-                                          decoration: InputDecoration(
-                                            labelText:
-                                                l10n.identifyObservationMonth,
-                                            errorText: _seasonMonthError(l10n),
-                                          ),
-                                          items: List.generate(
-                                            12,
-                                            (index) => DropdownMenuItem(
-                                              value: index + 1,
-                                              child: Text(
-                                                _monthName(l10n, index + 1),
-                                              ),
-                                            ),
-                                          ),
-                                          onChanged: (value) => setState(() {
-                                            _observationMonth = value;
-                                            _seasonMonthMissing = false;
-                                          }),
-                                        ),
-                                        if (selectedRegion != null &&
-                                            selectedRegion.note.isNotEmpty) ...[
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            selectedRegion.note,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall,
-                                          ),
-                                        ],
-                                      ],
-                                    ],
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate.fixed([
+                            _fieldDataCard(l10n),
+                            FilledButton.icon(
+                              onPressed: _identify,
+                              icon: const Icon(Icons.filter_alt),
+                              label: Text(l10n.identifyShowCandidates),
+                            ),
+                            ..._resultWidgets(l10n),
+                          ]),
                         ),
                       ),
-                      FilledButton.icon(
-                        onPressed: _identify,
-                        icon: const Icon(Icons.filter_alt),
-                        label: Text(l10n.identifyShowCandidates),
-                      ),
-                      if (_results != null) ...[
-                        const SizedBox(height: 20),
-                        Text(
-                          l10n.identifyResults,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        if (_results!.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text(l10n.identifyNoMatches),
-                          ),
-                        ..._results!.map((result) {
-                          final morphology = result.requested == 0
-                              ? l10n.identifyNoMorphology
-                              : '${result.matched}/${result.requested} ${l10n.identifyTraits}';
-                          final field = result.fieldRequested == 0
-                              ? ''
-                              : ' · ${result.fieldMatched}/${result.fieldRequested} ${l10n.identifyField}';
-                          return ListTile(
-                            title: Text(result.species.commonName),
-                            subtitle: Text(
-                              '${result.species.scientificName} · ${l10n.identifyMatchScore} ${(result.score * 100).round()}% · $morphology$field',
-                            ),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => SpeciesScreen(
-                                  locale: widget.locale,
-                                  speciesId: result.species.id,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
                     ],
                   );
                 },

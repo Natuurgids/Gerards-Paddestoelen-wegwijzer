@@ -154,9 +154,10 @@ void main() {
 }
 
 Future<void> _dragUntilBuilt(WidgetTester tester, Finder target) async {
-  final listView = find.byType(ListView);
+  final scrollView = find.byType(CustomScrollView);
+  expect(scrollView, findsOneWidget);
   for (var attempt = 0; attempt < 8 && target.evaluate().isEmpty; attempt++) {
-    await tester.drag(listView, const Offset(0, -240));
+    await tester.drag(scrollView, const Offset(0, -240));
     await tester.pumpAndSettle();
   }
   expect(target, findsOneWidget);
