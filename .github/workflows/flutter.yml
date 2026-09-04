@@ -33,6 +33,8 @@ jobs:
         run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
       - name: Enrich English and German vernacular names
         run: python3 tool/enrich_vernacular_names.py --min-de 100 --min-en 100
+      - name: Enrich IUCN conservation status
+        run: python3 tool/enrich_conservation_status.py --min-matches 1
       - name: Generate packaged reference database
         run: REFERENCE_DATABASE_OUTPUT=assets/data/reference.sqlite flutter test tool/reference_database_builder_test.dart
       - name: Generate launcher icon source
