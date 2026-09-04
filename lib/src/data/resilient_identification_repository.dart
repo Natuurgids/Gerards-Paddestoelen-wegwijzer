@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 
 import 'models.dart';
 import 'reference_asset_store.dart';
@@ -9,6 +12,8 @@ class ResilientIdentificationRepository extends IdentificationRepository {
       : _preferDatabase = databaseProvider != null;
 
   static const _databaseBudget = Duration(seconds: 2);
+  static const _supplementalTraitsAsset =
+      'assets/data/species_traits_europe.json';
 
   final bool _preferDatabase;
 
@@ -61,6 +66,21 @@ class ResilientIdentificationRepository extends IdentificationRepository {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _assetRelations() async {
+    final manifest = await ReferenceAssetStore.instance.traits;
+    final relations = <Map<String, dynamic>>[
+      ...(manifest['species_traits'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>(),
+    ];
+    final raw = await rootBundle.loadString(_supplementalTraitsAsset);
+    final supplemental = jsonDecode(raw) as Map<String, dynamic>;
+    relations.addAll(
+      (supplemental['species_traits'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>(),
+    );
+    return relations;
+  }
+
   Future<List<IdentificationCandidate>> _identifyFromAssets(
     String languageCode,
     Map<int, int> selected,
@@ -83,11 +103,9 @@ class ResilientIdentificationRepository extends IdentificationRepository {
           .toList();
     }
 
-    final manifest = await ReferenceAssetStore.instance.traits;
-    final relations = manifest['species_traits'] as List<dynamic>? ?? const [];
+    final relations = await _assetRelations();
     final bySpecies = <int, Map<int, List<Map<String, dynamic>>>>{};
-    for (final raw in relations) {
-      final relation = raw as Map<String, dynamic>;
+    for (final relation in relations) {
       final speciesId = relation['species_id'] as int;
       final traitId = relation['trait_id'] as int;
       bySpecies

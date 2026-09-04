@@ -5,20 +5,27 @@ import 'package:sqflite/sqflite.dart';
 
 class TraitManifestImporter {
   static const _assetPath = 'assets/data/identification_traits.json';
+  static const _supplementalAssetPath = 'assets/data/species_traits_europe.json';
   static const _languages = {'nl', 'en', 'de'};
 
   static Future<void> sync(Database db) async {
     final raw = await rootBundle.loadString(_assetPath);
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    await syncDecoded(db, decoded);
+    final supplementalRaw = await rootBundle.loadString(_supplementalAssetPath);
+    final supplemental = jsonDecode(supplementalRaw) as Map<String, dynamic>;
+    await syncDecoded(db, decoded, supplemental: supplemental);
   }
 
   static Future<void> syncDecoded(
     Database db,
-    Map<String, dynamic> decoded,
-  ) async {
+    Map<String, dynamic> decoded, {
+    Map<String, dynamic>? supplemental,
+  }) async {
     final traits = decoded['traits'] as List<dynamic>? ?? const [];
-    final speciesTraits = decoded['species_traits'] as List<dynamic>? ?? const [];
+    final speciesTraits = <dynamic>[
+      ...(decoded['species_traits'] as List<dynamic>? ?? const []),
+      ...(supplemental?['species_traits'] as List<dynamic>? ?? const []),
+    ];
     _validate(traits, speciesTraits);
 
     await db.transaction((txn) async {
@@ -81,6 +88,8 @@ class TraitManifestImporter {
             'trait_id': relation['trait_id'],
             'option_id': relation['option_id'],
             'weight': relation['weight'] ?? 1.0,
+            'source_id': relation['source_id'],
+            'source_record_id': relation['source_record_id'],
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
@@ -95,17 +104,8 @@ class TraitManifestImporter {
     Map<String, Object?> values,
   ) {
     final id = values['id'];
-    batch.update(
-      table,
-      values,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    batch.insert(
-      table,
-      values,
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    batch.update(table, values, where: 'id = ?', whereArgs: [id]);
+    batch.insert(table, values, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   static void _validate(List<dynamic> traits, List<dynamic> speciesTraits) {
@@ -121,7 +121,9 @@ class TraitManifestImporter {
         throw FormatException('Trait ids must be unique integers: $traitId');
       }
       final code = trait['code'];
-      if (code is! String || code.trim().isEmpty || code.trim() != code ||
+      if (code is! String ||
+          code.trim().isEmpty ||
+          code.trim() != code ||
           !traitCodes.add(code)) {
         throw FormatException('Trait codes must be unique and non-empty: $code');
       }
@@ -138,8 +140,10 @@ class TraitManifestImporter {
           throw FormatException('Trait option ids must be unique integers: $optionId');
         }
         final optionCode = option['code'];
-        if (optionCode is! String || optionCode.trim().isEmpty ||
-            optionCode.trim() != optionCode || !optionCodes.add(optionCode)) {
+        if (optionCode is! String ||
+            optionCode.trim().isEmpty ||
+            optionCode.trim() != optionCode ||
+            !optionCodes.add(optionCode)) {
           throw FormatException(
             'Option codes must be unique per trait and non-empty: $optionCode',
           );

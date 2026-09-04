@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "season_regions": [
     {
       "code": "GB-IE",
@@ -23,13 +23,7 @@
         {"code": "stem_height", "min": 10.0, "max": 25.0, "unit": "cm"}
       ],
       "season_datasets": [
-        {
-          "region_code": "GB-IE",
-          "months": [
-            {"month": 8, "likelihood": 2}, {"month": 9, "likelihood": 3},
-            {"month": 10, "likelihood": 3}, {"month": 11, "likelihood": 2}
-          ]
-        }
+        {"region_code":"GB-IE","months":[{"month":8,"likelihood":2},{"month":9,"likelihood":3},{"month":10,"likelihood":3},{"month":11,"likelihood":2}]}
       ]
     },
     {
@@ -39,14 +33,7 @@
         {"code": "stem_height", "min": 7.0, "max": 15.0, "unit": "cm"}
       ],
       "season_datasets": [
-        {
-          "region_code": "GB-IE",
-          "months": [
-            {"month": 7, "likelihood": 2}, {"month": 8, "likelihood": 3},
-            {"month": 9, "likelihood": 3}, {"month": 10, "likelihood": 3},
-            {"month": 11, "likelihood": 2}
-          ]
-        }
+        {"region_code":"GB-IE","months":[{"month":7,"likelihood":2},{"month":8,"likelihood":3},{"month":9,"likelihood":3},{"month":10,"likelihood":3},{"month":11,"likelihood":2}]}
       ]
     },
     {
@@ -57,15 +44,21 @@
         {"code": "stem_diameter", "min": 1.0, "max": 10.0, "unit": "cm"}
       ],
       "season_datasets": [
-        {
-          "region_code": "GB-IE",
-          "months": [
-            {"month": 6, "likelihood": 1}, {"month": 7, "likelihood": 2},
-            {"month": 8, "likelihood": 3}, {"month": 9, "likelihood": 3},
-            {"month": 10, "likelihood": 2}
-          ]
-        }
+        {"region_code":"GB-IE","months":[{"month":6,"likelihood":1},{"month":7,"likelihood":2},{"month":8,"likelihood":3},{"month":9,"likelihood":3},{"month":10,"likelihood":2}]}
       ]
-    }
+    },
+    {"species_id":4,"measurements":[],"season_datasets":[]},
+    {"species_id":5,"measurements":[],"season_datasets":[]},
+    {"species_id":6,"measurements":[],"season_datasets":[]},
+    {"species_id":7,"measurements":[],"season_datasets":[]},
+    {"species_id":8,"measurements":[],"season_datasets":[]},
+    {"species_id":9,"measurements":[],"season_datasets":[]},
+    {"species_id":10,"measurements":[],"season_datasets":[]},
+    {"species_id":11,"measurements":[],"season_datasets":[]},
+    {"species_id":12,"measurements":[],"season_datasets":[]},
+    {"species_id":13,"measurements":[],"season_datasets":[]},
+    {"species_id":14,"measurements":[],"season_datasets":[]},
+    {"species_id":15,"measurements":[],"season_datasets":[]},
+    {"species_id":16,"measurements":[],"season_datasets":[]}
   ]
 }

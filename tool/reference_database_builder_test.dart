@@ -45,6 +45,7 @@ void main() {
       await TraitManifestImporter.syncDecoded(
         db,
         await _manifest('assets/data/identification_traits.json'),
+        supplemental: await _manifest('assets/data/species_traits_europe.json'),
       );
       await FieldDataImporter.syncDecoded(
         db,
@@ -69,8 +70,22 @@ void main() {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      expect((await db.rawQuery('SELECT COUNT(*) n FROM species')).single['n'], 3);
-      expect((await db.rawQuery('SELECT COUNT(*) n FROM trait_option')).single['n'], 139);
+      expect(
+        (await db.rawQuery('SELECT COUNT(*) n FROM species')).single['n'],
+        16,
+      );
+      expect(
+        (await db.rawQuery('SELECT COUNT(*) n FROM trait_option')).single['n'],
+        139,
+      );
+      expect(
+        (await db.rawQuery('SELECT COUNT(*) n FROM species_trait')).single['n'],
+        greaterThan(60),
+      );
+      expect(
+        (await db.rawQuery('SELECT COUNT(*) n FROM reference_source')).single['n'],
+        greaterThanOrEqualTo(1),
+      );
       expect((await db.rawQuery('SELECT COUNT(*) n FROM lesson')).single['n'], 12);
       expect(await db.query('training_progress'), isEmpty);
     } finally {
