@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -13,6 +16,8 @@ import 'trait_manifest_importer.dart';
 class AppDatabase {
   AppDatabase._();
   static final instance = AppDatabase._();
+  static const _referenceDatabaseAsset = 'assets/data/reference.sqlite';
+
   Database? _db;
   Future<Database>? _opening;
   List<String> _lastManifestSyncFailures = const [];
@@ -33,6 +38,7 @@ class AppDatabase {
 
   Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'mycology.sqlite');
+    await _installReferenceDatabaseIfNeeded(path);
     return openDatabase(
       path,
       version: DatabaseSchema.currentVersion,
@@ -77,5 +83,18 @@ class AppDatabase {
         );
       },
     );
+  }
+
+  Future<void> _installReferenceDatabaseIfNeeded(String path) async {
+    final databaseFile = File(path);
+    if (await databaseFile.exists()) return;
+
+    await databaseFile.parent.create(recursive: true);
+    final data = await rootBundle.load(_referenceDatabaseAsset);
+    final bytes = data.buffer.asUint8List(
+      data.offsetInBytes,
+      data.lengthInBytes,
+    );
+    await databaseFile.writeAsBytes(bytes, flush: true);
   }
 }
