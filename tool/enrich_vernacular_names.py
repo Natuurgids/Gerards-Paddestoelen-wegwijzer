@@ -20,7 +20,7 @@ SOURCES = {
     "de": {
         "id": "dgfm-german-fungi",
         "title": "Taxon list of fungi and fungal-like organisms from Germany compiled by the DGfM",
-        "url": "https://services.snsb.info/DTNtaxonlists/rest/v0.1/lists/DiversityTaxonNames_Fungi/1140/dwc",
+        "url": "http://services.snsb.info/DTNtaxonlists/rest/v0.1/lists/DiversityTaxonNames_Fungi/1140/dwc",
         "source_url": "https://www.gbif.org/dataset/155b33d2-84b1-4a31-9287-9d9e900bc6c8",
         "license": "CC BY 4.0",
         "citation": "Dämmrich F. Taxon list of fungi and fungal-like organisms from Germany compiled by the DGfM. Staatliche Naturwissenschaftliche Sammlungen Bayerns. doi:10.15468/gtvmjw",
@@ -29,7 +29,7 @@ SOURCES = {
     "en": {
         "id": "uksi-natural-history-museum",
         "title": "United Kingdom Species Inventory (UKSI)",
-        "url": "https://www.gbif.org/dataset/dbaa27eb-29e7-4cbb-8eab-3f689cfce116",
+        "url": "https://registry.nbnatlas.org/UKSI/UKSI_DwCA.zip",
         "source_url": "https://www.gbif.org/dataset/dbaa27eb-29e7-4cbb-8eab-3f689cfce116",
         "license": "CC BY 4.0",
         "citation": "Raper C. United Kingdom Species Inventory (UKSI). Natural History Museum. doi:10.15468/rm6pm4",
