@@ -31,6 +31,8 @@ jobs:
         run: flutter pub get
       - name: Generate Dutch Species Register Fungi catalogue
         run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
+      - name: Inspect NSR threat status fields
+        run: python3 tool/inspect_nsr_threat_status.py
       - name: Enrich English and German vernacular names
         run: python3 tool/enrich_vernacular_names.py --min-de 100 --min-en 10
       - name: Enrich IUCN conservation status
