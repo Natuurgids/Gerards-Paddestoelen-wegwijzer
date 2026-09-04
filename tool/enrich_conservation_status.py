@@ -124,9 +124,6 @@ def _statuses(archive: Path) -> dict[str, str]:
             if scientific and status:
                 result[scientific.casefold()] = status
 
-        # Current IUCN archives may expose conservation terms in an extension rather
-        # than on the taxon core. Resolve extension coreid values back to the core
-        # scientific name and retain only explicit status terms.
         for extension in (e for e in root if e.tag.endswith("extension")):
             spec = _spec(extension)
             field_names = set(spec[4].values())
@@ -181,6 +178,16 @@ def enrich(catalog_path: Path, archive: Path, retrieved_at: str) -> int:
         species["conservation_status"] = status
         species["conservation_scope"] = "global"
         species["conservation_source_id"] = SOURCE_ID
+        species["conservation_statuses"] = [
+            {
+                "system": "iucn_red_list",
+                "scope": "global",
+                "jurisdiction_code": "",
+                "status": status,
+                "source_id": SOURCE_ID,
+                "source_record_id": scientific,
+            }
+        ]
         changed += 1
 
     sources = [s for s in catalog.get("sources", []) if s.get("id") != SOURCE_ID]
