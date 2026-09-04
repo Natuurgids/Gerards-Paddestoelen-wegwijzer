@@ -12,14 +12,44 @@ Future<Database> _defaultDatabaseProvider() => AppDatabase.instance.database;
 
 class TrainingDataRepository {
   TrainingDataRepository({TrainingDatabaseProvider? databaseProvider})
-      : _databaseProvider = databaseProvider ?? _defaultDatabaseProvider;
+      : _databaseProvider = databaseProvider ?? _defaultDatabaseProvider,
+        _preferDatabase = databaseProvider != null;
 
   static const _databaseBudget = Duration(seconds: 2);
+  static const _progressBudget = Duration(milliseconds: 350);
   static final Map<int, ({double bestScore, int attempts})> _sessionProgress = {};
 
   final TrainingDatabaseProvider _databaseProvider;
+  final bool _preferDatabase;
 
   Future<List<LessonSummary>> lessons(String languageCode) async {
+    if (_preferDatabase) {
+      return _lessonsFromDatabase(languageCode);
+    }
+
+    final progress = await _persistentProgressWithinBudget();
+    for (final entry in _sessionProgress.entries) {
+      final persisted = progress[entry.key];
+      progress[entry.key] = (
+        bestScore: persisted == null
+            ? entry.value.bestScore
+            : (entry.value.bestScore > persisted.bestScore
+                ? entry.value.bestScore
+                : persisted.bestScore),
+        attempts: persisted == null
+            ? entry.value.attempts
+            : (entry.value.attempts > persisted.attempts
+                ? entry.value.attempts
+                : persisted.attempts),
+      );
+    }
+    return ReferenceAssetStore.instance.lessons(
+      languageCode,
+      progress: progress,
+    );
+  }
+
+  Future<List<LessonSummary>> _lessonsFromDatabase(String languageCode) async {
     try {
       final db = await _databaseProvider().timeout(_databaseBudget);
       final rows = await db
@@ -53,10 +83,31 @@ class TrainingDataRepository {
     }
   }
 
+  Future<Map<int, ({double bestScore, int attempts})>>
+      _persistentProgressWithinBudget() async {
+    try {
+      final db = await _databaseProvider().timeout(_progressBudget);
+      final rows = await db.query('training_progress').timeout(_progressBudget);
+      return {
+        for (final row in rows)
+          row['lesson_id'] as int: (
+            bestScore: (row['best_score'] as num).toDouble(),
+            attempts: row['attempts'] as int,
+          ),
+      };
+    } on Object {
+      return <int, ({double bestScore, int attempts})>{};
+    }
+  }
+
   Future<List<QuizQuestion>> questions(
     int lessonId,
     String languageCode,
   ) async {
+    if (!_preferDatabase) {
+      return ReferenceAssetStore.instance.questions(lessonId, languageCode);
+    }
+
     try {
       final db = await _databaseProvider().timeout(_databaseBudget);
       final rows = await db
