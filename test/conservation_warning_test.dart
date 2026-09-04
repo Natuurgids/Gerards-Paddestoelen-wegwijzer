@@ -16,7 +16,7 @@ void main() {
 
   testWidgets('shows Dutch warning for threatened IUCN status', (tester) async {
     await tester.pumpWidget(app('nl', 'Vulnerable'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('Beschermingswaarschuwing'), findsOneWidget);
     expect(find.textContaining('IUCN Rode Lijst: Vulnerable'), findsOneWidget);
     expect(find.textContaining('niet automatisch een wettelijke'), findsOneWidget);
@@ -24,13 +24,13 @@ void main() {
 
   testWidgets('hides least-concern status', (tester) async {
     await tester.pumpWidget(app('en', 'Least Concern'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.textContaining('IUCN'), findsNothing);
   });
 
   testWidgets('shows compact badge in determination results', (tester) async {
     await tester.pumpWidget(app('de', 'EN', compact: true));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('IUCN EN'), findsOneWidget);
   });
 }
