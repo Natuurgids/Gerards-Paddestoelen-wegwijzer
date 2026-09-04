@@ -29,6 +29,10 @@ jobs:
         run: flutter create . --platforms=android,ios --project-name gerards_paddestoelen_wegwijzer --org nl.natuurgids
       - name: Install dependencies
         run: flutter pub get
+      - name: Generate launcher icon source
+        run: python3 tool/generate_app_icon.py
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
       - name: Analyze
         run: flutter analyze
       - name: Test
