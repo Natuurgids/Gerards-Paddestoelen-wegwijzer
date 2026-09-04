@@ -97,8 +97,7 @@ def _diagnostic(core_rows: list[dict[str, str]]) -> str:
         return Counter(row.get(field, "") for row in core_rows if row.get(field, "")).most_common(12)
     return (
         f"fields={keys}; kingdom={values('kingdom')}; taxonRank={values('taxonRank')}; "
-        f"taxonomicStatus={values('taxonomicStatus')}; nameStatus={values('nameStatus')}; "
-        f"occurrenceStatus={values('occurrenceStatus')}"
+        f"taxonomicStatus={values('taxonomicStatus')}; occurrenceStatus={values('occurrenceStatus')}"
     )
 
 
@@ -131,7 +130,7 @@ def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int
                 taxon_id = row.get("_id", "")
                 language = (row.get("language") or row.get("languageCode") or "").lower()
                 name = row.get("vernacularName", "").strip()
-                if not taxon_id or not name or not language.startswith("nl"):
+                if not taxon_id or not name or language not in {"nl", "nld", "dutch", "nl-nl"}:
                     continue
                 preferred = (row.get("isPreferredName") or row.get("preferredName") or "").lower() in {"true", "1", "yes"}
                 previous = dutch_names.get(taxon_id)
@@ -139,18 +138,21 @@ def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int
                     dutch_names[taxon_id] = (preferred, name)
 
     generated = []
+    seen_names = set(existing_names)
     for row in core_rows:
         kingdom = row.get("kingdom", "").strip().casefold()
         rank = row.get("taxonRank", "").strip().casefold()
         status = row.get("taxonomicStatus", "").strip().casefold()
         if kingdom != "fungi" or rank != "species":
             continue
-        if status and status not in {"accepted", "valid"}:
+        if status and status not in {"accepted", "accepted name", "valid"}:
             continue
         scientific = row.get("scientificName", "").strip()
         taxon_id = (row.get("taxonID") or row.get("_id") or "").strip()
-        if not scientific or not taxon_id or scientific.casefold() in existing_names:
+        normalized = scientific.casefold()
+        if not scientific or not taxon_id or normalized in seen_names:
             continue
+        seen_names.add(normalized)
         generated.append((scientific, taxon_id, row))
 
     generated.sort(key=lambda item: (item[0].casefold(), item[1]))
@@ -199,13 +201,12 @@ def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int
                 "de": {"common_name": scientific},
             },
         })
-        existing_names.add(scientific.casefold())
         added += 1
 
     catalog["version"] = max(int(catalog.get("version", 1)), 3)
     catalog_path.write_text(json.dumps(catalog, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     total = len(catalog["species"])
-    print(f"NSR merge complete: added {added}; catalogue total {total}")
+    print(f"NSR merge complete: added {added}; catalogue total {total}; Dutch names {len(dutch_names)}")
     if total < min_species:
         raise ValueError(f"Generated catalogue has only {total} species")
     return total
