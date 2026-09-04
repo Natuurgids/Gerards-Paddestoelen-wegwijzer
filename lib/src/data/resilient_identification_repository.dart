@@ -5,7 +5,8 @@ import 'reference_asset_store.dart';
 import 'repositories.dart';
 
 class ResilientIdentificationRepository extends IdentificationRepository {
-  ResilientIdentificationRepository();
+  ResilientIdentificationRepository({DatabaseProvider? databaseProvider})
+      : super(databaseProvider: databaseProvider);
 
   static const _databaseBudget = Duration(seconds: 2);
 
