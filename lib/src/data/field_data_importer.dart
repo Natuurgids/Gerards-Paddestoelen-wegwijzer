@@ -31,8 +31,18 @@ class FieldDataImporter {
       if (!declaredRegions.add(code)) {
         throw FormatException('Duplicate season region code: $code');
       }
-      _validateLocalizedRegionField(region['labels'], 'labels', code, required: true);
-      _validateLocalizedRegionField(region['notes'], 'notes', code, required: false);
+      _validateLocalizedRegionField(
+        region['labels'],
+        'labels',
+        code,
+        required: true,
+      );
+      _validateLocalizedRegionField(
+        region['notes'],
+        'notes',
+        code,
+        required: false,
+      );
     }
 
     for (final rawSpecies in species) {
@@ -124,18 +134,20 @@ class FieldDataImporter {
     }
 
     await db.transaction((txn) async {
+      final batch = txn.batch();
+
       // These tables contain developer-managed reference content only. Treat
       // the manifest as authoritative so removed measurements, calendars,
       // regions or species entries cannot survive as stale SQLite rows.
-      await txn.delete('species_measurement');
-      await txn.delete('species_season');
-      await txn.delete('season_region_text');
-      await txn.delete('season_region');
+      batch.delete('species_measurement');
+      batch.delete('species_season');
+      batch.delete('season_region_text');
+      batch.delete('season_region');
 
       for (final rawRegion in regions) {
         final region = rawRegion as Map<String, dynamic>;
         final code = region['code'] as String;
-        await txn.insert(
+        batch.insert(
           'season_region',
           {'code': code},
           conflictAlgorithm: ConflictAlgorithm.replace,
@@ -143,7 +155,7 @@ class FieldDataImporter {
         final labels = region['labels'] as Map<String, dynamic>;
         final notes = region['notes'] as Map<String, dynamic>?;
         for (final language in _languages) {
-          await txn.insert(
+          batch.insert(
             'season_region_text',
             {
               'region_code': code,
@@ -163,7 +175,7 @@ class FieldDataImporter {
         final measurements = item['measurements'] as List<dynamic>? ?? const [];
         for (final rawMeasurement in measurements) {
           final measurement = rawMeasurement as Map<String, dynamic>;
-          await txn.insert(
+          batch.insert(
             'species_measurement',
             {
               'species_id': speciesId,
@@ -179,19 +191,24 @@ class FieldDataImporter {
         final seasonDatasets = item['season_datasets'] as List<dynamic>?;
         if (seasonDatasets != null) {
           for (final rawDataset in seasonDatasets) {
-            final dataset = rawDataset as Map<String, dynamic>;
-            await _syncSeasonDataset(txn, speciesId, dataset);
+            _queueSeasonDataset(
+              batch,
+              speciesId,
+              rawDataset as Map<String, dynamic>,
+            );
           }
         } else {
           final legacySeason = item['season'] as List<dynamic>? ?? const [];
           if (legacySeason.isNotEmpty) {
-            await _syncSeasonDataset(txn, speciesId, {
+            _queueSeasonDataset(batch, speciesId, {
               'region_code': item['season_region'],
               'months': legacySeason,
             });
           }
         }
       }
+
+      await batch.commit(noResult: true);
     });
   }
 
@@ -202,7 +219,8 @@ class FieldDataImporter {
     required bool required,
   }) {
     if (value == null && !required) return;
-    if (value is! Map<String, dynamic> || !_languages.every(value.containsKey)) {
+    if (value is! Map<String, dynamic> ||
+        !_languages.every(value.containsKey)) {
       throw FormatException(
         'Season region $code must have nl, en and de $field',
       );
@@ -255,16 +273,16 @@ class FieldDataImporter {
     }
   }
 
-  static Future<void> _syncSeasonDataset(
-    Transaction txn,
+  static void _queueSeasonDataset(
+    Batch batch,
     int speciesId,
     Map<String, dynamic> dataset,
-  ) async {
+  ) {
     final regionCode = _canonicalRegionCode(dataset['region_code']);
     final months = dataset['months'] as List<dynamic>? ?? const [];
     for (final rawMonth in months) {
       final month = rawMonth as Map<String, dynamic>;
-      await txn.insert(
+      batch.insert(
         'species_season',
         {
           'species_id': speciesId,
