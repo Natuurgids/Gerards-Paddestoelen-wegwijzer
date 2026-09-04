@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Enrich generated species catalogue names from licensed GBIF checklists.
+"""Enrich generated species catalogue names from licensed checklists.
 
 Matches only exact scientific names. Existing non-scientific localized names always
 win. This deliberately imports vernacular names only, never descriptive biology.
-Both sources are read through GBIF's indexed Species API. We enumerate publisher
-source usages only, then independently retain accepted Fungi at species rank.
+German names are read from GBIF's indexed DGfM checklist. English names are read
+from the NBN Atlas species API backed by the UK Species Inventory.
 """
 from __future__ import annotations
 
@@ -28,11 +28,9 @@ SOURCES = {
     "en": {
         "id": "uksi-natural-history-museum",
         "title": "United Kingdom Species Inventory (UKSI)",
-        "dataset_key": "dbaa27eb-29e7-4cbb-8eab-3f689cfce116",
         "source_url": "https://www.gbif.org/dataset/dbaa27eb-29e7-4cbb-8eab-3f689cfce116",
         "license": "CC BY 4.0",
         "citation": "Raper C. United Kingdom Species Inventory (UKSI). Natural History Museum. doi:10.15468/rm6pm4",
-        "languages": {"en", "eng", "english", "en-gb"},
     },
 }
 
@@ -49,10 +47,7 @@ def _request_json(url: str) -> dict:
         return json.load(response)
 
 
-def _page(dataset_key: str, offset: int, limit: int) -> dict:
-    # SOURCE excludes GBIF's denormalized classification usages. Taxonomic filters
-    # are deliberately applied locally because source checklists do not always
-    # index their higher classification in the same way.
+def _gbif_page(dataset_key: str, offset: int, limit: int) -> dict:
     query = urllib.parse.urlencode(
         {
             "datasetKey": dataset_key,
@@ -64,16 +59,16 @@ def _page(dataset_key: str, offset: int, limit: int) -> dict:
     return _request_json(f"https://api.gbif.org/v1/species/search?{query}")
 
 
-def _is_target_species(row: dict) -> bool:
+def _gbif_is_target(row: dict) -> bool:
     kingdom = str(row.get("kingdom") or "").strip().casefold()
     rank = str(row.get("rank") or "").strip().upper()
     status = str(row.get("taxonomicStatus") or row.get("status") or "").strip().upper()
     return kingdom == "fungi" and rank == "SPECIES" and status == "ACCEPTED"
 
 
-def _collect_names(payload: dict, languages: set[str], result: dict[str, str]) -> None:
+def _collect_gbif_names(payload: dict, result: dict[str, str]) -> None:
     for row in payload.get("results", []):
-        if not _is_target_species(row):
+        if not _gbif_is_target(row):
             continue
         scientific = str(row.get("scientificName") or "").strip()
         if not scientific:
@@ -81,31 +76,82 @@ def _collect_names(payload: dict, languages: set[str], result: dict[str, str]) -
         for item in row.get("vernacularNames") or []:
             language = str(item.get("language") or "").strip().casefold()
             name = str(item.get("vernacularName") or "").strip()
-            if name and language in languages:
+            if name and language in SOURCES["de"]["languages"]:
                 result.setdefault(scientific.casefold(), name)
                 break
 
 
-def _names_from_gbif(dataset_key: str, languages: set[str]) -> dict[str, str]:
-    """Enumerate publisher source usages and retain accepted fungal species."""
+def _german_names() -> dict[str, str]:
+    dataset_key = SOURCES["de"]["dataset_key"]
     limit = 1000
-    first = _page(dataset_key, 0, limit)
+    first = _gbif_page(dataset_key, 0, limit)
     result: dict[str, str] = {}
-    _collect_names(first, languages, result)
+    _collect_gbif_names(first, result)
     count = int(first.get("count") or len(first.get("results", [])))
     if count > 75_000:
-        raise ValueError(
-            f"GBIF source checklist has {count} usages, above safe pagination bound"
-        )
+        raise ValueError(f"DGfM GBIF source checklist unexpectedly large: {count}")
     offsets = list(range(limit, count, limit))
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(_page, dataset_key, offset, limit) for offset in offsets]
+        futures = [executor.submit(_gbif_page, dataset_key, offset, limit) for offset in offsets]
         for future in concurrent.futures.as_completed(futures):
-            _collect_names(future.result(), languages, result)
-    print(
-        f"GBIF source checklist {dataset_key}: usages={count}; "
-        f"accepted fungal vernacular species={len(result)}"
+            _collect_gbif_names(future.result(), result)
+    print(f"DGfM via GBIF: usages={count}; German fungal names={len(result)}")
+    return result
+
+
+def _nbn_page(start: int, page_size: int) -> dict:
+    params = [
+        ("q", "*:*") ,
+        ("fq", "idxtype:TAXON"),
+        ("fq", 'taxonomicStatus:"accepted"'),
+        ("fq", 'rank:"species"'),
+        ("fq", "rk_kingdom:Fungi"),
+        ("pageSize", str(page_size)),
+        ("start", str(start)),
+    ]
+    query = urllib.parse.urlencode(params)
+    return _request_json(f"https://species-ws.nbnatlas.org/search?{query}")
+
+
+def _nbn_results(payload: dict) -> tuple[list[dict], int]:
+    search = payload.get("searchResults") or payload
+    rows = search.get("results") or []
+    total = (
+        search.get("totalRecords")
+        or search.get("totalResults")
+        or payload.get("totalRecords")
+        or len(rows)
     )
+    return list(rows), int(total)
+
+
+def _collect_nbn_names(rows: list[dict], result: dict[str, str]) -> None:
+    for row in rows:
+        scientific = str(
+            row.get("scientificName") or row.get("name") or ""
+        ).strip()
+        common = str(
+            row.get("commonName") or row.get("preferredCommonName") or ""
+        ).strip()
+        if scientific and common:
+            result.setdefault(scientific.casefold(), common)
+
+
+def _english_names() -> dict[str, str]:
+    page_size = 1000
+    first_payload = _nbn_page(0, page_size)
+    first_rows, total = _nbn_results(first_payload)
+    if total > 50_000:
+        raise ValueError(f"NBN accepted Fungi species query unexpectedly large: {total}")
+    result: dict[str, str] = {}
+    _collect_nbn_names(first_rows, result)
+    starts = list(range(page_size, total, page_size))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+        futures = [executor.submit(_nbn_page, start, page_size) for start in starts]
+        for future in concurrent.futures.as_completed(futures):
+            rows, _ = _nbn_results(future.result())
+            _collect_nbn_names(rows, result)
+    print(f"UKSI via NBN Atlas: accepted Fungi species={total}; English names={len(result)}")
     return result
 
 
@@ -116,10 +162,11 @@ def enrich(catalog_path: Path, retrieved_at: str) -> dict[str, int]:
         for t in catalog.get("taxa", [])
         if t.get("rank") == "species"
     }
+    lookups = {"de": _german_names(), "en": _english_names()}
     counts = {}
     sources = list(catalog.get("sources", []))
-    for locale, config in SOURCES.items():
-        lookup = _names_from_gbif(config["dataset_key"], config["languages"])
+    for locale, lookup in lookups.items():
+        config = SOURCES[locale]
         changed = 0
         for species in catalog.get("species", []):
             scientific = taxon_names.get(int(species["taxon_id"]))
