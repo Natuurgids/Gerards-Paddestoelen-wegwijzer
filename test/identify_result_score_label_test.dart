@@ -71,9 +71,10 @@ Future<void> _scrollResultIntoView(
   WidgetTester tester,
   Finder target,
 ) async {
-  final list = find.byType(ListView);
+  final scrollView = find.byType(CustomScrollView);
+  expect(scrollView, findsOneWidget);
   for (var attempt = 0; attempt < 4 && target.evaluate().isEmpty; attempt++) {
-    await tester.drag(list, const Offset(0, -300));
+    await tester.drag(scrollView, const Offset(0, -300));
     await tester.pumpAndSettle();
   }
 }
