@@ -97,7 +97,8 @@ class ReferenceAssetStore {
       (a, b) => a.commonName.toLowerCase().compareTo(b.commonName.toLowerCase()),
     );
     if (offset >= results.length) return const [];
-    final end = (offset + limit).clamp(0, results.length);
+    final requestedEnd = offset + limit;
+    final end = requestedEnd < results.length ? requestedEnd : results.length;
     return results.sublist(offset, end);
   }
 
