@@ -29,6 +29,8 @@ jobs:
         run: flutter create . --platforms=android,ios --project-name gerards_paddestoelen_wegwijzer --org nl.natuurgids
       - name: Install dependencies
         run: flutter pub get
+      - name: Generate packaged reference database
+        run: REFERENCE_DATABASE_OUTPUT=assets/data/reference.sqlite flutter test tool/reference_database_builder_test.dart
       - name: Generate launcher icon source
         run: python3 tool/generate_app_icon.py
       - name: Generate launcher icons
