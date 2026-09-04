@@ -70,9 +70,15 @@ void main() {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
+      final speciesCount =
+          (await db.rawQuery('SELECT COUNT(*) n FROM species')).single['n'] as int;
+      expect(speciesCount, greaterThanOrEqualTo(10000));
       expect(
-        (await db.rawQuery('SELECT COUNT(*) n FROM species')).single['n'],
-        16,
+        (await db.rawQuery(
+          "SELECT COUNT(*) n FROM species WHERE source_id='nsr-dutch-species-register'",
+        ))
+            .single['n'],
+        greaterThan(9000),
       );
       expect(
         (await db.rawQuery('SELECT COUNT(*) n FROM trait_option')).single['n'],
@@ -84,7 +90,7 @@ void main() {
       );
       expect(
         (await db.rawQuery('SELECT COUNT(*) n FROM reference_source')).single['n'],
-        greaterThanOrEqualTo(1),
+        greaterThanOrEqualTo(2),
       );
       expect((await db.rawQuery('SELECT COUNT(*) n FROM lesson')).single['n'], 12);
       expect(await db.query('training_progress'), isEmpty);
