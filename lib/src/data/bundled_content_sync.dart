@@ -6,7 +6,7 @@ class BundledContentSync {
   const BundledContentSync._();
 
   static const contentKey = 'reference-content';
-  static const revision = 4;
+  static const revision = 5;
 
   static Future<List<String>> runIfNeeded(
     Database db,
