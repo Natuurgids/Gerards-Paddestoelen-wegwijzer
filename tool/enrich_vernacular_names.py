@@ -9,6 +9,7 @@ publisher archive endpoints that reject automated downloads.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import urllib.parse
 import urllib.request
@@ -48,32 +49,43 @@ def _request_json(url: str) -> dict:
         return json.load(response)
 
 
+def _page(dataset_key: str, offset: int, limit: int) -> dict:
+    query = urllib.parse.urlencode(
+        {"datasetKey": dataset_key, "limit": limit, "offset": offset}
+    )
+    return _request_json(f"https://api.gbif.org/v1/species/search?{query}")
+
+
+def _collect_names(payload: dict, languages: set[str], result: dict[str, str]) -> None:
+    for row in payload.get("results", []):
+        scientific = str(row.get("scientificName") or "").strip()
+        if not scientific:
+            continue
+        for item in row.get("vernacularNames") or []:
+            language = str(item.get("language") or "").strip().casefold()
+            name = str(item.get("vernacularName") or "").strip()
+            if name and language in languages:
+                result.setdefault(scientific.casefold(), name)
+                break
+
+
 def _names_from_gbif(dataset_key: str, languages: set[str]) -> dict[str, str]:
     """Enumerate one GBIF checklist and retain its indexed vernacular names."""
-    result: dict[str, str] = {}
-    offset = 0
     limit = 1000
-    while True:
-        query = urllib.parse.urlencode(
-            {"datasetKey": dataset_key, "limit": limit, "offset": offset}
+    first = _page(dataset_key, 0, limit)
+    result: dict[str, str] = {}
+    _collect_names(first, languages, result)
+    count = int(first.get("count") or len(first.get("results", [])))
+    if count > 100_000:
+        raise ValueError(
+            f"GBIF checklist has {count} records, above the safe search-pagination bound"
         )
-        payload = _request_json(f"https://api.gbif.org/v1/species/search?{query}")
-        rows = payload.get("results", [])
-        for row in rows:
-            scientific = str(row.get("scientificName") or "").strip()
-            if not scientific:
-                continue
-            for item in row.get("vernacularNames") or []:
-                language = str(item.get("language") or "").strip().casefold()
-                name = str(item.get("vernacularName") or "").strip()
-                if name and language in languages:
-                    result.setdefault(scientific.casefold(), name)
-                    break
-        if payload.get("endOfRecords") or not rows:
-            break
-        offset += len(rows)
-        if offset > 100_000:
-            raise ValueError("GBIF checklist pagination exceeded safety bound")
+    offsets = list(range(limit, count, limit))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(_page, dataset_key, offset, limit) for offset in offsets]
+        for future in concurrent.futures.as_completed(futures):
+            _collect_names(future.result(), languages, result)
+    print(f"GBIF checklist {dataset_key}: records={count}; vernacular species={len(result)}")
     return result
 
 
