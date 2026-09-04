@@ -1,0 +1,16 @@
+{
+  "snapshot_date": "2026-09-04",
+  "catalogue": {
+    "total_species": 12525,
+    "nsr_species": 12509,
+    "dgfm_german_names": 1050,
+    "uksi_english_names": 12,
+    "iucn_statuses": 118
+  },
+  "required_sources": [
+    "nsr-dutch-species-register",
+    "dgfm-german-fungi",
+    "uksi-natural-history-museum",
+    "iucn-red-list"
+  ]
+}
