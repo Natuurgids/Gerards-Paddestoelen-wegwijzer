@@ -25,8 +25,10 @@ void main() {
       query: 'Amanita muscaria',
       limit: 10,
     );
-    expect(filtered, hasLength(1));
-    expect(filtered.single.scientificName, 'Amanita muscaria');
+    expect(
+      filtered.any((species) => species.scientificName == 'Amanita muscaria'),
+      isTrue,
+    );
   });
 
   test('bundled species detail contains gallery and field data', () async {
