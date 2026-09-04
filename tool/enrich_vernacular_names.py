@@ -3,9 +3,9 @@
 
 Matches only exact scientific names. Existing non-scientific localized names always
 win. This deliberately imports vernacular names only, never descriptive biology.
-Both sources are read through GBIF's indexed Species API. GBIF performs checklist,
-rank and accepted-status filtering; Fungi membership is then verified from each
-returned record before any vernacular name is considered.
+Both sources are read through GBIF's indexed Species API. The full-text query is
+restricted to Fungi and accepted species, then kingdom membership is independently
+verified on every returned row before any vernacular name is considered.
 """
 from __future__ import annotations
 
@@ -16,7 +16,6 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-FUNGI_GBIF_KEY = 5
 SOURCES = {
     "de": {
         "id": "dgfm-german-fungi",
@@ -52,12 +51,13 @@ def _request_json(url: str) -> dict:
 
 
 def _page(dataset_key: str, offset: int, limit: int) -> dict:
-    # species/search accepts checklist, rank and taxonomic-status filters. The
-    # earlier higher-taxon/origin combination is intentionally avoided here:
-    # those fields are not consistently indexed for source checklist usages.
+    # GBIF Species API full-text search includes the classification. Using q=Fungi
+    # avoids the checklist-local higherTaxonKey, whose value is a UUID rather than
+    # the numeric backbone kingdom key. We still verify the kingdom on every row.
     query = urllib.parse.urlencode(
         {
             "datasetKey": dataset_key,
+            "q": "Fungi",
             "rank": "SPECIES",
             "status": "ACCEPTED",
             "limit": limit,
@@ -68,9 +68,7 @@ def _page(dataset_key: str, offset: int, limit: int) -> dict:
 
 
 def _is_fungus(row: dict) -> bool:
-    kingdom = str(row.get("kingdom") or "").strip().casefold()
-    kingdom_key = row.get("kingdomKey")
-    return kingdom == "fungi" or kingdom_key == FUNGI_GBIF_KEY
+    return str(row.get("kingdom") or "").strip().casefold() == "fungi"
 
 
 def _collect_names(payload: dict, languages: set[str], result: dict[str, str]) -> None:
@@ -89,15 +87,15 @@ def _collect_names(payload: dict, languages: set[str], result: dict[str, str]) -
 
 
 def _names_from_gbif(dataset_key: str, languages: set[str]) -> dict[str, str]:
-    """Enumerate accepted species in one checklist and retain Fungi only."""
+    """Enumerate accepted fungal species in one GBIF checklist."""
     limit = 1000
     first = _page(dataset_key, 0, limit)
     result: dict[str, str] = {}
     _collect_names(first, languages, result)
     count = int(first.get("count") or len(first.get("results", [])))
-    if count > 150_000:
+    if count > 75_000:
         raise ValueError(
-            f"Filtered GBIF checklist has {count} accepted species, above safe pagination bound"
+            f"Fungi-filtered GBIF checklist has {count} records, above safe pagination bound"
         )
     offsets = list(range(limit, count, limit))
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
@@ -105,8 +103,8 @@ def _names_from_gbif(dataset_key: str, languages: set[str]) -> dict[str, str]:
         for future in concurrent.futures.as_completed(futures):
             _collect_names(future.result(), languages, result)
     print(
-        f"GBIF checklist {dataset_key}: accepted species={count}; "
-        f"fungal vernacular species={len(result)}"
+        f"GBIF Fungi checklist {dataset_key}: records={count}; "
+        f"vernacular species={len(result)}"
     )
     return result
 
@@ -168,7 +166,7 @@ def main():
     parser.add_argument("--min-en", type=int, default=100)
     args = parser.parse_args()
     counts = enrich(Path(args.catalog), args.retrieved_at)
-    if counts.get("de", 0) < args.min_de or counts.get("en", 0) < args.min_en:
+    if counts.get("de", 0) < args.min_de or counts.get("en", 0) < args.min-en:
         raise ValueError(f"Vernacular coverage unexpectedly low: {counts}")
 
 
