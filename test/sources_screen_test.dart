@@ -17,7 +17,10 @@ void main() {
   testWidgets('Dutch sources screen exposes NSR licence and source boundaries',
       (tester) async {
     await tester.pumpWidget(app(const Locale('nl')));
-    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pump();
 
     expect(find.text('Bronnen & licenties'), findsOneWidget);
     expect(
