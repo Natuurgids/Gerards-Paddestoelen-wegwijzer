@@ -25,6 +25,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   void _reload() => _lessons = _repo.lessons(widget.locale.languageCode);
 
+  void _retry() {
+    setState(_reload);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -37,12 +41,22 @@ class _TrainingScreenState extends State<TrainingScreen> {
               child: FutureBuilder<List<LessonSummary>>(
                 future: _lessons,
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: IconButton(
+                        onPressed: _retry,
+                        icon: const Icon(Icons.refresh),
+                        iconSize: 40,
+                      ),
+                    );
+                  }
+                  if (snapshot.connectionState != ConnectionState.done) {
                     return const Center(child: CircularProgressIndicator());
                   }
+                  final lessons = snapshot.data ?? const <LessonSummary>[];
                   return ListView(
                     padding: const EdgeInsets.all(16),
-                    children: snapshot.data!
+                    children: lessons
                         .map(
                           (lesson) => Card(
                             child: ListTile(
@@ -61,7 +75,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                                     ),
                                   ),
                                 );
-                                setState(_reload);
+                                if (mounted) setState(_reload);
                               },
                             ),
                           ),
@@ -97,7 +111,15 @@ class _LessonScreenState extends State<LessonScreen> {
   @override
   void initState() {
     super.initState();
+    _loadQuestions();
+  }
+
+  void _loadQuestions() {
     _future = _repo.questions(widget.lesson.id, widget.locale.languageCode);
+  }
+
+  void _retry() {
+    setState(_loadQuestions);
   }
 
   Future<void> _submit(List<QuizQuestion> questions) async {
@@ -127,10 +149,19 @@ class _LessonScreenState extends State<LessonScreen> {
               child: FutureBuilder<List<QuizQuestion>>(
                 future: _future,
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: IconButton(
+                        onPressed: _retry,
+                        icon: const Icon(Icons.refresh),
+                        iconSize: 40,
+                      ),
+                    );
+                  }
+                  if (snapshot.connectionState != ConnectionState.done) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final questions = snapshot.data!;
+                  final questions = snapshot.data ?? const <QuizQuestion>[];
                   return ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
