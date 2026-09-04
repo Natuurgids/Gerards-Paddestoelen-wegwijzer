@@ -136,7 +136,7 @@ class DatabaseSchema {
         )
         SELECT id, 'iucn_red_list', 'global', '', conservation_status, NULL, NULL
         FROM species
-        WHERE conservation_status IS NOT NULL AND TRIM(conservation_status) <> '' ''');
+        WHERE conservation_status IS NOT NULL AND LENGTH(TRIM(conservation_status)) > 0''');
       }
     }
   }
