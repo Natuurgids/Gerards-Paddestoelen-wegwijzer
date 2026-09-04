@@ -24,11 +24,11 @@ void main() {
 
     expect(find.text('Bronnen & licenties'), findsOneWidget);
     expect(
-      find.textContaining('Checklist Dutch Species Register'),
+      find.text('Checklist Dutch Species Register - Nederlands Soortenregister'),
       findsOneWidget,
     );
     expect(find.textContaining('CC BY 4.0'), findsOneWidget);
-    expect(find.textContaining('First Nature'), findsOneWidget);
+    expect(find.text('First Nature fungus identification guides'), findsOneWidget);
     expect(
       find.textContaining('Geen hergebruiklicentie vastgelegd'),
       findsOneWidget,
