@@ -47,10 +47,7 @@ class SpeciesBrowserRepository {
       FROM species s
       JOIN taxon t ON t.id=s.taxon_id
       JOIN species_text st ON st.species_id=s.id AND st.language_code=?
-      WHERE ?='' OR t.scientific_name LIKE ? COLLATE NOCASE OR EXISTS(
-        SELECT 1 FROM species_text alias
-        WHERE alias.species_id=s.id AND alias.common_name LIKE ? COLLATE NOCASE
-      )
+      WHERE ?='' OR st.common_name LIKE ? COLLATE NOCASE OR t.scientific_name LIKE ? COLLATE NOCASE
       ORDER BY st.common_name COLLATE NOCASE
       LIMIT ? OFFSET ?''',
             [languageCode, trimmed, like, like, limit, offset],
