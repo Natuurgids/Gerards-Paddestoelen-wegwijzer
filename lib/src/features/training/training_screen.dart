@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
-import '../../data/repositories.dart';
+import '../../data/training_data_repository.dart';
 import '../../widgets/safety_notice.dart';
 
 class TrainingScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class TrainingScreen extends StatefulWidget {
 }
 
 class _TrainingScreenState extends State<TrainingScreen> {
-  final _repo = TrainingRepository();
+  final _repo = TrainingDataRepository();
   late Future<List<LessonSummary>> _lessons;
 
   @override
@@ -89,7 +89,7 @@ class LessonScreen extends StatefulWidget {
 }
 
 class _LessonScreenState extends State<LessonScreen> {
-  final _repo = TrainingRepository();
+  final _repo = TrainingDataRepository();
   late Future<List<QuizQuestion>> _future;
   final Map<int, int> _answers = {};
   double? _score;
