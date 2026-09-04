@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
 import '../../data/repositories.dart';
+import '../../data/resilient_species_repository.dart';
 import '../../widgets/safety_notice.dart';
 import '../../widgets/species_image.dart';
 
@@ -31,7 +32,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
   @override
   void initState() {
     super.initState();
-    _future = (widget.repository ?? SpeciesRepository()).detail(
+    _future = (widget.repository ?? ResilientSpeciesRepository()).detail(
       widget.speciesId,
       widget.locale.languageCode,
     );
@@ -152,6 +153,9 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
               child: FutureBuilder<SpeciesDetail?>(
                 future: _future,
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text(l10n.speciesNotFound));
+                  }
                   if (snapshot.connectionState != ConnectionState.done) {
                     return const Center(child: CircularProgressIndicator());
                   }

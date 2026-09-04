@@ -5,12 +5,18 @@ import 'reference_asset_store.dart';
 import 'repositories.dart';
 
 class ResilientIdentificationRepository extends IdentificationRepository {
-  ResilientIdentificationRepository({super.databaseProvider});
+  ResilientIdentificationRepository({super.databaseProvider})
+      : _preferDatabase = databaseProvider != null;
 
   static const _databaseBudget = Duration(seconds: 2);
 
+  final bool _preferDatabase;
+
   @override
   Future<List<TraitChoice>> choices(String languageCode) async {
+    if (!_preferDatabase) {
+      return ReferenceAssetStore.instance.traitChoices(languageCode);
+    }
     try {
       return await super.choices(languageCode).timeout(_databaseBudget);
     } on Object {
@@ -28,6 +34,16 @@ class ResilientIdentificationRepository extends IdentificationRepository {
     double? stemHeightCm,
     double? stemDiameterCm,
   }) async {
+    final hasFieldEvidence =
+        (observationMonth != null && seasonRegionCode != null) ||
+            capDiameterCm != null ||
+            stemHeightCm != null ||
+            stemDiameterCm != null;
+
+    if (!_preferDatabase && !hasFieldEvidence) {
+      return _identifyFromAssets(languageCode, selected);
+    }
+
     try {
       return await super
           .identify(

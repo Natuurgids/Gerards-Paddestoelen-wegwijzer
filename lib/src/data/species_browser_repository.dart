@@ -12,12 +12,14 @@ Future<Database> _defaultDatabaseProvider() => AppDatabase.instance.database;
 
 class SpeciesBrowserRepository {
   SpeciesBrowserRepository({SpeciesBrowserDatabaseProvider? databaseProvider})
-      : _databaseProvider = databaseProvider ?? _defaultDatabaseProvider;
+      : _databaseProvider = databaseProvider ?? _defaultDatabaseProvider,
+        _preferDatabase = databaseProvider != null;
 
   static const defaultPageSize = 50;
   static const _databaseBudget = Duration(seconds: 2);
 
   final SpeciesBrowserDatabaseProvider _databaseProvider;
+  final bool _preferDatabase;
 
   Future<List<SpeciesSummary>> searchPage(
     String languageCode, {
@@ -25,6 +27,15 @@ class SpeciesBrowserRepository {
     int offset = 0,
     int limit = defaultPageSize,
   }) async {
+    if (!_preferDatabase) {
+      return ReferenceAssetStore.instance.speciesPage(
+        languageCode,
+        query: query,
+        offset: offset,
+        limit: limit,
+      );
+    }
+
     try {
       final db = await _databaseProvider().timeout(_databaseBudget);
       final trimmed = query.trim();

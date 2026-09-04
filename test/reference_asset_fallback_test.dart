@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'package:gerards_paddestoelen_wegwijzer/src/data/reference_asset_store.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/resilient_identification_repository.dart';
+import 'package:gerards_paddestoelen_wegwijzer/src/data/resilient_species_repository.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/species_browser_repository.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/training_data_repository.dart';
 
@@ -21,6 +23,26 @@ void main() {
     final filtered = await repo.searchPage('nl', query: 'vlieg', limit: 10);
     expect(filtered, hasLength(1));
     expect(filtered.single.scientificName, 'Amanita muscaria');
+  });
+
+  test('bundled species detail contains gallery and field data', () async {
+    final detail = await ReferenceAssetStore.instance.speciesDetail(1, 'nl');
+
+    expect(detail, isNotNull);
+    expect(detail!.scientificName, 'Amanita muscaria');
+    expect(detail.images, hasLength(5));
+    expect(detail.measurements, isNotEmpty);
+    expect(detail.season, isNotEmpty);
+  });
+
+  test('species detail falls back when database is unavailable', () async {
+    final repo = ResilientSpeciesRepository(databaseProvider: failingDatabase);
+
+    final detail = await repo.detail(2, 'en');
+
+    expect(detail, isNotNull);
+    expect(detail!.scientificName, 'Amanita phalloides');
+    expect(detail.images, hasLength(5));
   });
 
   test('determination falls back to bundled traits and mappings', () async {
