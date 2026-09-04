@@ -11,6 +11,7 @@ class ReferenceAssetStore {
 
   Future<Map<String, dynamic>>? _speciesCatalog;
   Future<Map<String, dynamic>>? _speciesImages;
+  Future<Map<String, dynamic>>? _fieldData;
   Future<Map<String, dynamic>>? _traits;
   Future<Map<String, dynamic>>? _training;
 
@@ -24,6 +25,9 @@ class ReferenceAssetStore {
 
   Future<Map<String, dynamic>> get speciesImages =>
       _speciesImages ??= _load('assets/data/species_images.json');
+
+  Future<Map<String, dynamic>> get fieldData =>
+      _fieldData ??= _load('assets/data/field_data.json');
 
   Future<Map<String, dynamic>> get traits =>
       _traits ??= _load('assets/data/identification_traits.json');
@@ -100,6 +104,107 @@ class ReferenceAssetStore {
     final requestedEnd = offset + limit;
     final end = requestedEnd < results.length ? requestedEnd : results.length;
     return results.sublist(offset, end);
+  }
+
+  Future<SpeciesDetail?> speciesDetail(
+    int speciesId,
+    String languageCode,
+  ) async {
+    final catalog = await speciesCatalog;
+    final imagesManifest = await speciesImages;
+    final fieldManifest = await fieldData;
+
+    final taxa = <int, String>{};
+    for (final raw in catalog['taxa'] as List<dynamic>? ?? const []) {
+      final item = raw as Map<String, dynamic>;
+      taxa[item['id'] as int] = item['scientific_name'] as String;
+    }
+
+    Map<String, dynamic>? species;
+    for (final raw in catalog['species'] as List<dynamic>? ?? const []) {
+      final candidate = raw as Map<String, dynamic>;
+      if (candidate['id'] == speciesId) {
+        species = candidate;
+        break;
+      }
+    }
+    if (species == null) return null;
+
+    final texts = species['texts'] as Map<String, dynamic>?;
+    final localized =
+        (texts?[languageCode] ?? texts?['en'] ?? texts?['nl']) as Map<String, dynamic>?;
+    final scientificName = taxa[species['taxon_id'] as int] ?? '';
+
+    final images = <SpeciesImage>[];
+    for (final raw in imagesManifest['species'] as List<dynamic>? ?? const []) {
+      final item = raw as Map<String, dynamic>;
+      if (item['speciesId'] != speciesId) continue;
+      for (final imageRaw in item['images'] as List<dynamic>? ?? const []) {
+        final image = imageRaw as Map<String, dynamic>;
+        images.add(
+          SpeciesImage(
+            path: image['path'] as String,
+            angleCode: image['angle'] as String?,
+            sortOrder: image['order'] as int? ?? 0,
+            photographer: image['photographer'] as String?,
+            license: image['license'] as String?,
+          ),
+        );
+      }
+      break;
+    }
+    images.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+    final measurements = <SpeciesMeasurement>[];
+    final season = <SpeciesSeasonMonth>[];
+    for (final raw in fieldManifest['species'] as List<dynamic>? ?? const []) {
+      final item = raw as Map<String, dynamic>;
+      if (item['species_id'] != speciesId) continue;
+      for (final measurementRaw
+          in item['measurements'] as List<dynamic>? ?? const []) {
+        final measurement = measurementRaw as Map<String, dynamic>;
+        measurements.add(
+          SpeciesMeasurement(
+            code: measurement['code'] as String,
+            minValue: (measurement['min'] as num?)?.toDouble(),
+            maxValue: (measurement['max'] as num?)?.toDouble(),
+            unit: measurement['unit'] as String,
+          ),
+        );
+      }
+      for (final datasetRaw
+          in item['season_datasets'] as List<dynamic>? ?? const []) {
+        final dataset = datasetRaw as Map<String, dynamic>;
+        final regionCode = dataset['region_code'] as String?;
+        for (final monthRaw in dataset['months'] as List<dynamic>? ?? const []) {
+          final month = monthRaw as Map<String, dynamic>;
+          season.add(
+            SpeciesSeasonMonth(
+              month: month['month'] as int,
+              likelihood: month['likelihood'] as int,
+              regionCode: regionCode,
+            ),
+          );
+        }
+      }
+      break;
+    }
+
+    return SpeciesDetail(
+      id: speciesId,
+      scientificName: scientificName,
+      commonName: localized?['common_name']?.toString() ?? scientificName,
+      summary: localized?['summary']?.toString(),
+      imagePath: images.isEmpty ? null : images.first.path,
+      description: localized?['description']?.toString(),
+      habitat: localized?['habitat']?.toString(),
+      lookalikes: localized?['lookalikes']?.toString(),
+      edibleStatus: species['edible_status']?.toString() ?? 'unknown',
+      toxicityLevel: species['toxicity_level']?.toString() ?? 'unknown',
+      images: images,
+      measurements: measurements,
+      season: season,
+    );
   }
 
   Future<List<TraitChoice>> traitChoices(String languageCode) async {
