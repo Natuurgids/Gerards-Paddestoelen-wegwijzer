@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Enrich generated species catalogue names from licensed DwC-A checklists.
+"""Enrich generated species catalogue names from licensed checklists.
 
 Matches only exact scientific names. Existing non-scientific localized names always
 win. This deliberately imports vernacular names only, never descriptive biology.
+German names are read from GBIF's indexed copy of the DGfM checklist so CI does not
+depend on the publisher endpoint accepting automated downloads.
 """
 from __future__ import annotations
 
@@ -11,6 +13,7 @@ import csv
 import io
 import json
 import tempfile
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
@@ -20,7 +23,7 @@ SOURCES = {
     "de": {
         "id": "dgfm-german-fungi",
         "title": "Taxon list of fungi and fungal-like organisms from Germany compiled by the DGfM",
-        "url": "http://services.snsb.info/DTNtaxonlists/rest/v0.1/lists/DiversityTaxonNames_Fungi/1140/dwc",
+        "dataset_key": "155b33d2-84b1-4a31-9287-9d9e900bc6c8",
         "source_url": "https://www.gbif.org/dataset/155b33d2-84b1-4a31-9287-9d9e900bc6c8",
         "license": "CC BY 4.0",
         "citation": "Dämmrich F. Taxon list of fungi and fungal-like organisms from Germany compiled by the DGfM. Staatliche Naturwissenschaftliche Sammlungen Bayerns. doi:10.15468/gtvmjw",
@@ -77,6 +80,18 @@ def _rows(zf, spec):
         yield row
 
 
+def _request_json(url: str) -> dict:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Gerards-Paddestoelen-Wegwijzer/1.0",
+            "Accept": "application/json",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=180) as response:
+        return json.load(response)
+
+
 def _download(url: str) -> Path:
     temp = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
     temp.close()
@@ -86,7 +101,37 @@ def _download(url: str) -> Path:
     return Path(temp.name)
 
 
-def _names(archive: Path, languages: set[str]) -> dict[str, str]:
+def _names_from_gbif(dataset_key: str, languages: set[str]) -> dict[str, str]:
+    """Enumerate one GBIF checklist and retain its indexed vernacular names."""
+    result: dict[str, str] = {}
+    offset = 0
+    limit = 1000
+    while True:
+        query = urllib.parse.urlencode(
+            {"datasetKey": dataset_key, "limit": limit, "offset": offset}
+        )
+        payload = _request_json(f"https://api.gbif.org/v1/species/search?{query}")
+        rows = payload.get("results", [])
+        for row in rows:
+            scientific = str(row.get("scientificName") or "").strip()
+            if not scientific:
+                continue
+            names = row.get("vernacularNames") or []
+            for item in names:
+                language = str(item.get("language") or "").strip().casefold()
+                name = str(item.get("vernacularName") or "").strip()
+                if name and language in languages:
+                    result.setdefault(scientific.casefold(), name)
+                    break
+        if payload.get("endOfRecords") or not rows:
+            break
+        offset += len(rows)
+        if offset > 100_000:
+            raise ValueError("GBIF checklist pagination exceeded safety bound")
+    return result
+
+
+def _names_from_archive(archive: Path, languages: set[str]) -> dict[str, str]:
     with zipfile.ZipFile(archive) as zf:
         meta = next((n for n in zf.namelist() if n.lower().endswith("meta.xml")), None)
         if not meta:
@@ -119,14 +164,17 @@ def _names(archive: Path, languages: set[str]) -> dict[str, str]:
         return {key: value for key, (_, value) in result.items()}
 
 
-def enrich(catalog_path: Path, archives: dict[str, Path], retrieved_at: str) -> dict[str, int]:
+def enrich(catalog_path: Path, en_archive: Path, retrieved_at: str) -> dict[str, int]:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     taxon_names = {int(t["id"]): str(t["scientific_name"]).strip() for t in catalog.get("taxa", []) if t.get("rank") == "species"}
+    lookups = {
+        "de": _names_from_gbif(SOURCES["de"]["dataset_key"], SOURCES["de"]["languages"]),
+        "en": _names_from_archive(en_archive, SOURCES["en"]["languages"]),
+    }
     counts = {}
     sources = list(catalog.get("sources", []))
-    for locale, archive in archives.items():
+    for locale, lookup in lookups.items():
         config = SOURCES[locale]
-        lookup = _names(archive, config["languages"])
         changed = 0
         for species in catalog.get("species", []):
             scientific = taxon_names.get(int(species["taxon_id"]))
@@ -157,27 +205,22 @@ def enrich(catalog_path: Path, archives: dict[str, Path], retrieved_at: str) -> 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--catalog", default="assets/data/species_catalog.json")
-    parser.add_argument("--de-archive")
     parser.add_argument("--en-archive")
     parser.add_argument("--retrieved-at", default="2026-09-04")
     parser.add_argument("--min-de", type=int, default=100)
     parser.add_argument("--min-en", type=int, default=100)
     args = parser.parse_args()
-    downloaded = []
+    downloaded = None
     try:
-        archives = {}
-        for locale, supplied in (("de", args.de_archive), ("en", args.en_archive)):
-            if supplied:
-                archives[locale] = Path(supplied)
-            else:
-                archives[locale] = _download(SOURCES[locale]["url"])
-                downloaded.append(archives[locale])
-        counts = enrich(Path(args.catalog), archives, args.retrieved_at)
+        en_archive = Path(args.en_archive) if args.en_archive else _download(SOURCES["en"]["url"])
+        if not args.en_archive:
+            downloaded = en_archive
+        counts = enrich(Path(args.catalog), en_archive, args.retrieved_at)
         if counts.get("de", 0) < args.min_de or counts.get("en", 0) < args.min_en:
             raise ValueError(f"Vernacular coverage unexpectedly low: {counts}")
     finally:
-        for path in downloaded:
-            path.unlink(missing_ok=True)
+        if downloaded is not None:
+            downloaded.unlink(missing_ok=True)
 
 if __name__ == "__main__":
     main()
