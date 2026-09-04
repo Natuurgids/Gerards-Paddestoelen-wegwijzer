@@ -66,6 +66,27 @@ class SpeciesCatalogImporter {
           'source_record_id': item['source_record_id'],
         });
 
+        batch.delete(
+          'species_conservation_status',
+          where: 'species_id=?',
+          whereArgs: [speciesId],
+        );
+        for (final status in _conservationStatuses(item)) {
+          batch.insert(
+            'species_conservation_status',
+            {
+              'species_id': speciesId,
+              'system': status['system'],
+              'scope': status['scope'],
+              'jurisdiction_code': status['jurisdiction_code'] ?? '',
+              'status': status['status'],
+              'source_id': status['source_id'],
+              'source_record_id': status['source_record_id'],
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+
         final texts = item['texts'] as Map<String, dynamic>;
         for (final entry in texts.entries) {
           final text = entry.value as Map<String, dynamic>;
@@ -87,6 +108,29 @@ class SpeciesCatalogImporter {
 
       await batch.commit(noResult: true);
     });
+  }
+
+  static List<Map<String, dynamic>> _conservationStatuses(
+    Map<String, dynamic> item,
+  ) {
+    final explicit = item['conservation_statuses'];
+    if (explicit is List<dynamic>) {
+      return explicit.cast<Map<String, dynamic>>();
+    }
+    final legacyStatus = item['conservation_status'];
+    if (legacyStatus is String && legacyStatus.trim().isNotEmpty) {
+      return [
+        <String, dynamic>{
+          'system': 'iucn_red_list',
+          'scope': item['conservation_scope'] ?? 'global',
+          'jurisdiction_code': '',
+          'status': legacyStatus,
+          'source_id': item['conservation_source_id'],
+          'source_record_id': item['conservation_source_record_id'],
+        },
+      ];
+    }
+    return const [];
   }
 
   static void _queueUpsertById(
@@ -160,6 +204,7 @@ class SpeciesCatalogImporter {
           (sourceId is! String || !sourceIds.contains(sourceId))) {
         throw FormatException('Species $id references unknown source: $sourceId');
       }
+      _validateConservationStatuses(item, id, sourceIds);
       final catalogOnly = item['catalog_only'] == true;
       if (catalogOnly) {
         if (sourceId is! String || sourceId.trim().isEmpty) {
@@ -183,6 +228,44 @@ class SpeciesCatalogImporter {
         'species $id',
         requireDescription: !catalogOnly,
       );
+    }
+  }
+
+  static void _validateConservationStatuses(
+    Map<String, dynamic> item,
+    int speciesId,
+    Set<String> sourceIds,
+  ) {
+    final statuses = _conservationStatuses(item);
+    final keys = <String>{};
+    for (final status in statuses) {
+      for (final field in const ['system', 'scope', 'status']) {
+        final value = status[field];
+        if (value is! String || value.trim().isEmpty) {
+          throw FormatException(
+            'Species $speciesId has invalid conservation $field',
+          );
+        }
+      }
+      final jurisdiction = status['jurisdiction_code'];
+      if (jurisdiction != null && jurisdiction is! String) {
+        throw FormatException(
+          'Species $speciesId has invalid conservation jurisdiction_code',
+        );
+      }
+      final statusSourceId = status['source_id'];
+      if (statusSourceId != null &&
+          (statusSourceId is! String || !sourceIds.contains(statusSourceId))) {
+        throw FormatException(
+          'Species $speciesId references unknown conservation source: $statusSourceId',
+        );
+      }
+      final key = '${status['system']}|${status['scope']}|${jurisdiction ?? ''}';
+      if (!keys.add(key)) {
+        throw FormatException(
+          'Species $speciesId has duplicate conservation status key: $key',
+        );
+      }
     }
   }
 
