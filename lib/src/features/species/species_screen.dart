@@ -4,6 +4,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
 import '../../data/repositories.dart';
 import '../../data/resilient_species_repository.dart';
+import '../../widgets/conservation_warning.dart';
 import '../../widgets/safety_notice.dart';
 import '../../widgets/species_image.dart';
 
@@ -229,6 +230,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                                     fontStyle: FontStyle.italic,
                                   ),
                             ),
+                            ConservationWarning(speciesId: species.id),
                             const SizedBox(height: 16),
                             Text(species.description ?? species.summary ?? ''),
                             if (species.measurements.isNotEmpty) ...[

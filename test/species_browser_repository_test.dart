@@ -37,10 +37,14 @@ void main() {
 
     final first = await repository.searchPage('en', limit: 2);
     final second = await repository.searchPage('en', offset: 2, limit: 2);
-    final filtered = await repository.searchPage('en', query: 'species4');
+    final commonName = await repository.searchPage('en', query: 'Species 4');
+    final latinName = await repository.searchPage('en', query: 'Genus species4');
 
     expect(first.map((item) => item.id), [1, 2]);
     expect(second.map((item) => item.id), [3, 4]);
-    expect(filtered.map((item) => item.id), [4]);
+    expect(commonName.map((item) => item.id), [4]);
+    expect(latinName.map((item) => item.id), [4]);
+    expect(latinName.single.commonName, 'Species 4');
+    expect(latinName.single.scientificName, 'Genus species4');
   });
 }
