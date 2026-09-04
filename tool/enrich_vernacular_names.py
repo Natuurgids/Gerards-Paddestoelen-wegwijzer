@@ -166,7 +166,7 @@ def main():
     parser.add_argument("--min-en", type=int, default=100)
     args = parser.parse_args()
     counts = enrich(Path(args.catalog), args.retrieved_at)
-    if counts.get("de", 0) < args.min_de or counts.get("en", 0) < args.min-en:
+    if counts.get("de", 0) < args.min_de or counts.get("en", 0) < args.min_en:
         raise ValueError(f"Vernacular coverage unexpectedly low: {counts}")
 
 
