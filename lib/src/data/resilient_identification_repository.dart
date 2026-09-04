@@ -86,7 +86,8 @@ class ResilientIdentificationRepository extends IdentificationRepository {
       var matched = 0;
       var matchedWeight = 0.0;
       var totalWeight = 0.0;
-      final relationsByTrait = bySpecies[item.id] ?? const {};
+      final Map<int, List<Map<String, dynamic>>> relationsByTrait =
+          bySpecies[item.id] ?? const {};
       for (final selectedEntry in selected.entries) {
         final traitRelations =
             relationsByTrait[selectedEntry.key] ?? const <Map<String, dynamic>>[];
