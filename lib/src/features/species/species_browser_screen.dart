@@ -29,6 +29,7 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
   bool _loadingInitial = true;
   bool _loadingMore = false;
   bool _hasMore = true;
+  bool _loadFailed = false;
   int _requestGeneration = 0;
 
   @override
@@ -66,22 +67,31 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
       _loadingInitial = true;
       _loadingMore = false;
       _hasMore = true;
+      _loadFailed = false;
     });
 
-    final rows = await _repo.searchPage(
-      widget.locale.languageCode,
-      query: _search.text,
-      limit: _pageSize + 1,
-    );
-    if (!mounted || generation != _requestGeneration) return;
+    try {
+      final rows = await _repo.searchPage(
+        widget.locale.languageCode,
+        query: _search.text,
+        limit: _pageSize + 1,
+      );
+      if (!mounted || generation != _requestGeneration) return;
 
-    setState(() {
-      _items
-        ..clear()
-        ..addAll(rows.take(_pageSize));
-      _hasMore = rows.length > _pageSize;
-      _loadingInitial = false;
-    });
+      setState(() {
+        _items
+          ..clear()
+          ..addAll(rows.take(_pageSize));
+        _hasMore = rows.length > _pageSize;
+        _loadingInitial = false;
+      });
+    } on Object {
+      if (!mounted || generation != _requestGeneration) return;
+      setState(() {
+        _loadingInitial = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   Future<void> _loadMore() async {
@@ -89,19 +99,27 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
     final generation = _requestGeneration;
     setState(() => _loadingMore = true);
 
-    final rows = await _repo.searchPage(
-      widget.locale.languageCode,
-      query: _search.text,
-      offset: _items.length,
-      limit: _pageSize + 1,
-    );
-    if (!mounted || generation != _requestGeneration) return;
+    try {
+      final rows = await _repo.searchPage(
+        widget.locale.languageCode,
+        query: _search.text,
+        offset: _items.length,
+        limit: _pageSize + 1,
+      );
+      if (!mounted || generation != _requestGeneration) return;
 
-    setState(() {
-      _items.addAll(rows.take(_pageSize));
-      _hasMore = rows.length > _pageSize;
-      _loadingMore = false;
-    });
+      setState(() {
+        _items.addAll(rows.take(_pageSize));
+        _hasMore = rows.length > _pageSize;
+        _loadingMore = false;
+      });
+    } on Object {
+      if (!mounted || generation != _requestGeneration) return;
+      setState(() {
+        _loadingMore = false;
+        _hasMore = false;
+      });
+    }
   }
 
   @override
@@ -127,52 +145,61 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
             Expanded(
               child: _loadingInitial
                   ? const Center(child: CircularProgressIndicator())
-                  : _items.isEmpty
-                      ? Center(child: Text(l10n.speciesBrowserEmpty))
-                      : ListView.separated(
-                          controller: _scroll,
-                          padding: const EdgeInsets.all(12),
-                          itemCount: _items.length + (_loadingMore ? 1 : 0),
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            if (index == _items.length) {
-                              return const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-                            final s = _items[index];
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                              leading: SizedBox(
-                                width: 64,
-                                height: 64,
-                                child: _Thumb(path: s.imagePath),
-                              ),
-                              title: Text(s.commonName),
-                              subtitle: Text(
-                                '${s.scientificName}\n${s.summary ?? ''}',
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              isThreeLine: true,
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => SpeciesScreen(
-                                    locale: widget.locale,
-                                    speciesId: s.id,
+                  : _loadFailed
+                      ? Center(
+                          child: IconButton(
+                            onPressed: _loadFirstPage,
+                            icon: const Icon(Icons.refresh),
+                            iconSize: 40,
+                          ),
+                        )
+                      : _items.isEmpty
+                          ? Center(child: Text(l10n.speciesBrowserEmpty))
+                          : ListView.separated(
+                              controller: _scroll,
+                              padding: const EdgeInsets.all(12),
+                              itemCount:
+                                  _items.length + (_loadingMore ? 1 : 0),
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                if (index == _items.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+                                final s = _items[index];
+                                return ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
                                   ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                                  leading: SizedBox(
+                                    width: 64,
+                                    height: 64,
+                                    child: _Thumb(path: s.imagePath),
+                                  ),
+                                  title: Text(s.commonName),
+                                  subtitle: Text(
+                                    '${s.scientificName}\n${s.summary ?? ''}',
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  isThreeLine: true,
+                                  onTap: () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => SpeciesScreen(
+                                        locale: widget.locale,
+                                        speciesId: s.id,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
             ),
             const SafetyNotice(),
           ],

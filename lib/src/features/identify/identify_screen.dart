@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
 import '../../data/repositories.dart';
+import '../../data/resilient_identification_repository.dart';
 import '../../widgets/safety_notice.dart';
 import '../species/species_screen.dart';
 import 'measurement_input.dart';
@@ -43,7 +44,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? IdentificationRepository();
+    _repo = widget.repository ?? ResilientIdentificationRepository();
     _fieldRepo = widget.fieldDataRepository ?? FieldDataRepository();
     _choices = _repo.choices(widget.locale.languageCode);
     _regions = _fieldRepo.seasonRegions(widget.locale.languageCode);
@@ -55,6 +56,12 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
     _stemController.dispose();
     _stemDiameterController.dispose();
     super.dispose();
+  }
+
+  void _retryChoices() {
+    setState(() {
+      _choices = _repo.choices(widget.locale.languageCode);
+    });
   }
 
   String? _measurementError(
@@ -346,11 +353,21 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
               child: FutureBuilder<List<TraitChoice>>(
                 future: _choices,
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: IconButton(
+                        onPressed: _retryChoices,
+                        icon: const Icon(Icons.refresh),
+                        iconSize: 40,
+                      ),
+                    );
+                  }
+                  if (snapshot.connectionState != ConnectionState.done) {
                     return const Center(child: CircularProgressIndicator());
                   }
+                  final choices = snapshot.data ?? const <TraitChoice>[];
                   final groups = <int, List<TraitChoice>>{};
-                  for (final choice in snapshot.data!) {
+                  for (final choice in choices) {
                     groups.putIfAbsent(choice.traitId, () => []).add(choice);
                   }
                   final groupList = groups.values.toList(growable: false);
