@@ -17,7 +17,7 @@ void main() {
     ];
 
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
           body: Wrap(
             children: [
