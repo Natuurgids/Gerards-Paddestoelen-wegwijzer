@@ -21,10 +21,11 @@ class TrainingManifestImporter {
     _validate(lessons);
 
     await db.transaction((txn) async {
+      final batch = txn.batch();
       for (final rawLesson in lessons) {
         final lesson = rawLesson as Map<String, dynamic>;
         final lessonId = lesson['id'] as int;
-        await _upsertById(txn, 'lesson', {
+        _batchUpsertById(batch, 'lesson', {
           'id': lessonId,
           'slug': lesson['slug'],
           'difficulty': lesson['difficulty'] ?? 1,
@@ -34,7 +35,7 @@ class TrainingManifestImporter {
         final texts = lesson['texts'] as Map<String, dynamic>;
         for (final entry in texts.entries) {
           final text = entry.value as Map<String, dynamic>;
-          await txn.insert(
+          batch.insert(
             'lesson_text',
             {
               'lesson_id': lessonId,
@@ -50,7 +51,7 @@ class TrainingManifestImporter {
         for (final rawQuestion in questions) {
           final question = rawQuestion as Map<String, dynamic>;
           final questionId = question['id'] as int;
-          await _upsertById(txn, 'question', {
+          _batchUpsertById(batch, 'question', {
             'id': questionId,
             'lesson_id': lessonId,
             'question_type': 'single_choice',
@@ -60,7 +61,7 @@ class TrainingManifestImporter {
           final questionTexts = question['texts'] as Map<String, dynamic>;
           for (final entry in questionTexts.entries) {
             final text = entry.value as Map<String, dynamic>;
-            await txn.insert(
+            batch.insert(
               'question_text',
               {
                 'question_id': questionId,
@@ -76,7 +77,7 @@ class TrainingManifestImporter {
           for (final rawAnswer in answers) {
             final answer = rawAnswer as Map<String, dynamic>;
             final answerId = answer['id'] as int;
-            await _upsertById(txn, 'answer_option', {
+            _batchUpsertById(batch, 'answer_option', {
               'id': answerId,
               'question_id': questionId,
               'is_correct': answer['correct'] == true ? 1 : 0,
@@ -85,7 +86,7 @@ class TrainingManifestImporter {
 
             final labels = answer['labels'] as Map<String, dynamic>;
             for (final entry in labels.entries) {
-              await txn.insert(
+              batch.insert(
                 'answer_option_text',
                 {
                   'answer_id': answerId,
@@ -98,24 +99,27 @@ class TrainingManifestImporter {
           }
         }
       }
+      await batch.commit(noResult: true);
     });
   }
 
-  static Future<void> _upsertById(
-    Transaction txn,
+  static void _batchUpsertById(
+    Batch batch,
     String table,
     Map<String, Object?> values,
-  ) async {
+  ) {
     final id = values['id'];
-    final updated = await txn.update(
+    batch.update(
       table,
       values,
       where: 'id = ?',
       whereArgs: [id],
     );
-    if (updated == 0) {
-      await txn.insert(table, values);
-    }
+    batch.insert(
+      table,
+      values,
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   static void _validate(List<dynamic> lessons) {
