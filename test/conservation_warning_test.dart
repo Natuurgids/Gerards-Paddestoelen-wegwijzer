@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gerards_paddestoelen_wegwijzer/l10n/app_localizations.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/widgets/conservation_warning.dart';
 
 void main() {
   Widget app(String locale, String? status, {bool compact = false}) => MaterialApp(
         locale: Locale(locale),
-        supportedLocales: const [Locale('nl'), Locale('en'), Locale('de')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: ConservationWarning(
             speciesId: 42,
