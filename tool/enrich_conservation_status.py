@@ -185,7 +185,7 @@ def enrich(catalog_path: Path, archive: Path, retrieved_at: str) -> int:
                 "jurisdiction_code": "",
                 "status": status,
                 "source_id": SOURCE_ID,
-                "source_record_id": scientific,
+                "source_record_id": None,
             }
         ]
         changed += 1
