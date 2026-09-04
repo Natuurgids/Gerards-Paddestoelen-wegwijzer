@@ -37,6 +37,31 @@ void main() {
     expect(rows.single['revision'], BundledContentSync.revision);
   });
 
+  test('older bundled content revision is resynced and upgraded', () async {
+    await db.insert('bundled_content_state', {
+      'content_key': BundledContentSync.contentKey,
+      'revision': BundledContentSync.revision - 1,
+      'synced_at': '2026-09-03T00:00:00Z',
+    });
+    var calls = 0;
+
+    Future<List<String>> sync() async {
+      calls++;
+      return const [];
+    }
+
+    expect(await BundledContentSync.runIfNeeded(db, sync), isEmpty);
+    expect(calls, 1);
+
+    final rows = await db.query(
+      'bundled_content_state',
+      where: 'content_key=?',
+      whereArgs: const [BundledContentSync.contentKey],
+    );
+    expect(rows, hasLength(1));
+    expect(rows.single['revision'], BundledContentSync.revision);
+  });
+
   test('failed bundled content sync is retried', () async {
     var calls = 0;
 
