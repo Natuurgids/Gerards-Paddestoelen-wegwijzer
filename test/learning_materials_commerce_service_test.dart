@@ -129,6 +129,9 @@ class _Provider implements LearningCommerceProviderAdapter {
 
   @override
   Future<void> restorePurchases() async {}
+
+  @override
+  Future<void> completeVerifiedPurchase(LearningPurchaseEvidence evidence) async {}
 }
 
 class _Verifier implements LearningPurchaseVerifier {

@@ -12,7 +12,6 @@ Paid learning commerce is separate from learning content delivery and from the c
 - Restore is a first-class operation. A trusted verifier must be able to reconcile the currently active permanent entitlement snapshot, including refunds/revocations where the store reports them.
 - The learning package installer continues to ask only whether a logical entitlement is granted; it never parses store receipts or provider identifiers.
 - Paid package hosting remains separately controlled. Commerce success and content download are distinct operations.
-- The current build remains safely unconfigured until a concrete store adapter, provider-specific product-ID mapping and trusted verification path are supplied.
 
 ## Supported purchase platform baseline
 
@@ -20,4 +19,21 @@ As of 2026-09-05 the app adopts the official Flutter `in_app_purchase` 3.3.x lin
 
 This repository generates Android and iOS scaffolding rather than committing the platform trees. After `flutter create`, run `python3 tool/configure_generated_platforms.py` before dependency installation or release builds. CI runs the same command and its regression tests. The script sets Android `minSdk` to 24, iOS deployment targets and `MinimumOSVersion` to 13.0, and fails if a future Flutter template no longer contains the expected declarations.
 
-The purchase SDK baseline does not itself enable commerce. The production learning-materials service remains unconfigured until a concrete store adapter, provider-specific product-ID mapping and trusted purchase verifier are supplied.
+## Store adapter configuration
+
+`LearningInAppPurchaseAdapter` is the concrete bridge to Flutter's official `in_app_purchase` API. It still implements the provider-neutral `LearningCommerceProviderAdapter`, so the materials UI and learning package installer never depend on Google Play or App Store SDK types.
+
+Provider-specific product IDs are deployment configuration rather than learning content. They may be supplied as JSON objects through compile-time Dart defines:
+
+- `LEARNING_GOOGLE_PLAY_PRODUCT_IDS`
+- `LEARNING_APP_STORE_PRODUCT_IDS`
+
+Each JSON object maps the existing logical offering `product_key` to the corresponding provider product identifier. The mapping must use non-empty unique provider IDs. No provider ID is invented by the app and no price is stored in this mapping.
+
+The adapter queries `ProductDetails` from the active store and maps the provider-formatted price and currency back to the logical learning product. Missing products produce no fallback quote. Purchase uses the store's non-consumable flow and Restore delegates to the store restore flow.
+
+Purchase updates are converted to `LearningPurchaseEvidence` only for configured provider product IDs. Unknown store products are ignored. `serverVerificationData` is passed to the trusted verifier; `purchaseID` is retained when the SDK provides one but is allowed to be empty because the official SDK type makes it nullable.
+
+A purchased/restored event is not acknowledged merely because the store emitted it. `LearningCommerceCoordinator.verifyAndCompleteEvidence` first validates the logical product/entitlement pair through the trusted verifier and only then asks the adapter to call the store's `completePurchase` for that exact retained transaction. Failed, pending, canceled, malformed or mismatched verification therefore cannot complete the purchase through this path.
+
+The adapter does not itself persist entitlements or provide a receipt-verification backend. Production commerce remains unconfigured until the provider product-ID mapping and trusted verifier/entitlement reconciliation path are supplied and wired into the app runtime.

@@ -45,6 +45,11 @@ class LearningPurchaseEvidence {
 
   final LearningCommerceProvider provider;
   final String productKey;
+
+  /// Provider transaction identifier when the store SDK exposes one.
+  ///
+  /// Some store SDK purchase objects legitimately omit this value. Verification
+  /// must therefore rely on [verificationPayload], not on a fabricated ID.
   final String transactionId;
   final String verificationPayload;
   final LearningPurchaseState state;
@@ -79,6 +84,9 @@ abstract interface class LearningCommerceProviderAdapter {
   Future<void> purchase(String productKey);
 
   Future<void> restorePurchases();
+
+  /// Complete/acknowledge a store transaction only after trusted verification.
+  Future<void> completeVerifiedPurchase(LearningPurchaseEvidence evidence);
 }
 
 abstract interface class LearningPurchaseVerifier {
@@ -200,8 +208,7 @@ class LearningCommerceCoordinator {
         evidence.state != LearningPurchaseState.restored) {
       throw StateError('Only completed purchases may be verified for entitlement');
     }
-    if (evidence.transactionId.trim().isEmpty ||
-        evidence.verificationPayload.trim().isEmpty) {
+    if (evidence.verificationPayload.trim().isEmpty) {
       throw StateError('Purchase evidence is incomplete');
     }
 
@@ -210,6 +217,18 @@ class LearningCommerceCoordinator {
         verified.entitlementKey != binding.entitlementKey) {
       throw StateError('Verified purchase does not match the learning offering');
     }
+    return verified;
+  }
+
+  /// Verify evidence first, then acknowledge the same store transaction.
+  ///
+  /// If verification throws or returns mismatched product/entitlement data, the
+  /// provider is not asked to complete the purchase.
+  Future<VerifiedLearningPurchase> verifyAndCompleteEvidence(
+    LearningPurchaseEvidence evidence,
+  ) async {
+    final verified = await verifyEvidence(evidence);
+    await provider.completeVerifiedPurchase(evidence);
     return verified;
   }
 }
