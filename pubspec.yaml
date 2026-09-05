@@ -36,4 +36,24 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/traits/bruising/
+    - assets/images/traits/cap_color/
+    - assets/images/traits/cap_shape/
+    - assets/images/traits/cap_surface/
+    - assets/images/traits/ecological_role/
+    - assets/images/traits/flesh_colour/
+    - assets/images/traits/fruitbody_form/
+    - assets/images/traits/gill_attachment/
+    - assets/images/traits/gill_spacing/
+    - assets/images/traits/growth_position/
+    - assets/images/traits/habitat_tree_group/
+    - assets/images/traits/hymenium/
+    - assets/images/traits/ring/
+    - assets/images/traits/ring_form/
+    - assets/images/traits/spore_print/
+    - assets/images/traits/stem_base_shape/
+    - assets/images/traits/stem_surface/
+    - assets/images/traits/substrate/
+    - assets/images/traits/volva/
+    - assets/images/traits/volva_form/
     - assets/data/
