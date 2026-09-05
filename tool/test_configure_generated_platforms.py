@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from configure_generated_platforms import (
+from tool.configure_generated_platforms import (
     ANDROID_MIN_SDK,
     IOS_MIN_VERSION,
     configure,
