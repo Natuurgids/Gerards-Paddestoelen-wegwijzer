@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
+
 import 'learning_access.dart';
 
 class LearningCatalog {
@@ -6,8 +10,19 @@ class LearningCatalog {
     required this.modules,
   });
 
+  static const _assetPath = 'assets/data/learning_catalog.json';
+
   final List<CourseMetadata> courses;
   final List<LearningModuleMetadata> modules;
+
+  static Future<LearningCatalog> loadBundled() async {
+    final raw = await rootBundle.loadString(_assetPath);
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Learning catalog root must be an object');
+    }
+    return LearningCatalog.fromDecoded(decoded);
+  }
 
   factory LearningCatalog.fromDecoded(Map<String, dynamic> decoded) {
     if (decoded['version'] != 1) {
@@ -17,7 +32,9 @@ class LearningCatalog {
     final rawCourses = decoded['courses'];
     final rawModules = decoded['modules'];
     if (rawCourses is! List<dynamic> || rawModules is! List<dynamic>) {
-      throw const FormatException('Learning catalog must declare courses and modules');
+      throw const FormatException(
+        'Learning catalog must declare courses and modules',
+      );
     }
 
     final courses = <CourseMetadata>[];
@@ -35,12 +52,19 @@ class LearningCatalog {
       final accessRequirement = switch (accessValue) {
         'free' => LearningAccessRequirement.free,
         'entitlement_required' => LearningAccessRequirement.entitlementRequired,
-        _ => throw FormatException('Invalid access requirement for course $key: $accessValue'),
+        _ => throw FormatException(
+            'Invalid access requirement for course $key: $accessValue',
+          ),
       };
-      final entitlementKey = _optionalKey(rawCourse['entitlement_key'], 'entitlement key');
+      final entitlementKey = _optionalKey(
+        rawCourse['entitlement_key'],
+        'entitlement key',
+      );
       if (accessRequirement == LearningAccessRequirement.entitlementRequired &&
           entitlementKey == null) {
-        throw FormatException('Course $key requires a non-empty entitlement_key');
+        throw FormatException(
+          'Course $key requires a non-empty entitlement_key',
+        );
       }
 
       courses.add(
@@ -70,9 +94,14 @@ class LearningCatalog {
       if (!moduleKeys.add(key)) {
         throw FormatException('Duplicate module key: $key');
       }
-      final courseKey = _requiredKey(rawModule['course_key'], 'course key for module $key');
+      final courseKey = _requiredKey(
+        rawModule['course_key'],
+        'course key for module $key',
+      );
       if (!courseKeys.contains(courseKey)) {
-        throw FormatException('Module $key references unknown course $courseKey');
+        throw FormatException(
+          'Module $key references unknown course $courseKey',
+        );
       }
 
       final rawLessonIds = rawModule['lesson_ids'];
@@ -82,7 +111,9 @@ class LearningCatalog {
       final lessonIds = <int>[];
       for (final rawLessonId in rawLessonIds) {
         if (rawLessonId is! int || rawLessonId <= 0) {
-          throw FormatException('Module $key has invalid lesson id: $rawLessonId');
+          throw FormatException(
+            'Module $key has invalid lesson id: $rawLessonId',
+          );
         }
         if (!assignedLessons.add(rawLessonId)) {
           throw FormatException(
@@ -135,7 +166,9 @@ class LearningCatalog {
 
   static String _requiredKey(Object? value, String context) {
     final key = _optionalKey(value, context);
-    if (key == null) throw FormatException('$context must be a non-empty string');
+    if (key == null) {
+      throw FormatException('$context must be a non-empty string');
+    }
     return key;
   }
 
@@ -149,18 +182,24 @@ class LearningCatalog {
 
   static int _sortOrder(Object? value, String context) {
     if (value == null) return 0;
-    if (value is! int) throw FormatException('$context sort_order must be an integer');
+    if (value is! int) {
+      throw FormatException('$context sort_order must be an integer');
+    }
     return value;
   }
 
   static List<String> _keyList(Object? value, String context) {
     if (value == null) return const [];
-    if (value is! List<dynamic>) throw FormatException('$context must be a list');
+    if (value is! List<dynamic>) {
+      throw FormatException('$context must be a list');
+    }
     final result = <String>[];
     final seen = <String>{};
     for (final rawKey in value) {
       final key = _requiredKey(rawKey, context);
-      if (!seen.add(key)) throw FormatException('$context contains duplicate $key');
+      if (!seen.add(key)) {
+        throw FormatException('$context contains duplicate $key');
+      }
       result.add(key);
     }
     return List<String>.unmodifiable(result);
