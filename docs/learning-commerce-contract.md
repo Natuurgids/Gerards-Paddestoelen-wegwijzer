@@ -77,4 +77,14 @@ After a verified entitlement is persisted, the runtime emits an entitlement-chan
 
 A configured long-lived runtime may be injected through `DefaultLearningMaterialsService` and then through `MycologyApp`/`HomeScreen` into the materials screen. The default `main.dart` does not create such a runtime or invent authentication, provider IDs or verifier sessions. Production commerce therefore remains fail-closed until a real authenticated bootstrap supplies those dependencies; the runtime lifecycle is available without weakening the security boundary.
 
-The verifier transport and runtime still do not make the currently public repository a paid-content host. Commercial paid revisions must remain newly authored and hosted on separately controlled content infrastructure.
+## Fail-closed deployment bootstrap
+
+`LearningCommerceBootstrap.fromEnvironment()` is the single composition gate for a future authenticated production bootstrap. It selects Google Play only on Android and App Store only on iOS, loads the bundled public offering catalogue, and requires the active platform's store mapping to contain exactly the same logical product keys as the catalogue. Missing, malformed, incomplete or wrong-platform mappings do not partially enable commerce.
+
+Both trusted verifier endpoints must be configured and valid, and a runtime `LearningVerifierHeadersProvider` must be supplied by the caller before the bootstrap will construct the official store adapter, verifier, durable entitlement repository, controller and long-lived runtime. The header provider is deliberately not sourced from Dart defines or repository secrets: it represents runtime session/account state owned by a future authenticated application bootstrap.
+
+Ordinary deployment incompleteness returns an explicit `LearningCommerceBootstrapStatus` and an offline-capable materials service with purchases disabled. Previously verified cached entitlements remain readable in this fallback path. A fully configured result owns the runtime subscription and must be closed with `LearningCommerceBootstrapResult.close()` when its application/session lifecycle ends.
+
+`main.dart` remains intentionally unconfigured. Adding the bootstrap factory does not by itself activate Buy/Restore in a production release and does not create an anonymous verifier identity. Real platform product IDs, a deployed trusted verifier, authenticated session ownership and separately controlled paid-content hosting are still release prerequisites.
+
+The verifier transport, runtime and bootstrap still do not make the currently public repository a paid-content host. Commercial paid revisions must remain newly authored and hosted on separately controlled content infrastructure.
