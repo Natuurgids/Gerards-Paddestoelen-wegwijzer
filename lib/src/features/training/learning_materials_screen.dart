@@ -27,6 +27,7 @@ class LearningMaterialsScreen extends StatefulWidget {
 
 class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
   late final LearningMaterialsService _service;
+  StreamSubscription<void>? _entitlementSubscription;
   LearningMaterialsLocalSnapshot? _local;
   Map<String, int> _remoteVersions = const <String, int>{};
   Map<String, LearningProductQuote> _productQuotes =
@@ -42,7 +43,21 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
   void initState() {
     super.initState();
     _service = widget.service ?? DefaultLearningMaterialsService.standard();
+    final changeSource = _service is LearningMaterialsEntitlementChangeSource
+        ? _service as LearningMaterialsEntitlementChangeSource
+        : null;
+    if (changeSource != null) {
+      _entitlementSubscription = changeSource.entitlementChanges.listen((_) {
+        if (mounted) unawaited(_load());
+      });
+    }
     unawaited(_load());
+  }
+
+  @override
+  void dispose() {
+    unawaited(_entitlementSubscription?.cancel());
+    super.dispose();
   }
 
   Future<void> _load() async {
