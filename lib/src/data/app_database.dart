@@ -6,6 +6,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'bundled_content_sync.dart';
+import 'core_dataset_update_service.dart';
 import 'database_schema.dart';
 import 'field_data_importer.dart';
 import 'image_manifest_importer.dart';
@@ -22,6 +23,7 @@ class AppDatabase {
   Database? _db;
   Future<Database>? _opening;
   Future<void>? _contentSync;
+  Future<CoreDatasetUpdateAttempt>? _datasetUpdate;
   List<String> _lastManifestSyncFailures = const [];
 
   List<String> get lastManifestSyncFailures =>
@@ -37,6 +39,30 @@ class AppDatabase {
     }).whenComplete(() {
       _opening = null;
     });
+  }
+
+  Future<CoreDatasetUpdateAttempt> checkForCoreDatasetUpdate({
+    CoreDatasetUpdateService? service,
+  }) {
+    final existing = _datasetUpdate;
+    if (existing != null) return existing;
+
+    final update = _runCoreDatasetUpdate(
+      service ?? const CoreDatasetUpdateService(manifestUrl: coreDatasetManifestUrl),
+    ).whenComplete(() {
+      _datasetUpdate = null;
+    });
+    _datasetUpdate = update;
+    return update;
+  }
+
+  Future<CoreDatasetUpdateAttempt> _runCoreDatasetUpdate(
+    CoreDatasetUpdateService service,
+  ) async {
+    final db = await database;
+    final bundledSync = _contentSync;
+    if (bundledSync != null) await bundledSync;
+    return service.checkAndApply(db);
   }
 
   Future<Database> _open() async {
