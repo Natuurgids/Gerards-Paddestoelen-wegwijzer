@@ -75,6 +75,18 @@ abstract interface class EntitlementRepository {
   Future<EntitlementSnapshot> loadEntitlements();
 }
 
+/// Default for builds that do not yet have a commerce/restore provider wired.
+///
+/// It never grants paid learning access. A store or account adapter can replace
+/// this repository later without changing learning content or installer logic.
+class EmptyEntitlementRepository implements EntitlementRepository {
+  const EmptyEntitlementRepository();
+
+  @override
+  Future<EntitlementSnapshot> loadEntitlements() async =>
+      EntitlementSnapshot(const <String>[]);
+}
+
 class LearningAccessPolicy {
   const LearningAccessPolicy(this._entitlements);
 
