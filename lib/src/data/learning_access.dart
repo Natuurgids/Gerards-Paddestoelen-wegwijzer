@@ -3,23 +3,38 @@ enum LearningAccessRequirement {
   entitlementRequired,
 }
 
+enum LearningContentDelivery {
+  builtIn,
+  downloadable,
+}
+
 class CourseMetadata {
   const CourseMetadata({
     required this.key,
     required this.accessRequirement,
     required this.sortOrder,
+    this.delivery = LearningContentDelivery.downloadable,
     this.entitlementKey,
     this.productKey,
     this.groupKey,
     this.prerequisiteCourseKeys = const [],
-  }) : assert(
+  })  : assert(
           accessRequirement == LearningAccessRequirement.free ||
               entitlementKey != null,
           'Entitlement-required courses need an entitlement key.',
+        ),
+        assert(
+          delivery != LearningContentDelivery.builtIn ||
+              accessRequirement == LearningAccessRequirement.free,
+          'Built-in product content must always remain free.',
         );
 
   final String key;
   final LearningAccessRequirement accessRequirement;
+
+  /// Whether the course ships with the standard product or is obtained later.
+  /// Built-in material is a permanent free part of the product.
+  final LearningContentDelivery delivery;
 
   /// Stable logical entitlement understood by the app.
   ///
