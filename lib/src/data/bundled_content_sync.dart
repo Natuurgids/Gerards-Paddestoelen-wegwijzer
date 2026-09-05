@@ -14,7 +14,6 @@ class BundledContentSync {
     Database db,
     BundledContentSyncRunner sync,
   ) async {
-    final bundledDataset = await CoreDatasetMetadata.loadBundled();
     final remoteRows = await db.query(
       'bundled_content_state',
       columns: const ['revision'],
@@ -29,7 +28,7 @@ class BundledContentSync {
           'Installed core dataset revision is invalid: $remoteRevision',
         );
       }
-      if (remoteRevision > bundledDataset.datasetVersion) {
+      if (remoteRevision > bundledCoreDatasetVersion) {
         return const [];
       }
     }
