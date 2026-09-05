@@ -17,6 +17,7 @@ enum LearningCommerceBootstrapStatus {
   unsupportedPlatform,
   missingSessionHeadersProvider,
   missingStoreProductIds,
+  invalidStoreProductIds,
   incompleteStoreProductIds,
   missingVerifierEndpoints,
   invalidVerifierConfiguration,
@@ -35,7 +36,9 @@ class LearningCommerceBootstrapResult {
 
   bool get configured => status == LearningCommerceBootstrapStatus.configured;
 
-  Future<void> close() async => runtime?.close();
+  Future<void> close() async {
+    await runtime?.close();
+  }
 }
 
 typedef LearningCommercePlatformProvider = LearningCommerceProvider? Function();
@@ -85,7 +88,16 @@ class LearningCommerceBootstrap {
     final commerceCatalog = LearningCommerceCatalog.fromOfferings(
       offerings.offerings,
     );
-    final ids = productIds ?? LearningStoreProductIds.fromEnvironment(provider);
+
+    late final LearningStoreProductIds ids;
+    try {
+      ids = productIds ?? LearningStoreProductIds.fromEnvironment(provider);
+    } on FormatException {
+      return LearningCommerceBootstrapResult(
+        status: LearningCommerceBootstrapStatus.invalidStoreProductIds,
+        service: fallback,
+      );
+    }
     if (!ids.configured) {
       return LearningCommerceBootstrapResult(
         status: LearningCommerceBootstrapStatus.missingStoreProductIds,
