@@ -46,6 +46,20 @@ void main() {
     );
   });
 
+  test('built-in product material cannot be locked by entitlement metadata',
+      () async {
+    const builtIn = CourseMetadata(
+      key: 'standard-product',
+      accessRequirement: LearningAccessRequirement.entitlementRequired,
+      delivery: LearningContentDelivery.builtIn,
+      entitlementKey: 'should-never-lock-standard',
+      sortOrder: 1,
+    );
+    final policy = LearningAccessPolicy(_FakeEntitlementRepository(const []));
+
+    expect(await policy.canAccessCourse(builtIn), isTrue);
+  });
+
   test('locked premium lessons do not leak without entitlement', () async {
     final repository = _FakeEntitlementRepository(const []);
     final policy = LearningAccessPolicy(repository);

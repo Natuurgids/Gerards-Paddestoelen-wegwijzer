@@ -3,11 +3,17 @@ enum LearningAccessRequirement {
   entitlementRequired,
 }
 
+enum LearningContentDelivery {
+  builtIn,
+  downloadable,
+}
+
 class CourseMetadata {
   const CourseMetadata({
     required this.key,
     required this.accessRequirement,
     required this.sortOrder,
+    this.delivery = LearningContentDelivery.downloadable,
     this.entitlementKey,
     this.productKey,
     this.groupKey,
@@ -20,6 +26,10 @@ class CourseMetadata {
 
   final String key;
   final LearningAccessRequirement accessRequirement;
+
+  /// Whether the course ships with the standard product or is obtained later.
+  /// Built-in material is a permanent free part of the product.
+  final LearningContentDelivery delivery;
 
   /// Stable logical entitlement understood by the app.
   ///
@@ -71,7 +81,8 @@ class LearningAccessPolicy {
   final EntitlementRepository _entitlements;
 
   Future<bool> canAccessCourse(CourseMetadata course) async {
-    if (course.accessRequirement == LearningAccessRequirement.free) {
+    if (course.delivery == LearningContentDelivery.builtIn ||
+        course.accessRequirement == LearningAccessRequirement.free) {
       return true;
     }
     final key = course.entitlementKey;
@@ -81,8 +92,7 @@ class LearningAccessPolicy {
   }
 
   /// Returns only lesson ids belonging to courses the current entitlement
-  /// snapshot permits. This is the boundary repositories/UI can use to avoid
-  /// leaking locked premium lesson content.
+  /// snapshot permits. Built-in product material always remains accessible.
   Future<Set<int>> accessibleLessonIds({
     required Iterable<CourseMetadata> courses,
     required Iterable<LearningModuleMetadata> modules,
@@ -94,7 +104,8 @@ class LearningAccessPolicy {
     final accessibleCourses = <String>{};
 
     for (final course in courses) {
-      if (course.accessRequirement == LearningAccessRequirement.free) {
+      if (course.delivery == LearningContentDelivery.builtIn ||
+          course.accessRequirement == LearningAccessRequirement.free) {
         accessibleCourses.add(course.key);
         continue;
       }
