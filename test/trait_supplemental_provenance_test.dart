@@ -20,6 +20,7 @@ void main() {
   });
 
   test('legacy base species traits may remain without provenance', () async {
+    await _insertSpecies(db, 10);
     await TraitManifestImporter.syncDecoded(db, _baseTraits());
 
     expect(await db.query('species_trait'), hasLength(1));
