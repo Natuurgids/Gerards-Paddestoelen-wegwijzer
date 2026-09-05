@@ -36,6 +36,8 @@ jobs:
           key: vernacular-source-pages-v1
       - name: Test vernacular source cache
         run: python3 -m unittest tool/test_enrich_vernacular_cache.py
+      - name: Test source license lock
+        run: python3 -m unittest tool/test_verify_source_snapshot_lock.py
       - name: Generate Dutch Species Register Fungi catalogue
         run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
       - name: Enrich English and German vernacular names
