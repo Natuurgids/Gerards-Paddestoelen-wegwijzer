@@ -62,6 +62,16 @@ void main() {
     expect(quotes, isEmpty);
   });
 
+  test('unavailable store fails before querying product details', () async {
+    final client = _Client(available: false);
+
+    await expectLater(
+      adapter(client).loadProductQuotes({logicalProduct}),
+      throwsA(isA<StateError>()),
+    );
+    expect(client.queries, isEmpty);
+  });
+
   test('unmapped logical product fails before store query', () async {
     final client = _Client();
 
