@@ -166,7 +166,7 @@ class LearningCommerceCoordinator {
           entry.value.productKey != entry.key ||
           entry.value.displayPrice.trim().isEmpty ||
           entry.value.currencyCode.trim().isEmpty) {
-        throw const StateError('Commerce provider returned an invalid product quote');
+        throw StateError('Commerce provider returned an invalid product quote');
       }
     }
     return Map.unmodifiable(quotes);
