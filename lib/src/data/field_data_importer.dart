@@ -17,7 +17,7 @@ class FieldDataImporter {
   }
 
   static Future<void> syncDecoded(
-    Database db,
+    DatabaseExecutor db,
     Map<String, dynamic> decoded,
   ) async {
     final regions = decoded['season_regions'] as List<dynamic>? ?? const [];
@@ -133,83 +133,93 @@ class FieldDataImporter {
       }
     }
 
-    await db.transaction((txn) async {
-      final batch = txn.batch();
+    if (db is Database) {
+      await db.transaction((txn) => _writeDecoded(txn, regions, species));
+    } else {
+      await _writeDecoded(db, regions, species);
+    }
+  }
 
-      // These tables contain developer-managed reference content only. Treat
-      // the manifest as authoritative so removed measurements, calendars,
-      // regions or species entries cannot survive as stale SQLite rows.
-      batch.delete('species_measurement');
-      batch.delete('species_season');
-      batch.delete('season_region_text');
-      batch.delete('season_region');
+  static Future<void> _writeDecoded(
+    DatabaseExecutor db,
+    List<dynamic> regions,
+    List<dynamic> species,
+  ) async {
+    final batch = db.batch();
 
-      for (final rawRegion in regions) {
-        final region = rawRegion as Map<String, dynamic>;
-        final code = region['code'] as String;
+    // These tables contain developer-managed reference content only. Treat
+    // the manifest as authoritative so removed measurements, calendars,
+    // regions or species entries cannot survive as stale SQLite rows.
+    batch.delete('species_measurement');
+    batch.delete('species_season');
+    batch.delete('season_region_text');
+    batch.delete('season_region');
+
+    for (final rawRegion in regions) {
+      final region = rawRegion as Map<String, dynamic>;
+      final code = region['code'] as String;
+      batch.insert(
+        'season_region',
+        {'code': code},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      final labels = region['labels'] as Map<String, dynamic>;
+      final notes = region['notes'] as Map<String, dynamic>?;
+      for (final language in _languages) {
         batch.insert(
-          'season_region',
-          {'code': code},
+          'season_region_text',
+          {
+            'region_code': code,
+            'language_code': language,
+            'label': labels[language],
+            'notes': notes?[language],
+          },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
-        final labels = region['labels'] as Map<String, dynamic>;
-        final notes = region['notes'] as Map<String, dynamic>?;
-        for (final language in _languages) {
-          batch.insert(
-            'season_region_text',
-            {
-              'region_code': code,
-              'language_code': language,
-              'label': labels[language],
-              'notes': notes?[language],
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        }
+      }
+    }
+
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      final speciesId = item['species_id'] as int;
+
+      final measurements = item['measurements'] as List<dynamic>? ?? const [];
+      for (final rawMeasurement in measurements) {
+        final measurement = rawMeasurement as Map<String, dynamic>;
+        batch.insert(
+          'species_measurement',
+          {
+            'species_id': speciesId,
+            'measurement_code': measurement['code'],
+            'min_value': measurement['min'],
+            'max_value': measurement['max'],
+            'unit': measurement['unit'],
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
 
-      for (final rawSpecies in species) {
-        final item = rawSpecies as Map<String, dynamic>;
-        final speciesId = item['species_id'] as int;
-
-        final measurements = item['measurements'] as List<dynamic>? ?? const [];
-        for (final rawMeasurement in measurements) {
-          final measurement = rawMeasurement as Map<String, dynamic>;
-          batch.insert(
-            'species_measurement',
-            {
-              'species_id': speciesId,
-              'measurement_code': measurement['code'],
-              'min_value': measurement['min'],
-              'max_value': measurement['max'],
-              'unit': measurement['unit'],
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
+      final seasonDatasets = item['season_datasets'] as List<dynamic>?;
+      if (seasonDatasets != null) {
+        for (final rawDataset in seasonDatasets) {
+          _queueSeasonDataset(
+            batch,
+            speciesId,
+            rawDataset as Map<String, dynamic>,
           );
         }
-
-        final seasonDatasets = item['season_datasets'] as List<dynamic>?;
-        if (seasonDatasets != null) {
-          for (final rawDataset in seasonDatasets) {
-            _queueSeasonDataset(
-              batch,
-              speciesId,
-              rawDataset as Map<String, dynamic>,
-            );
-          }
-        } else {
-          final legacySeason = item['season'] as List<dynamic>? ?? const [];
-          if (legacySeason.isNotEmpty) {
-            _queueSeasonDataset(batch, speciesId, {
-              'region_code': item['season_region'],
-              'months': legacySeason,
-            });
-          }
+      } else {
+        final legacySeason = item['season'] as List<dynamic>? ?? const [];
+        if (legacySeason.isNotEmpty) {
+          _queueSeasonDataset(batch, speciesId, {
+            'region_code': item['season_region'],
+            'months': legacySeason,
+          });
         }
       }
+    }
 
-      await batch.commit(noResult: true);
-    });
+    await batch.commit(noResult: true);
   }
 
   static void _validateLocalizedRegionField(
