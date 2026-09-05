@@ -98,7 +98,11 @@ void main() {
   });
 
   test('hash mismatch rejects package without lessons or install state', () async {
-    final fixture = _fixture(contentVersion: 1, catalogShaOverride: '0' * 64);
+    final fixture = _fixture(
+      contentVersion: 1,
+      catalogShaOverride:
+          '0000000000000000000000000000000000000000000000000000000000000000',
+    );
     final bytes = _FakeByteSource({
       fixture.catalogUri: fixture.catalogBytes,
       fixture.packageUri: fixture.packageBytes,
