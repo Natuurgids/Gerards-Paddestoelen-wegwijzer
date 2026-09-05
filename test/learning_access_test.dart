@@ -5,12 +5,14 @@ void main() {
   const freeCourse = CourseMetadata(
     key: 'basics',
     accessRequirement: LearningAccessRequirement.free,
+    delivery: LearningContentDelivery.builtIn,
     sortOrder: 10,
     groupKey: 'foundation',
   );
   const premiumCourse = CourseMetadata(
     key: 'advanced-genera',
     accessRequirement: LearningAccessRequirement.entitlementRequired,
+    delivery: LearningContentDelivery.downloadable,
     entitlementKey: 'course.advanced-genera',
     productKey: 'advanced-genera-single',
     sortOrder: 20,
@@ -33,9 +35,10 @@ void main() {
     ),
   ];
 
-  test('free lessons remain accessible without entitlements', () async {
+  test('built-in lessons remain accessible without entitlements', () async {
     final policy = LearningAccessPolicy(_FakeEntitlementRepository(const []));
 
+    expect(freeCourse.delivery, LearningContentDelivery.builtIn);
     expect(await policy.canAccessCourse(freeCourse), isTrue);
     expect(
       await policy.accessibleLessonIds(
@@ -46,10 +49,11 @@ void main() {
     );
   });
 
-  test('locked premium lessons do not leak without entitlement', () async {
+  test('locked downloadable lessons do not leak without entitlement', () async {
     final repository = _FakeEntitlementRepository(const []);
     final policy = LearningAccessPolicy(repository);
 
+    expect(premiumCourse.delivery, LearningContentDelivery.downloadable);
     expect(await policy.canAccessCourse(premiumCourse), isFalse);
     final lessonIds = await policy.accessibleLessonIds(
       courses: const [freeCourse, premiumCourse],
@@ -61,7 +65,7 @@ void main() {
     expect(lessonIds, isNot(contains(101)));
   });
 
-  test('the same logical entitlement unlocks premium content', () async {
+  test('the same logical entitlement unlocks downloadable content', () async {
     final policy = LearningAccessPolicy(
       _FakeEntitlementRepository(const ['course.advanced-genera']),
     );
