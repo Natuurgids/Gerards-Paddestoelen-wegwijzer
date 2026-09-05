@@ -14,93 +14,102 @@ class TrainingManifestImporter {
   }
 
   static Future<void> syncDecoded(
-    Database db,
+    DatabaseExecutor db,
     Map<String, dynamic> decoded,
   ) async {
     final lessons = decoded['lessons'] as List<dynamic>? ?? const [];
     _validate(lessons);
 
-    await db.transaction((txn) async {
-      final batch = txn.batch();
-      for (final rawLesson in lessons) {
-        final lesson = rawLesson as Map<String, dynamic>;
-        final lessonId = lesson['id'] as int;
-        _batchUpsertById(batch, 'lesson', {
-          'id': lessonId,
-          'slug': lesson['slug'],
-          'difficulty': lesson['difficulty'] ?? 1,
-          'sort_order': lesson['sort_order'] ?? 0,
+    if (db is Database) {
+      await db.transaction((txn) => _writeDecoded(txn, lessons));
+    } else {
+      await _writeDecoded(db, lessons);
+    }
+  }
+
+  static Future<void> _writeDecoded(
+    DatabaseExecutor db,
+    List<dynamic> lessons,
+  ) async {
+    final batch = db.batch();
+    for (final rawLesson in lessons) {
+      final lesson = rawLesson as Map<String, dynamic>;
+      final lessonId = lesson['id'] as int;
+      _batchUpsertById(batch, 'lesson', {
+        'id': lessonId,
+        'slug': lesson['slug'],
+        'difficulty': lesson['difficulty'] ?? 1,
+        'sort_order': lesson['sort_order'] ?? 0,
+      });
+
+      final texts = lesson['texts'] as Map<String, dynamic>;
+      for (final entry in texts.entries) {
+        final text = entry.value as Map<String, dynamic>;
+        batch.insert(
+          'lesson_text',
+          {
+            'lesson_id': lessonId,
+            'language_code': entry.key,
+            'title': text['title'],
+            'body': text['body'],
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      final questions = lesson['questions'] as List<dynamic>;
+      for (final rawQuestion in questions) {
+        final question = rawQuestion as Map<String, dynamic>;
+        final questionId = question['id'] as int;
+        _batchUpsertById(batch, 'question', {
+          'id': questionId,
+          'lesson_id': lessonId,
+          'question_type': 'single_choice',
+          'sort_order': question['sort_order'] ?? 0,
         });
 
-        final texts = lesson['texts'] as Map<String, dynamic>;
-        for (final entry in texts.entries) {
+        final questionTexts = question['texts'] as Map<String, dynamic>;
+        for (final entry in questionTexts.entries) {
           final text = entry.value as Map<String, dynamic>;
           batch.insert(
-            'lesson_text',
+            'question_text',
             {
-              'lesson_id': lessonId,
+              'question_id': questionId,
               'language_code': entry.key,
-              'title': text['title'],
-              'body': text['body'],
+              'prompt': text['prompt'],
+              'explanation': text['explanation'],
             },
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
 
-        final questions = lesson['questions'] as List<dynamic>;
-        for (final rawQuestion in questions) {
-          final question = rawQuestion as Map<String, dynamic>;
-          final questionId = question['id'] as int;
-          _batchUpsertById(batch, 'question', {
-            'id': questionId,
-            'lesson_id': lessonId,
-            'question_type': 'single_choice',
-            'sort_order': question['sort_order'] ?? 0,
+        final answers = question['answers'] as List<dynamic>;
+        for (final rawAnswer in answers) {
+          final answer = rawAnswer as Map<String, dynamic>;
+          final answerId = answer['id'] as int;
+          _batchUpsertById(batch, 'answer_option', {
+            'id': answerId,
+            'question_id': questionId,
+            'is_correct': answer['correct'] == true ? 1 : 0,
+            'sort_order': answer['sort_order'] ?? 0,
           });
 
-          final questionTexts = question['texts'] as Map<String, dynamic>;
-          for (final entry in questionTexts.entries) {
-            final text = entry.value as Map<String, dynamic>;
+          final labels = answer['labels'] as Map<String, dynamic>;
+          for (final entry in labels.entries) {
             batch.insert(
-              'question_text',
+              'answer_option_text',
               {
-                'question_id': questionId,
+                'answer_id': answerId,
                 'language_code': entry.key,
-                'prompt': text['prompt'],
-                'explanation': text['explanation'],
+                'label': entry.value,
               },
               conflictAlgorithm: ConflictAlgorithm.replace,
             );
           }
-
-          final answers = question['answers'] as List<dynamic>;
-          for (final rawAnswer in answers) {
-            final answer = rawAnswer as Map<String, dynamic>;
-            final answerId = answer['id'] as int;
-            _batchUpsertById(batch, 'answer_option', {
-              'id': answerId,
-              'question_id': questionId,
-              'is_correct': answer['correct'] == true ? 1 : 0,
-              'sort_order': answer['sort_order'] ?? 0,
-            });
-
-            final labels = answer['labels'] as Map<String, dynamic>;
-            for (final entry in labels.entries) {
-              batch.insert(
-                'answer_option_text',
-                {
-                  'answer_id': answerId,
-                  'language_code': entry.key,
-                  'label': entry.value,
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
-            }
-          }
         }
       }
-      await batch.commit(noResult: true);
-    });
+    }
+    await batch.commit(noResult: true);
   }
 
   static void _batchUpsertById(
