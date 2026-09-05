@@ -10,7 +10,6 @@ void main() {
       observedYear: 2026,
       sourceId: 'ndff-open-data',
       sourceRetrievedAt: '2026-09-05',
-      sourceRecordId: 'observation-123',
     );
 
     expect(cell.cellSizeMeters, 5000);
@@ -58,7 +57,7 @@ void main() {
     );
   });
 
-  test('storage representation contains no reconstructable point coordinates', () {
+  test('storage representation is a strict non-correlating allowlist', () {
     final stored = PublicObservationCell.publicData(
       speciesId: 42,
       gridCell: 'NL-123-456',
@@ -68,17 +67,38 @@ void main() {
       sourceRetrievedAt: '2026-09-05',
     ).toStorageMap();
 
-    expect(stored.keys, containsAll(<String>[
-      'grid_cell',
-      'cell_size_m',
-      'observed_year',
-      'source_id',
-      'source_retrieved_at',
-    ]));
-    expect(stored.keys.any((key) => key.contains('lat')), isFalse);
-    expect(stored.keys.any((key) => key.contains('lon')), isFalse);
-    expect(stored.keys.any((key) => key.contains('coordinate')), isFalse);
-    expect(stored.keys.any((key) => key.contains('timestamp')), isFalse);
-    expect(stored.keys.any((key) => key.contains('observed_at')), isFalse);
+    expect(
+      stored.keys.toSet(),
+      <String>{
+        'species_id',
+        'grid_cell',
+        'cell_size_m',
+        'observed_year',
+        'source_id',
+        'source_retrieved_at',
+      },
+    );
+
+    const forbiddenFragments = <String>[
+      'lat',
+      'lon',
+      'coordinate',
+      'timestamp',
+      'observed_at',
+      'record_id',
+      'observation_id',
+      'upload',
+      'route',
+      'observer',
+      'identity',
+      'related',
+    ];
+    for (final key in stored.keys) {
+      expect(
+        forbiddenFragments.any(key.contains),
+        isFalse,
+        reason: 'public observation storage leaked correlating key: $key',
+      );
+    }
   });
 }
