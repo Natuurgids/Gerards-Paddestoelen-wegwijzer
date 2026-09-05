@@ -42,9 +42,9 @@ void main() {
   });
 
   test('offline manifest fetch is non-destructive and reported unavailable', () async {
-    final attempt = await CoreDatasetUpdateService(
+    final attempt = await const CoreDatasetUpdateService(
       manifestUrl: 'https://updates.example.org/latest.json',
-      byteSource: const _OfflineByteSource(),
+      byteSource: _OfflineByteSource(),
     ).checkAndApply(db);
 
     expect(attempt.outcome, CoreDatasetUpdateAttemptOutcome.unavailable);
