@@ -12,5 +12,11 @@
     "dgfm-german-fungi",
     "uksi-natural-history-museum",
     "iucn-red-list"
-  ]
+  ],
+  "required_source_licenses": {
+    "nsr-dutch-species-register": "CC BY 4.0",
+    "dgfm-german-fungi": "CC BY 4.0",
+    "uksi-natural-history-museum": "CC BY 4.0",
+    "iucn-red-list": "CC BY 4.0"
+  }
 }
