@@ -7,6 +7,7 @@ import 'learning_in_app_purchase.dart';
 import 'learning_materials_service.dart';
 import 'learning_offering.dart';
 import 'learning_package_installer.dart';
+import 'learning_package_transport.dart';
 import 'learning_purchase_verifier_http.dart';
 import 'verified_entitlement_cache.dart';
 
@@ -19,6 +20,8 @@ enum LearningCommerceBootstrapStatus {
   incompleteStoreProductIds,
   missingVerifierEndpoints,
   invalidVerifierConfiguration,
+  missingDeliveryEndpoint,
+  invalidDeliveryConfiguration,
 }
 
 class LearningCommerceBootstrapResult {
@@ -58,8 +61,10 @@ class LearningCommerceBootstrap {
     LearningStoreProductIds? productIds,
     LearningInAppPurchaseClient? purchaseClient,
     LearningVerifierTransport? verifierTransport,
+    LearningPackageHttpTransport? packageTransport,
     String? verifyUrl,
     String? entitlementsUrl,
+    String? packageCatalogUrl,
   }) async {
     final dbProvider = databaseProvider ?? () => AppDatabase.instance.database;
     final loadOfferings = offeringLoader ?? LearningOfferingCatalog.loadBundled;
@@ -136,6 +141,35 @@ class LearningCommerceBootstrap {
       );
     }
 
+    final resolvedCatalogUrl = packageCatalogUrl ?? learningPackageCatalogUrl;
+    if (resolvedCatalogUrl.trim().isEmpty) {
+      return LearningCommerceBootstrapResult(
+        status: LearningCommerceBootstrapStatus.missingDeliveryEndpoint,
+        service: fallback,
+      );
+    }
+    final catalogUri = Uri.tryParse(resolvedCatalogUrl);
+    if (catalogUri == null) {
+      return LearningCommerceBootstrapResult(
+        status: LearningCommerceBootstrapStatus.invalidDeliveryConfiguration,
+        service: fallback,
+      );
+    }
+
+    late final AuthenticatedLearningPackageByteSource packageByteSource;
+    try {
+      packageByteSource = AuthenticatedLearningPackageByteSource(
+        trustedOrigin: catalogUri,
+        headersProvider: sessionHeadersProvider,
+        transport: packageTransport,
+      );
+    } on FormatException {
+      return LearningCommerceBootstrapResult(
+        status: LearningCommerceBootstrapStatus.invalidDeliveryConfiguration,
+        service: fallback,
+      );
+    }
+
     final store = LearningInAppPurchaseAdapter(
       providerType: provider,
       productIds: ids,
@@ -157,8 +191,9 @@ class LearningCommerceBootstrap {
     final service = DefaultLearningMaterialsService(
       entitlements: entitlements,
       installer: LearningPackageInstaller(
-        catalogUrl: learningPackageCatalogUrl,
+        catalogUrl: resolvedCatalogUrl,
         entitlements: entitlements,
+        byteSource: packageByteSource,
       ),
       databaseProvider: dbProvider,
       offeringLoader: () async => offerings,
