@@ -18,15 +18,10 @@ class CourseMetadata {
     this.productKey,
     this.groupKey,
     this.prerequisiteCourseKeys = const [],
-  })  : assert(
+  }) : assert(
           accessRequirement == LearningAccessRequirement.free ||
               entitlementKey != null,
           'Entitlement-required courses need an entitlement key.',
-        ),
-        assert(
-          delivery != LearningContentDelivery.builtIn ||
-              accessRequirement == LearningAccessRequirement.free,
-          'Built-in product content must always remain free.',
         );
 
   final String key;
@@ -86,7 +81,8 @@ class LearningAccessPolicy {
   final EntitlementRepository _entitlements;
 
   Future<bool> canAccessCourse(CourseMetadata course) async {
-    if (course.accessRequirement == LearningAccessRequirement.free) {
+    if (course.delivery == LearningContentDelivery.builtIn ||
+        course.accessRequirement == LearningAccessRequirement.free) {
       return true;
     }
     final key = course.entitlementKey;
@@ -96,8 +92,7 @@ class LearningAccessPolicy {
   }
 
   /// Returns only lesson ids belonging to courses the current entitlement
-  /// snapshot permits. This is the boundary repositories/UI can use to avoid
-  /// leaking locked premium lesson content.
+  /// snapshot permits. Built-in product material always remains accessible.
   Future<Set<int>> accessibleLessonIds({
     required Iterable<CourseMetadata> courses,
     required Iterable<LearningModuleMetadata> modules,
@@ -109,7 +104,8 @@ class LearningAccessPolicy {
     final accessibleCourses = <String>{};
 
     for (final course in courses) {
-      if (course.accessRequirement == LearningAccessRequirement.free) {
+      if (course.delivery == LearningContentDelivery.builtIn ||
+          course.accessRequirement == LearningAccessRequirement.free) {
         accessibleCourses.add(course.key);
         continue;
       }
