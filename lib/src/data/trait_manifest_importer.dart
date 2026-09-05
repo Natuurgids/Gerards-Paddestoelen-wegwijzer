@@ -22,11 +22,16 @@ class TraitManifestImporter {
     Map<String, dynamic>? supplemental,
   }) async {
     final traits = decoded['traits'] as List<dynamic>? ?? const [];
+    final baseSpeciesTraits =
+        decoded['species_traits'] as List<dynamic>? ?? const [];
+    final supplementalSpeciesTraits =
+        supplemental?['species_traits'] as List<dynamic>? ?? const [];
     final speciesTraits = <dynamic>[
-      ...(decoded['species_traits'] as List<dynamic>? ?? const []),
-      ...(supplemental?['species_traits'] as List<dynamic>? ?? const []),
+      ...baseSpeciesTraits,
+      ...supplementalSpeciesTraits,
     ];
     _validate(traits, speciesTraits);
+    _validateSupplementalProvenance(supplementalSpeciesTraits);
 
     await db.transaction((txn) async {
       final batch = txn.batch();
@@ -137,7 +142,9 @@ class TraitManifestImporter {
         final option = rawOption as Map<String, dynamic>;
         final optionId = option['id'];
         if (optionId is! int || !optionIds.add(optionId)) {
-          throw FormatException('Trait option ids must be unique integers: $optionId');
+          throw FormatException(
+            'Trait option ids must be unique integers: $optionId',
+          );
         }
         final optionCode = option['code'];
         if (optionCode is! String ||
@@ -174,6 +181,27 @@ class TraitManifestImporter {
           'Species trait species_id must be an integer: ${relation['species_id']}',
         );
       }
+    }
+  }
+
+  static void _validateSupplementalProvenance(List<dynamic> speciesTraits) {
+    for (final rawRelation in speciesTraits) {
+      final relation = rawRelation as Map<String, dynamic>;
+      final speciesId = relation['species_id'];
+      _validateProvenanceValue(
+        relation['source_id'],
+        'Supplemental species trait $speciesId source_id',
+      );
+      _validateProvenanceValue(
+        relation['source_record_id'],
+        'Supplemental species trait $speciesId source_record_id',
+      );
+    }
+  }
+
+  static void _validateProvenanceValue(Object? value, String context) {
+    if (value is! String || value.trim().isEmpty || value.trim() != value) {
+      throw FormatException('$context must be a trimmed, non-empty string');
     }
   }
 
