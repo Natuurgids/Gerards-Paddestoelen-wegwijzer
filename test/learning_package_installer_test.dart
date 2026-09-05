@@ -51,9 +51,16 @@ void main() {
     expect(bytes.requestedUris, [fixture.catalogUri]);
     expect(await db.query('lesson'), isEmpty);
     expect(await _stateRows(db, fixture.packageKey), isEmpty);
+    expect(
+      await LearningPackageLessonOwnership.lessonIdsForPackage(
+        db,
+        fixture.packageKey,
+      ),
+      isEmpty,
+    );
   });
 
-  test('verified entitled package installs atomically and records state', () async {
+  test('verified entitled package installs atomically and records ownership', () async {
     final fixture = _fixture(contentVersion: 1);
     final bytes = _FakeByteSource({
       fixture.catalogUri: fixture.catalogBytes,
@@ -75,13 +82,29 @@ void main() {
     expect(bytes.requestedUris, [fixture.catalogUri, fixture.packageUri]);
     expect((await db.query('lesson')).single['id'], 1000);
     expect((await _stateRows(db, fixture.packageKey)).single['revision'], 1);
+    expect(
+      await LearningPackageLessonOwnership.lessonIdsForPackage(
+        db,
+        fixture.packageKey,
+      ),
+      {1000},
+    );
+    expect(
+      await LearningPackageLessonOwnership.ownerForLesson(db, 1000),
+      fixture.packageKey,
+    );
     expect(await db.query('training_progress'), isEmpty);
   });
 
-  test('current installed package skips package download', () async {
+  test('current installed package with ownership skips package download', () async {
     final fixture = _fixture(contentVersion: 1);
     await db.insert('bundled_content_state', {
       'content_key': 'learning-package:${fixture.packageKey}',
+      'revision': 1,
+      'synced_at': '2026-09-05T12:00:00.000Z',
+    });
+    await db.insert('bundled_content_state', {
+      'content_key': 'learning-package-lesson:1000:${fixture.packageKey}',
       'revision': 1,
       'synced_at': '2026-09-05T12:00:00.000Z',
     });
@@ -95,6 +118,35 @@ void main() {
 
     expect(result.outcome, LearningPackageInstallOutcome.alreadyCurrent);
     expect(bytes.requestedUris, [fixture.catalogUri]);
+  });
+
+  test('same-version legacy install without ownership backfills mapping', () async {
+    final fixture = _fixture(contentVersion: 1);
+    await db.insert('bundled_content_state', {
+      'content_key': 'learning-package:${fixture.packageKey}',
+      'revision': 1,
+      'synced_at': '2026-09-05T12:00:00.000Z',
+    });
+    final bytes = _FakeByteSource({
+      fixture.catalogUri: fixture.catalogBytes,
+      fixture.packageUri: fixture.packageBytes,
+    });
+
+    final result = await LearningPackageInstaller(
+      catalogUrl: fixture.catalogUri.toString(),
+      entitlements: _Entitlements([fixture.entitlementKey]),
+      byteSource: bytes,
+    ).install(db, fixture.packageKey);
+
+    expect(result.outcome, LearningPackageInstallOutcome.installed);
+    expect(bytes.requestedUris, [fixture.catalogUri, fixture.packageUri]);
+    expect(
+      await LearningPackageLessonOwnership.lessonIdsForPackage(
+        db,
+        fixture.packageKey,
+      ),
+      {1000},
+    );
   });
 
   test('hash mismatch rejects package without lessons or install state', () async {
@@ -118,20 +170,58 @@ void main() {
     );
     expect(await db.query('lesson'), isEmpty);
     expect(await _stateRows(db, fixture.packageKey), isEmpty);
+    expect(
+      await LearningPackageLessonOwnership.lessonIdsForPackage(
+        db,
+        fixture.packageKey,
+      ),
+      isEmpty,
+    );
   });
 
-  test('package update preserves existing training progress', () async {
-    final first = _fixture(contentVersion: 1, bodySuffix: ' v1');
+  test('lesson id already owned by another package rejects atomically', () async {
+    final fixture = _fixture(contentVersion: 1);
+    await db.insert('bundled_content_state', {
+      'content_key': 'learning-package-lesson:1000:other-package',
+      'revision': 1,
+      'synced_at': '2026-09-05T11:00:00.000Z',
+    });
+    final bytes = _FakeByteSource({
+      fixture.catalogUri: fixture.catalogBytes,
+      fixture.packageUri: fixture.packageBytes,
+    });
+
+    expect(
+      () => LearningPackageInstaller(
+        catalogUrl: fixture.catalogUri.toString(),
+        entitlements: _Entitlements([fixture.entitlementKey]),
+        byteSource: bytes,
+      ).install(db, fixture.packageKey),
+      throwsA(isA<FormatException>()),
+    );
+    expect(await db.query('lesson'), isEmpty);
+    expect(await _stateRows(db, fixture.packageKey), isEmpty);
+    expect(
+      await LearningPackageLessonOwnership.ownerForLesson(db, 1000),
+      'other-package',
+    );
+  });
+
+  test('package update preserves progress and retires old ownership', () async {
+    final first = _fixture(
+      contentVersion: 1,
+      bodySuffix: ' v1',
+      lessonId: 1000,
+    );
     final firstBytes = _FakeByteSource({
       first.catalogUri: first.catalogBytes,
       first.packageUri: first.packageBytes,
     });
-    final installer = LearningPackageInstaller(
+    await LearningPackageInstaller(
       catalogUrl: first.catalogUri.toString(),
       entitlements: _Entitlements([first.entitlementKey]),
       byteSource: firstBytes,
-    );
-    await installer.install(db, first.packageKey);
+    ).install(db, first.packageKey);
     await db.insert('training_progress', {
       'lesson_id': 1000,
       'completed_at': '2026-09-05T12:15:00.000Z',
@@ -139,7 +229,11 @@ void main() {
       'attempts': 2,
     });
 
-    final second = _fixture(contentVersion: 2, bodySuffix: ' v2');
+    final second = _fixture(
+      contentVersion: 2,
+      bodySuffix: ' v2',
+      lessonId: 1001,
+    );
     final secondBytes = _FakeByteSource({
       second.catalogUri: second.catalogBytes,
       second.packageUri: second.packageBytes,
@@ -152,13 +246,26 @@ void main() {
 
     expect(result.outcome, LearningPackageInstallOutcome.installed);
     final progress = (await db.query('training_progress')).single;
+    expect(progress['lesson_id'], 1000);
     expect(progress['best_score'], 1.0);
     expect(progress['attempts'], 2);
     expect((await _stateRows(db, second.packageKey)).single['revision'], 2);
+    expect(
+      await LearningPackageLessonOwnership.lessonIdsForPackage(
+        db,
+        second.packageKey,
+      ),
+      {1001},
+    );
+    expect(await LearningPackageLessonOwnership.ownerForLesson(db, 1000), isNull);
+    expect(
+      await db.query('lesson', where: 'id=?', whereArgs: const [1000]),
+      hasLength(1),
+    );
     final text = (await db.query(
       'lesson_text',
       where: 'lesson_id=? AND language_code=?',
-      whereArgs: const [1000, 'nl'],
+      whereArgs: const [1001, 'nl'],
     )).single;
     expect(text['body'], endsWith('v2'));
   });
@@ -191,13 +298,23 @@ class _Fixture {
 
 _Fixture _fixture({
   required int contentVersion,
+  int lessonId = 1000,
   String bodySuffix = '',
   String? catalogShaOverride,
 }) {
   const packageKey = 'boletes-pores';
   const entitlementKey = 'learning.specialist.boletes-pores';
-  final catalogUri = Uri.parse('https://learning.example.org/learning_package_catalog.json');
-  final packageUri = Uri.parse('https://learning.example.org/packages/boletes-pores.json');
+  const courseKey = 'specialist-boletes-pores';
+  const productKey = 'learning_pack_boletes_pores';
+  final questionId = lessonId * 10;
+  final firstAnswerId = lessonId * 100;
+  final secondAnswerId = firstAnswerId + 1;
+  final catalogUri = Uri.parse(
+    'https://learning.example.org/learning_package_catalog.json',
+  );
+  final packageUri = Uri.parse(
+    'https://learning.example.org/packages/boletes-pores.json',
+  );
   final packageBytes = Uint8List.fromList(
     utf8.encode(
       jsonEncode({
@@ -205,20 +322,20 @@ _Fixture _fixture({
         'package_key': packageKey,
         'content_version': contentVersion,
         'course': {
-          'key': 'specialist-boletes-pores',
+          'key': courseKey,
           'access': 'entitlement_required',
           'delivery': 'downloadable',
           'entitlement_key': entitlementKey,
-          'product_key': 'learning_pack_boletes_pores',
+          'product_key': productKey,
           'group_key': 'specializations',
           'sort_order': 110,
           'prerequisite_course_keys': ['determination-foundations'],
         },
         'modules': [
           {
-            'key': 'boletes-pores-basics',
-            'course_key': 'specialist-boletes-pores',
-            'lesson_ids': [1000],
+            'key': 'boletes-pores-$lessonId',
+            'course_key': courseKey,
+            'lesson_ids': [lessonId],
             'sort_order': 10,
           },
         ],
@@ -226,8 +343,8 @@ _Fixture _fixture({
           'version': 2,
           'lessons': [
             {
-              'id': 1000,
-              'slug': 'boletes-pores-basics',
+              'id': lessonId,
+              'slug': 'boletes-pores-$lessonId',
               'difficulty': 2,
               'sort_order': 1,
               'texts': {
@@ -237,25 +354,38 @@ _Fixture _fixture({
               },
               'questions': [
                 {
-                  'id': 10000,
+                  'id': questionId,
                   'sort_order': 1,
                   'texts': {
-                    'nl': {'prompt': 'Welke structuur?', 'explanation': 'Bekijk meerdere kenmerken.'},
-                    'en': {'prompt': 'Which structure?', 'explanation': 'Use multiple characters.'},
-                    'de': {'prompt': 'Welche Struktur?', 'explanation': 'Nutze mehrere Merkmale.'},
+                    'nl': {
+                      'prompt': 'Welke structuur?',
+                      'explanation': 'Bekijk meerdere kenmerken.',
+                    },
+                    'en': {
+                      'prompt': 'Which structure?',
+                      'explanation': 'Use multiple characters.',
+                    },
+                    'de': {
+                      'prompt': 'Welche Struktur?',
+                      'explanation': 'Nutze mehrere Merkmale.',
+                    },
                   },
                   'answers': [
                     {
-                      'id': 100000,
+                      'id': firstAnswerId,
                       'correct': true,
                       'sort_order': 1,
                       'labels': {'nl': 'Poriën', 'en': 'Pores', 'de': 'Poren'},
                     },
                     {
-                      'id': 100001,
+                      'id': secondAnswerId,
                       'correct': false,
                       'sort_order': 2,
-                      'labels': {'nl': 'Alleen kleur', 'en': 'Colour only', 'de': 'Nur Farbe'},
+                      'labels': {
+                        'nl': 'Alleen kleur',
+                        'en': 'Colour only',
+                        'de': 'Nur Farbe',
+                      },
                     },
                   ],
                 },
@@ -274,9 +404,9 @@ _Fixture _fixture({
         'packages': [
           {
             'package_key': packageKey,
-            'course_key': 'specialist-boletes-pores',
+            'course_key': courseKey,
             'entitlement_key': entitlementKey,
-            'product_key': 'learning_pack_boletes_pores',
+            'product_key': productKey,
             'content_version': contentVersion,
             'package_path': 'packages/boletes-pores.json',
             'package_sha256': catalogShaOverride ?? digest,
