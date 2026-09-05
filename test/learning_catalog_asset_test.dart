@@ -9,7 +9,7 @@ import 'package:gerards_paddestoelen_wegwijzer/src/data/learning_catalog.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('bundled catalog keeps every current packaged lesson free', () async {
+  test('bundled catalog keeps every current packaged lesson built-in and free', () async {
     final trainingRaw = await rootBundle.loadString(
       'assets/data/training_content.json',
     );
@@ -26,6 +26,10 @@ void main() {
 
     expect(packagedLessonIds, isNotEmpty);
     expect(catalogLessonIds, packagedLessonIds);
+    expect(
+      catalog.courses.map((course) => course.delivery),
+      everyElement(LearningContentDelivery.builtIn),
+    );
     expect(
       catalog.courses.map((course) => course.accessRequirement),
       everyElement(LearningAccessRequirement.free),
