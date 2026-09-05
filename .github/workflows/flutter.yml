@@ -27,6 +27,10 @@ jobs:
           cache: true
       - name: Generate platform scaffolding
         run: flutter create . --platforms=android,ios --project-name gerards_paddestoelen_wegwijzer --org nl.natuurgids
+      - name: Configure release platform floors
+        run: python3 tool/configure_generated_platforms.py
+      - name: Test release platform floor configurator
+        run: python3 -m unittest tool/test_configure_generated_platforms.py
       - name: Install dependencies
         run: flutter pub get
       - name: Restore reviewed vernacular source pages

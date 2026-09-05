@@ -14,4 +14,10 @@ Paid learning commerce is separate from learning content delivery and from the c
 - Paid package hosting remains separately controlled. Commerce success and content download are distinct operations.
 - The current build remains safely unconfigured until a concrete store adapter, provider-specific product-ID mapping and trusted verification path are supplied.
 
-As of 2026-09-05, the current official Flutter `in_app_purchase` line supports App Store and Google Play but its latest supported-platform matrix raises the Android floor to SDK 24 and iOS to 13. Concrete plugin adoption is therefore a separate release/platform-support decision rather than an implicit side effect of this contract PR.
+## Supported purchase platform baseline
+
+As of 2026-09-05 the app adopts the official Flutter `in_app_purchase` 3.3.x line as its purchase SDK baseline. That line supports Android SDK 24+ and iOS 13.0+. Google Play Billing Library 7 reached its normal new-app/update deadline on 2026-08-31, so retaining an older purchase SDK solely to preserve Android 21 is not the release baseline.
+
+This repository generates Android and iOS scaffolding rather than committing the platform trees. After `flutter create`, run `python3 tool/configure_generated_platforms.py` before dependency installation or release builds. CI runs the same command and its regression tests. The script sets Android `minSdk` to 24, iOS deployment targets and `MinimumOSVersion` to 13.0, and fails if a future Flutter template no longer contains the expected declarations.
+
+The purchase SDK baseline does not itself enable commerce. The production learning-materials service remains unconfigured until a concrete store adapter, provider-specific product-ID mapping and trusted purchase verifier are supplied.
