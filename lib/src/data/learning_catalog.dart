@@ -37,16 +37,27 @@ class LearningCatalog {
         'entitlement_required' => LearningAccessRequirement.entitlementRequired,
         _ => throw FormatException('Invalid access requirement for course $key: $accessValue'),
       };
+      final deliveryValue = rawCourse['delivery'];
+      final delivery = switch (deliveryValue) {
+        'built_in' => LearningContentDelivery.builtIn,
+        'downloadable' => LearningContentDelivery.downloadable,
+        _ => throw FormatException('Invalid delivery for course $key: $deliveryValue'),
+      };
       final entitlementKey = _optionalKey(rawCourse['entitlement_key'], 'entitlement key');
       if (accessRequirement == LearningAccessRequirement.entitlementRequired &&
           entitlementKey == null) {
         throw FormatException('Course $key requires a non-empty entitlement_key');
+      }
+      if (delivery == LearningContentDelivery.builtIn &&
+          accessRequirement != LearningAccessRequirement.free) {
+        throw FormatException('Built-in course $key must remain free');
       }
 
       courses.add(
         CourseMetadata(
           key: key,
           accessRequirement: accessRequirement,
+          delivery: delivery,
           entitlementKey: entitlementKey,
           productKey: _optionalKey(rawCourse['product_key'], 'product key'),
           groupKey: _optionalKey(rawCourse['group_key'], 'group key'),
