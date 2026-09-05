@@ -31,6 +31,8 @@ jobs:
         run: python3 tool/configure_generated_platforms.py
       - name: Test release platform floor configurator
         run: python3 -m unittest tool/test_configure_generated_platforms.py
+      - name: Test paid learning package publisher
+        run: python3 -m unittest tool/test_publish_learning_packages.py
       - name: Install dependencies
         run: flutter pub get
       - name: Restore reviewed vernacular source pages
