@@ -4,6 +4,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../widgets/safety_notice.dart';
 import '../identify/identify_screen.dart';
 import '../species/species_browser_screen.dart';
+import '../training/learning_materials_screen.dart';
 import '../training/training_screen.dart';
 import 'sources_screen.dart';
 
@@ -66,6 +67,16 @@ class HomeScreen extends StatelessWidget {
                     ),
                     icon: const Icon(Icons.school_outlined),
                     label: Text(l10n.homeLearn),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => LearningMaterialsScreen(locale: locale),
+                      ),
+                    ),
+                    icon: const Icon(Icons.download_for_offline_outlined),
+                    label: Text(l10n.homeLearningMaterials),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
