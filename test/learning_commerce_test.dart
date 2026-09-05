@@ -114,7 +114,7 @@ void main() {
     expect(verifier.evidence, isEmpty);
   });
 
-  test('completed evidence must verify to matching product and entitlement', () async {
+  test('completed evidence may omit SDK transaction ID', () async {
     final verifier = _Verifier(
       result: const VerifiedLearningPurchase(
         productKey: 'learning_pack_boletes_pores',
@@ -126,8 +126,8 @@ void main() {
     const evidence = LearningPurchaseEvidence(
       provider: LearningCommerceProvider.appStore,
       productKey: 'learning_pack_boletes_pores',
-      transactionId: 'transaction-1',
-      verificationPayload: 'signed-payload',
+      transactionId: '',
+      verificationPayload: 'server-verification-payload',
       state: LearningPurchaseState.purchased,
     );
 
@@ -137,7 +137,32 @@ void main() {
     expect(verifier.evidence, [evidence]);
   });
 
-  test('mismatched verifier result is rejected', () async {
+  test('trusted verification completes the same provider evidence afterward', () async {
+    final provider = _Provider(configured: true);
+    final verifier = _Verifier(
+      result: const VerifiedLearningPurchase(
+        productKey: 'learning_pack_boletes_pores',
+        entitlementKey: 'learning.specialist.boletes-pores',
+        active: true,
+      ),
+    );
+    final coordinator = _coordinator(provider: provider, verifier: verifier);
+    const evidence = LearningPurchaseEvidence(
+      provider: LearningCommerceProvider.googlePlay,
+      productKey: 'learning_pack_boletes_pores',
+      transactionId: 'order-1',
+      verificationPayload: 'signed-payload',
+      state: LearningPurchaseState.purchased,
+    );
+
+    final verified = await coordinator.verifyAndCompleteEvidence(evidence);
+
+    expect(verified.active, isTrue);
+    expect(provider.completed, [evidence]);
+  });
+
+  test('failed trusted verification never completes provider evidence', () async {
+    final provider = _Provider(configured: true);
     final verifier = _Verifier(
       result: const VerifiedLearningPurchase(
         productKey: 'learning_pack_boletes_pores',
@@ -145,9 +170,10 @@ void main() {
         active: true,
       ),
     );
+    final coordinator = _coordinator(provider: provider, verifier: verifier);
 
     expect(
-      () => _coordinator(verifier: verifier).verifyEvidence(
+      () => coordinator.verifyAndCompleteEvidence(
         const LearningPurchaseEvidence(
           provider: LearningCommerceProvider.googlePlay,
           productKey: 'learning_pack_boletes_pores',
@@ -158,6 +184,7 @@ void main() {
       ),
       throwsA(isA<StateError>()),
     );
+    expect(provider.completed, isEmpty);
   });
 }
 
@@ -217,6 +244,7 @@ class _Provider implements LearningCommerceProviderAdapter {
   final bool configured;
   final Map<String, LearningProductQuote> quotes;
   final List<String> purchases = [];
+  final List<LearningPurchaseEvidence> completed = [];
   int restoreCalls = 0;
 
   @override
@@ -237,6 +265,11 @@ class _Provider implements LearningCommerceProviderAdapter {
   @override
   Future<void> restorePurchases() async {
     restoreCalls++;
+  }
+
+  @override
+  Future<void> completeVerifiedPurchase(LearningPurchaseEvidence evidence) async {
+    completed.add(evidence);
   }
 }
 
