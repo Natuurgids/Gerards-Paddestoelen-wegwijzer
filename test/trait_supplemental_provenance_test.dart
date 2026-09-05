@@ -27,6 +27,7 @@ void main() {
   });
 
   test('sourced supplemental species traits are accepted', () async {
+    await _insertReferenceSource(db, 'reviewed-source');
     await _insertSpecies(db, 20);
 
     await TraitManifestImporter.syncDecoded(
@@ -133,6 +134,15 @@ Map<String, dynamic> _baseTraits({bool includeBaseRelation = true}) => {
             ]
           : <dynamic>[],
     };
+
+Future<void> _insertReferenceSource(Database db, String sourceId) async {
+  await db.insert('reference_source', {
+    'id': sourceId,
+    'title': 'Reviewed source',
+    'url': 'https://example.invalid/source',
+    'retrieved_at': '2026-09-05',
+  });
+}
 
 Future<void> _insertSpecies(Database db, int speciesId) async {
   await db.insert('taxon', {
