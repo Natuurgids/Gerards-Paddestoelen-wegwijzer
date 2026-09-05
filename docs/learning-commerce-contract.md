@@ -67,6 +67,16 @@ The purchase verification request contains only contract version, provider, logi
 
 The entitlement-reconciliation endpoint returns the authoritative active logical entitlement keys for the authenticated session. Runtime authentication/session headers may be supplied through `LearningVerifierHeadersProvider`. No reusable verifier/backend secret may be embedded in source code, Dart defines or the APK. Endpoint URLs are public configuration; credentials are runtime state.
 
+## Protected paid-content delivery
+
+`AuthenticatedLearningPackageByteSource` binds paid catalogue/package downloads to the configured `LEARNING_PACKAGE_CATALOG_URL` HTTPS origin. The same runtime session-header provider used by the trusted verifier supplies request headers for delivery, but the headers are requested anew for every request so short-lived tokens can rotate.
+
+The authenticated byte source rejects a URI outside the configured catalogue origin before requesting session headers. The production learning-package HTTP transport also refuses redirects, validates caller-supplied header names/values and enforces the caller's byte limit. This prevents account/session credentials from being silently forwarded to another host.
+
+The remote catalogue may describe all specialist products for the authenticated app session, but package bytes are still not fetched until the local logical entitlement is granted. Catalogue/package hashes and exact package byte size remain mandatory integrity checks before import. Runtime authentication is access control; SHA-256 remains package integrity.
+
+The fail-closed bootstrap deliberately constructs its fallback materials service with paid delivery disabled (`catalogUrl: ''`). Previously installed and verified content can therefore remain usable offline, but an invalid/missing session, store mapping, verifier or delivery endpoint cannot trigger anonymous paid-content downloads.
+
 ## Runtime processing and UI refresh
 
 `LearningCommerceRuntime` is the long-lived processor for configured store purchase updates. It serializes completed purchase/restore evidence so verification, entitlement persistence and store completion cannot race. Pending, canceled and failed store states are not submitted for entitlement processing. A verification/persistence failure is reported on the runtime error stream but does not terminate the store subscription, so later valid purchases can still be processed.
@@ -81,9 +91,9 @@ A configured long-lived runtime may be injected through `DefaultLearningMaterial
 
 `LearningCommerceBootstrap.fromEnvironment()` is the single composition gate for a future authenticated production bootstrap. It selects Google Play only on Android and App Store only on iOS, loads the bundled public offering catalogue, and requires the active platform's store mapping to contain exactly the same logical product keys as the catalogue. Missing, malformed, incomplete or wrong-platform mappings do not partially enable commerce.
 
-Both trusted verifier endpoints must be configured and valid, and a runtime `LearningVerifierHeadersProvider` must be supplied by the caller before the bootstrap will construct the official store adapter, verifier, durable entitlement repository, controller and long-lived runtime. The header provider is deliberately not sourced from Dart defines or repository secrets: it represents runtime session/account state owned by a future authenticated application bootstrap.
+Both trusted verifier endpoints and the protected paid-package catalogue endpoint must be configured and valid, and a runtime `LearningVerifierHeadersProvider` must be supplied by the caller before the bootstrap will construct the official store adapter, verifier, authenticated package transport, durable entitlement repository, controller and long-lived runtime. The header provider is deliberately not sourced from Dart defines or repository secrets: it represents runtime session/account state owned by a future authenticated application bootstrap.
 
-Ordinary deployment incompleteness returns an explicit `LearningCommerceBootstrapStatus` and an offline-capable materials service with purchases disabled. Previously verified cached entitlements remain readable in this fallback path. A fully configured result owns the runtime subscription and must be closed with `LearningCommerceBootstrapResult.close()` when its application/session lifecycle ends.
+Ordinary deployment incompleteness returns an explicit `LearningCommerceBootstrapStatus` and an offline-capable materials service with purchases and new paid downloads disabled. Previously verified cached entitlements remain readable and already-installed entitled content can remain usable offline. A fully configured result owns the runtime subscription and must be closed with `LearningCommerceBootstrapResult.close()` when its application/session lifecycle ends.
 
 `main.dart` remains intentionally unconfigured. Adding the bootstrap factory does not by itself activate Buy/Restore in a production release and does not create an anonymous verifier identity. Real platform product IDs, a deployed trusted verifier, authenticated session ownership and separately controlled paid-content hosting are still release prerequisites.
 
