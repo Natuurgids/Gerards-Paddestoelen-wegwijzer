@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:sqflite/sqflite.dart';
-
 import 'app_database.dart';
 import 'learning_commerce.dart';
 import 'learning_commerce_runtime.dart';
