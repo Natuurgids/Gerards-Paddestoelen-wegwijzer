@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 0.2.0+2
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -15,6 +15,7 @@ dependencies:
   sqflite: ^2.3.3+1
   path: ^1.9.0
   crypto: ^3.0.6
+  in_app_purchase: ^3.3.0
 
 dev_dependencies:
   flutter_test:
@@ -28,7 +29,7 @@ flutter_launcher_icons:
   ios: true
   image_path: assets/app_icon.png
   remove_alpha_ios: true
-  min_sdk_android: 21
+  min_sdk_android: 24
 
 flutter:
   generate: true
