@@ -4,6 +4,7 @@
     {
       "key": "determination-foundations",
       "access": "free",
+      "delivery": "built_in",
       "group_key": "foundations",
       "sort_order": 10
     }
