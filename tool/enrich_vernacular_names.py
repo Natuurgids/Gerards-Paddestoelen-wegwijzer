@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import hashlib
 import json
 import urllib.parse
 import urllib.request
@@ -34,8 +35,21 @@ SOURCES = {
     },
 }
 
+_CACHE_DIR: Path | None = None
+
+
+def _cache_path(url: str) -> Path | None:
+    if _CACHE_DIR is None:
+        return None
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()
+    return _CACHE_DIR / f"{digest}.json"
+
 
 def _request_json(url: str) -> dict:
+    cache_path = _cache_path(url)
+    if cache_path is not None and cache_path.exists():
+        return json.loads(cache_path.read_text(encoding="utf-8"))
+
     request = urllib.request.Request(
         url,
         headers={
@@ -44,7 +58,17 @@ def _request_json(url: str) -> dict:
         },
     )
     with urllib.request.urlopen(request, timeout=180) as response:
-        return json.load(response)
+        payload = json.load(response)
+
+    if cache_path is not None:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = cache_path.with_suffix(".tmp")
+        temporary.write_text(
+            json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(cache_path)
+    return payload
 
 
 def _gbif_page(dataset_key: str, offset: int, limit: int) -> dict:
@@ -206,12 +230,15 @@ def enrich(catalog_path: Path, retrieved_at: str) -> dict[str, int]:
 
 
 def main():
+    global _CACHE_DIR
     parser = argparse.ArgumentParser()
     parser.add_argument("--catalog", default="assets/data/species_catalog.json")
     parser.add_argument("--retrieved-at", default="2026-09-04")
     parser.add_argument("--min-de", type=int, default=100)
     parser.add_argument("--min-en", type=int, default=100)
+    parser.add_argument("--cache-dir")
     args = parser.parse_args()
+    _CACHE_DIR = Path(args.cache_dir) if args.cache_dir else None
     counts = enrich(Path(args.catalog), args.retrieved_at)
     if counts.get("de", 0) < args.min_de or counts.get("en", 0) < args.min_en:
         raise ValueError(f"Vernacular coverage unexpectedly low: {counts}")
