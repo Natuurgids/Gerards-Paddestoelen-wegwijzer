@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:gerards_paddestoelen_wegwijzer/l10n/app_localizations.dart';
+import 'package:gerards_paddestoelen_wegwijzer/src/data/learning_commerce.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/learning_materials_service.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/learning_offering.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/learning_package_installer.dart';
@@ -40,6 +41,124 @@ void main() {
     expect(find.text('Downloaden'), findsNothing);
     expect(find.text('Openen'), findsNothing);
     expect(find.textContaining('€'), findsNothing);
+    expect(find.byKey(const ValueKey('learning-materials-restore')), findsNothing);
+  });
+
+  testWidgets('configured store shows only its localized quote and purchase', (
+    tester,
+  ) async {
+    final service = _FakeMaterialsService(
+      material: _material(entitled: false),
+      purchasesConfigured: true,
+      deliveryConfigured: false,
+      quotes: const {
+        'learning_pack_boletes_pores': LearningProductQuote(
+          productKey: 'learning_pack_boletes_pores',
+          displayPrice: '€ 2,99',
+          currencyCode: 'EUR',
+        ),
+      },
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        LearningMaterialsScreen(
+          locale: const Locale('nl'),
+          service: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('learning-material-price-boletes-pores')), findsOneWidget);
+    expect(find.text('€ 2,99'), findsOneWidget);
+    expect(find.text('Kopen · € 2,99'), findsOneWidget);
+    expect(find.byKey(const ValueKey('learning-materials-restore')), findsOneWidget);
+
+    await tester.tap(find.text('Kopen · € 2,99'));
+    await tester.pumpAndSettle();
+
+    expect(service.purchaseCalls, ['learning_pack_boletes_pores']);
+    expect(find.text('Niet in bezit'), findsOneWidget);
+    expect(find.text('Downloaden'), findsNothing);
+    expect(
+      find.textContaining('Toegang wordt pas actief nadat de aankoop is geverifieerd'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('configured store with missing quote shows no fallback price or buy', (
+    tester,
+  ) async {
+    final service = _FakeMaterialsService(
+      material: _material(entitled: false),
+      purchasesConfigured: true,
+      deliveryConfigured: false,
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        LearningMaterialsScreen(
+          locale: const Locale('nl'),
+          service: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('€'), findsNothing);
+    expect(find.text('Kopen'), findsNothing);
+    expect(find.byKey(const ValueKey('learning-material-buy-boletes-pores')), findsNothing);
+  });
+
+  testWidgets('restore delegates without inventing entitlement', (tester) async {
+    final service = _FakeMaterialsService(
+      material: _material(entitled: false),
+      purchasesConfigured: true,
+      deliveryConfigured: false,
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        LearningMaterialsScreen(
+          locale: const Locale('nl'),
+          service: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Aankopen herstellen'));
+    await tester.pumpAndSettle();
+
+    expect(service.restoreCalls, 1);
+    expect(find.text('Niet in bezit'), findsOneWidget);
+    expect(find.text('Openen'), findsNothing);
+  });
+
+  testWidgets('store quote failure is nonblocking and has no fallback price', (
+    tester,
+  ) async {
+    final service = _FakeMaterialsService(
+      material: _material(entitled: false),
+      purchasesConfigured: true,
+      deliveryConfigured: false,
+      throwQuotes: true,
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        LearningMaterialsScreen(
+          locale: const Locale('nl'),
+          service: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Winkelinformatie is nu niet beschikbaar'), findsOneWidget);
+    expect(find.textContaining('€'), findsNothing);
+    expect(find.byKey(const ValueKey('learning-material-buy-boletes-pores')), findsNothing);
   });
 
   testWidgets('entitled offering can download when remote version is known', (
@@ -178,7 +297,9 @@ class _FakeMaterialsService implements LearningMaterialsService {
     required this.purchasesConfigured,
     required this.deliveryConfigured,
     this.remoteVersions = const {},
+    this.quotes = const {},
     this.throwRemote = false,
+    this.throwQuotes = false,
   }) : _material = material;
 
   LearningMaterialLocalState _material;
@@ -190,8 +311,12 @@ class _FakeMaterialsService implements LearningMaterialsService {
   final bool deliveryConfigured;
 
   final Map<String, int> remoteVersions;
+  final Map<String, LearningProductQuote> quotes;
   final bool throwRemote;
+  final bool throwQuotes;
   final List<String> installCalls = [];
+  final List<String> purchaseCalls = [];
+  int restoreCalls = 0;
 
   @override
   Future<LearningMaterialsLocalSnapshot> loadLocal() async =>
@@ -200,6 +325,24 @@ class _FakeMaterialsService implements LearningMaterialsService {
         purchasesConfigured: purchasesConfigured,
         deliveryConfigured: deliveryConfigured,
       );
+
+  @override
+  Future<Map<String, LearningProductQuote>> loadProductQuotes(
+    Iterable<LearningOffering> offerings,
+  ) async {
+    if (throwQuotes) throw StateError('store offline');
+    return quotes;
+  }
+
+  @override
+  Future<void> purchase(String productKey) async {
+    purchaseCalls.add(productKey);
+  }
+
+  @override
+  Future<void> restorePurchases() async {
+    restoreCalls++;
+  }
 
   @override
   Future<Map<String, int>> loadRemoteVersions(
