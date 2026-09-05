@@ -13,6 +13,7 @@ const learningPackageCatalogUrl = String.fromEnvironment(
   'LEARNING_PACKAGE_CATALOG_URL',
 );
 const _learningPackageStatePrefix = 'learning-package:';
+const _learningPackageLessonStatePrefix = 'learning-package-lesson:';
 const _maxLearningCatalogBytes = 256 * 1024;
 
 enum LearningPackageInstallOutcome {
@@ -72,6 +73,62 @@ class InstalledLearningPackageState {
       contentVersion: revision,
       installedAt: installedAt.toUtc(),
     );
+  }
+}
+
+class LearningPackageLessonOwnership {
+  const LearningPackageLessonOwnership._();
+
+  static Future<Set<int>> lessonIdsForPackage(
+    DatabaseExecutor db,
+    String packageKey,
+  ) async {
+    final owners = await _loadAll(db);
+    return {
+      for (final entry in owners.entries)
+        if (entry.value == packageKey) entry.key,
+    };
+  }
+
+  static Future<String?> ownerForLesson(
+    DatabaseExecutor db,
+    int lessonId,
+  ) async {
+    final owners = await _loadAll(db);
+    return owners[lessonId];
+  }
+
+  static Future<Map<int, String>> _loadAll(DatabaseExecutor db) async {
+    final rows = await db.query(
+      'bundled_content_state',
+      columns: const ['content_key'],
+      where: 'content_key LIKE ?',
+      whereArgs: ['$_learningPackageLessonStatePrefix%'],
+    );
+    final result = <int, String>{};
+    for (final row in rows) {
+      final rawKey = row['content_key'];
+      if (rawKey is! String ||
+          !rawKey.startsWith(_learningPackageLessonStatePrefix)) {
+        continue;
+      }
+      final remainder = rawKey.substring(_learningPackageLessonStatePrefix.length);
+      final separator = remainder.indexOf(':');
+      if (separator <= 0 || separator == remainder.length - 1) {
+        throw StateError('Installed learning package lesson state is invalid: $rawKey');
+      }
+      final lessonId = int.tryParse(remainder.substring(0, separator));
+      final packageKey = remainder.substring(separator + 1);
+      if (lessonId == null || lessonId < downloadableLearningLessonIdFloor) {
+        throw StateError('Installed learning package lesson state is invalid: $rawKey');
+      }
+      final previous = result[lessonId];
+      if (previous != null && previous != packageKey) {
+        throw StateError('Lesson $lessonId is owned by more than one learning package');
+      }
+      result[lessonId] = packageKey;
+    }
+    return Map.unmodifiable(result);
   }
 }
 
@@ -176,7 +233,11 @@ class LearningPackageInstaller {
     }
 
     final installed = await InstalledLearningPackageState.load(db, packageKey);
-    if (installed != null && installed.contentVersion >= descriptor.contentVersion) {
+    final installedLessonIds =
+        await LearningPackageLessonOwnership.lessonIdsForPackage(db, packageKey);
+    if (installed != null &&
+        installed.contentVersion >= descriptor.contentVersion &&
+        installedLessonIds.isNotEmpty) {
       return LearningPackageInstallResult(
         outcome: LearningPackageInstallOutcome.alreadyCurrent,
         packageKey: packageKey,
@@ -203,19 +264,59 @@ class LearningPackageInstaller {
       decoded,
       expected: descriptor,
     );
+    final packageLessonIds = {
+      for (final module in package.modules) ...module.lessonIds,
+    };
 
     await db.transaction((txn) async {
       final current = await InstalledLearningPackageState.load(txn, packageKey);
-      if (current != null && current.contentVersion >= package.contentVersion) {
+      final currentLessonIds =
+          await LearningPackageLessonOwnership.lessonIdsForPackage(txn, packageKey);
+      if (current != null &&
+          current.contentVersion >= package.contentVersion &&
+          currentLessonIds.isNotEmpty) {
         return;
       }
+
+      final allOwners = await LearningPackageLessonOwnership._loadAll(txn);
+      for (final lessonId in packageLessonIds) {
+        final owner = allOwners[lessonId];
+        if (owner != null && owner != packageKey) {
+          throw FormatException(
+            'Learning package ${package.packageKey} cannot claim lesson $lessonId owned by $owner',
+          );
+        }
+      }
+
       await TrainingManifestImporter.syncDecoded(txn, package.trainingContent);
+
+      final timestamp = (installedAt ?? DateTime.now()).toUtc().toIso8601String();
+      for (final entry in allOwners.entries) {
+        if (entry.value == packageKey) {
+          await txn.delete(
+            'bundled_content_state',
+            where: 'content_key=?',
+            whereArgs: [_lessonStateKey(entry.key, packageKey)],
+          );
+        }
+      }
+      for (final lessonId in packageLessonIds) {
+        await txn.insert(
+          'bundled_content_state',
+          {
+            'content_key': _lessonStateKey(lessonId, packageKey),
+            'revision': package.contentVersion,
+            'synced_at': timestamp,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
       await txn.insert(
         'bundled_content_state',
         {
           'content_key': '$_learningPackageStatePrefix$packageKey',
           'revision': package.contentVersion,
-          'synced_at': (installedAt ?? DateTime.now()).toUtc().toIso8601String(),
+          'synced_at': timestamp,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -229,6 +330,9 @@ class LearningPackageInstaller {
     );
   }
 }
+
+String _lessonStateKey(int lessonId, String packageKey) =>
+    '$_learningPackageLessonStatePrefix$lessonId:$packageKey';
 
 Map<String, dynamic> _decodeJsonObject(Uint8List bytes, String context) {
   Object? decoded;
