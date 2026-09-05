@@ -378,7 +378,7 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
                           )
                         : const Icon(Icons.shopping_bag_outlined),
                     label: Text(
-                      '${l10n.learningMaterialsPurchase} · ${quote!.displayPrice}',
+                      '${l10n.learningMaterialsPurchase} · ${quote.displayPrice}',
                     ),
                   ),
                 if (updateAvailable)
