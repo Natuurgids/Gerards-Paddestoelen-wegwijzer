@@ -51,9 +51,10 @@ void main() {
     final coordinator = _coordinator(provider: provider);
 
     final quotes = await coordinator.loadQuotes();
+    final quote = quotes.values.single;
 
-    expect(quotes.single.displayPrice, '€ 2,99');
-    expect(quotes.single.currencyCode, 'EUR');
+    expect(quote.displayPrice, '€ 2,99');
+    expect(quote.currencyCode, 'EUR');
   });
 
   test('provider cannot inject an unknown product quote', () async {
@@ -219,7 +220,8 @@ class _Provider implements LearningCommerceProviderAdapter {
   int restoreCalls = 0;
 
   @override
-  Stream<LearningPurchaseEvidence> get purchaseUpdates => const Stream.empty();
+  Stream<LearningPurchaseEvidence> get purchaseUpdates =>
+      const Stream<LearningPurchaseEvidence>.empty();
 
   @override
   Future<Map<String, LearningProductQuote>> loadProductQuotes(
