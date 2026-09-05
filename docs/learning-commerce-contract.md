@@ -34,6 +34,22 @@ The adapter queries `ProductDetails` from the active store and maps the provider
 
 Purchase updates are converted to `LearningPurchaseEvidence` only for configured provider product IDs. Unknown store products are ignored. `serverVerificationData` is passed to the trusted verifier; `purchaseID` is retained when the SDK provides one but is allowed to be empty because the official SDK type makes it nullable.
 
-A purchased/restored event is not acknowledged merely because the store emitted it. `LearningCommerceCoordinator.verifyAndCompleteEvidence` first validates the logical product/entitlement pair through the trusted verifier and only then asks the adapter to call the store's `completePurchase` for that exact retained transaction. Failed, pending, canceled, malformed or mismatched verification therefore cannot complete the purchase through this path.
+A purchased/restored event is not acknowledged merely because the store emitted it. Trusted verification must first validate the logical product/entitlement pair. The production processing path must also persist the resulting entitlement state before it asks the store adapter to call `completePurchase` for the exact retained transaction. Failed, pending, canceled, malformed or mismatched verification therefore cannot complete the purchase through this path.
 
-The adapter does not itself persist entitlements or provide a receipt-verification backend. Production commerce remains unconfigured until the provider product-ID mapping and trusted verifier/entitlement reconciliation path are supplied and wired into the app runtime.
+## Durable verified entitlement cache
+
+`SqliteVerifiedEntitlementRepository` implements the same provider-neutral `EntitlementRepository` read interface used by learning access and package installation. It stores only verified logical entitlement keys under the reserved `learning-entitlement:` namespace in the existing `bundled_content_state` table. This avoids a database schema bump that would otherwise make current core dataset schema-v9 packages incompatible.
+
+The entitlement namespace is independent from bundled reference-content, core dataset, installed learning-package and training-progress state. Full entitlement reconciliation deletes/replaces only `learning-entitlement:` rows in one transaction and therefore cannot reset reference content, installed package ownership or quiz progress.
+
+`LearningVerifiedEntitlementController.processEvidence` follows this order:
+
+1. trusted verifier validates purchase/restore evidence and its logical product→entitlement binding;
+2. the verified active/inactive entitlement is persisted locally;
+3. only after persistence succeeds is the exact retained store transaction completed.
+
+If entitlement persistence fails, the store transaction is left incomplete for redelivery/recovery. If completion fails after persistence, reprocessing is idempotent because the logical entitlement write is idempotent and the verifier remains authoritative.
+
+For Restore, `restoreAndReconcile` first asks the store to restore purchases and then replaces the local entitlement namespace from `LearningPurchaseVerifier.restoreVerifiedEntitlements()`. Entitlements unknown to the current app version are ignored, which allows a newer backend/account state to coexist with an older app without granting access to content that app does not know.
+
+The local cache is an offline access cache, not a receipt verifier. Production commerce still requires a trusted verifier implementation and runtime wiring of store purchase updates into the verified entitlement controller. Provider receipts are never trusted merely because they exist on-device.
