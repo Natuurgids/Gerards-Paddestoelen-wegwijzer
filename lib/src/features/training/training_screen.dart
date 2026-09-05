@@ -6,24 +6,42 @@ import '../../data/training_data_repository.dart';
 import '../../widgets/safety_notice.dart';
 
 class TrainingScreen extends StatefulWidget {
-  const TrainingScreen({super.key, required this.locale});
+  const TrainingScreen({
+    super.key,
+    required this.locale,
+    this.repository,
+    this.lessonIds,
+    this.title,
+  });
+
   final Locale locale;
+  final TrainingDataRepository? repository;
+  final Set<int>? lessonIds;
+  final String? title;
 
   @override
   State<TrainingScreen> createState() => _TrainingScreenState();
 }
 
 class _TrainingScreenState extends State<TrainingScreen> {
-  final _repo = TrainingDataRepository();
+  late final TrainingDataRepository _repo;
   late Future<List<LessonSummary>> _lessons;
 
   @override
   void initState() {
     super.initState();
+    _repo = widget.repository ?? TrainingDataRepository();
     _reload();
   }
 
-  void _reload() => _lessons = _repo.lessons(widget.locale.languageCode);
+  void _reload() => _lessons = _loadLessons();
+
+  Future<List<LessonSummary>> _loadLessons() async {
+    final lessons = await _repo.lessons(widget.locale.languageCode);
+    final lessonIds = widget.lessonIds;
+    if (lessonIds == null) return lessons;
+    return lessons.where((lesson) => lessonIds.contains(lesson.id)).toList();
+  }
 
   void _retry() {
     setState(_reload);
@@ -33,7 +51,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.trainingTitle)),
+      appBar: AppBar(title: Text(widget.title ?? l10n.trainingTitle)),
       body: SafeArea(
         child: Column(
           children: [
@@ -72,6 +90,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                                     builder: (_) => LessonScreen(
                                       locale: widget.locale,
                                       lesson: lesson,
+                                      repository: _repo,
                                     ),
                                   ),
                                 );
@@ -94,16 +113,23 @@ class _TrainingScreenState extends State<TrainingScreen> {
 }
 
 class LessonScreen extends StatefulWidget {
-  const LessonScreen({super.key, required this.locale, required this.lesson});
+  const LessonScreen({
+    super.key,
+    required this.locale,
+    required this.lesson,
+    this.repository,
+  });
+
   final Locale locale;
   final LessonSummary lesson;
+  final TrainingDataRepository? repository;
 
   @override
   State<LessonScreen> createState() => _LessonScreenState();
 }
 
 class _LessonScreenState extends State<LessonScreen> {
-  final _repo = TrainingDataRepository();
+  late final TrainingDataRepository _repo;
   late Future<List<QuizQuestion>> _future;
   final Map<int, int> _answers = {};
   double? _score;
@@ -111,6 +137,7 @@ class _LessonScreenState extends State<LessonScreen> {
   @override
   void initState() {
     super.initState();
+    _repo = widget.repository ?? TrainingDataRepository();
     _loadQuestions();
   }
 

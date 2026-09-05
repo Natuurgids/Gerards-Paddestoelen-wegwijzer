@@ -54,6 +54,7 @@ void main() {
     expect(find.text('Gerards Pilz-Wegweiser'), findsOneWidget);
     expect(find.text('Bestimmen'), findsOneWidget);
     expect(find.text('Lernen'), findsOneWidget);
+    expect(find.text('Neue Lernmaterialien'), findsOneWidget);
     expect(find.text('Arten ansehen'), findsOneWidget);
     expect(find.textContaining('Sicherheitshinweis'), findsOneWidget);
   });
