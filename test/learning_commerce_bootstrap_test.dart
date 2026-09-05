@@ -26,6 +26,7 @@ void main() {
     Map<String, String>? productIds,
     String verifyUrl = 'https://commerce.example.test/verify',
     String entitlementsUrl = 'https://commerce.example.test/entitlements',
+    String packageCatalogUrl = 'https://commerce.example.test/learning/catalog.json',
   }) =>
       LearningCommerceBootstrap.fromEnvironment(
         platformProvider: () => provider,
@@ -41,6 +42,7 @@ void main() {
         purchaseClient: const _PurchaseClient(),
         verifyUrl: verifyUrl,
         entitlementsUrl: entitlementsUrl,
+        packageCatalogUrl: packageCatalogUrl,
       );
 
   test('unsupported platform stays fail-closed', () async {
@@ -105,6 +107,28 @@ void main() {
     expect((await result.service.loadLocal()).purchasesConfigured, isFalse);
   });
 
+  test('missing paid delivery endpoint stays fail-closed', () async {
+    final result = await bootstrap(packageCatalogUrl: '');
+
+    expect(
+      result.status,
+      LearningCommerceBootstrapStatus.missingDeliveryEndpoint,
+    );
+    expect((await result.service.loadLocal()).purchasesConfigured, isFalse);
+  });
+
+  test('invalid paid delivery endpoint stays fail-closed', () async {
+    final result = await bootstrap(
+      packageCatalogUrl: 'http://commerce.example.test/learning/catalog.json',
+    );
+
+    expect(
+      result.status,
+      LearningCommerceBootstrapStatus.invalidDeliveryConfiguration,
+    );
+    expect((await result.service.loadLocal()).purchasesConfigured, isFalse);
+  });
+
   test('complete configuration assembles and starts verified runtime', () async {
     final result = await bootstrap();
     addTearDown(result.close);
@@ -116,6 +140,7 @@ void main() {
 
     final local = await result.service.loadLocal();
     expect(local.purchasesConfigured, isTrue);
+    expect(local.deliveryConfigured, isTrue);
     expect(local.materials.single.entitlementGranted, isFalse);
   });
 
@@ -132,6 +157,7 @@ void main() {
       purchaseClient: const _PurchaseClient(),
       verifyUrl: 'https://commerce.example.test/verify',
       entitlementsUrl: 'https://commerce.example.test/entitlements',
+      packageCatalogUrl: 'https://commerce.example.test/learning/catalog.json',
     );
 
     expect(
