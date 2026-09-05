@@ -52,4 +52,19 @@ If entitlement persistence fails, the store transaction is left incomplete for r
 
 For Restore, `restoreAndReconcile` first asks the store to restore purchases and then replaces the local entitlement namespace from `LearningPurchaseVerifier.restoreVerifiedEntitlements()`. Entitlements unknown to the current app version are ignored, which allows a newer backend/account state to coexist with an older app without granting access to content that app does not know.
 
-The local cache is an offline access cache, not a receipt verifier. Production commerce still requires a trusted verifier implementation and runtime wiring of store purchase updates into the verified entitlement controller. Provider receipts are never trusted merely because they exist on-device.
+The local cache is an offline access cache, not a receipt verifier. Provider receipts are never trusted merely because they exist on-device.
+
+## Trusted verifier transport
+
+`HttpLearningPurchaseVerifier` implements `LearningPurchaseVerifier` against separately controlled HTTPS infrastructure. The two public deployment endpoints are supplied through compile-time configuration:
+
+- `LEARNING_PURCHASE_VERIFY_URL`
+- `LEARNING_ENTITLEMENTS_URL`
+
+Both endpoints must use HTTPS, contain no URL user credentials or fragment, and share the same origin. The default transport refuses redirects, limits verifier responses to 64 KiB and applies a finite network timeout. This prevents a verifier request from silently following evidence or session headers to another host.
+
+The purchase verification request contains only contract version, provider, logical `product_key`, optional provider transaction ID and the store's server-verification payload. It never sends locally invented purchase proof. A successful verification response contains only logical `product_key`, logical `entitlement_key` and an `active` boolean; `LearningCommerceCoordinator` still validates that product/entitlement pair against the bundled offering catalogue before access changes.
+
+The entitlement-reconciliation endpoint returns the authoritative active logical entitlement keys for the authenticated session. Runtime authentication/session headers may be supplied through `LearningVerifierHeadersProvider`. No reusable verifier/backend secret may be embedded in source code, Dart defines or the APK. Endpoint URLs are public configuration; credentials are runtime state.
+
+The verifier transport alone does not enable production commerce. A release must still provide provider product-ID mappings, a real trusted verifier service, an authenticated session/account mechanism for full entitlement reconciliation, runtime purchase-stream processing, and controlled paid-content hosting. In the absence of those pieces the app must remain fail-closed rather than trusting receipts locally.
