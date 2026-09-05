@@ -3,19 +3,21 @@ import 'package:gerards_paddestoelen_wegwijzer/src/data/learning_access.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/learning_catalog.dart';
 
 void main() {
-  test('parses free and entitlement-required courses without provider coupling', () async {
+  test('parses built-in free and downloadable premium courses', () async {
     final catalog = LearningCatalog.fromDecoded({
       'version': 1,
       'courses': [
         {
           'key': 'basics',
           'access': 'free',
+          'delivery': 'built_in',
           'group_key': 'foundation',
           'sort_order': 10,
         },
         {
           'key': 'advanced',
           'access': 'entitlement_required',
+          'delivery': 'downloadable',
           'entitlement_key': 'course.advanced',
           'product_key': 'advanced-single',
           'group_key': 'advanced',
@@ -40,8 +42,9 @@ void main() {
       ],
     });
 
-    expect(catalog.courses.map((course) => course.key), ['basics', 'advanced']);
-    expect(catalog.modules.map((module) => module.key), ['basics-1', 'advanced-1']);
+    expect(catalog.courses.first.delivery, LearningContentDelivery.builtIn);
+    expect(catalog.courses.first.accessRequirement, LearningAccessRequirement.free);
+    expect(catalog.courses.last.delivery, LearningContentDelivery.downloadable);
     expect(catalog.courses.last.productKey, 'advanced-single');
     expect(catalog.courses.last.entitlementKey, 'course.advanced');
 
@@ -55,6 +58,24 @@ void main() {
     );
   });
 
+  test('rejects making built-in product material premium', () {
+    expect(
+      () => LearningCatalog.fromDecoded({
+        'version': 1,
+        'courses': [
+          {
+            'key': 'standard',
+            'access': 'entitlement_required',
+            'delivery': 'built_in',
+            'entitlement_key': 'course.standard',
+          },
+        ],
+        'modules': const [],
+      }),
+      throwsFormatException,
+    );
+  });
+
   test('rejects premium course without a logical entitlement key', () {
     expect(
       () => LearningCatalog.fromDecoded({
@@ -63,6 +84,7 @@ void main() {
           {
             'key': 'premium',
             'access': 'entitlement_required',
+            'delivery': 'downloadable',
           },
         ],
         'modules': const [],
@@ -76,10 +98,11 @@ void main() {
       () => LearningCatalog.fromDecoded({
         'version': 1,
         'courses': [
-          {'key': 'free', 'access': 'free'},
+          {'key': 'free', 'access': 'free', 'delivery': 'built_in'},
           {
             'key': 'premium',
             'access': 'entitlement_required',
+            'delivery': 'downloadable',
             'entitlement_key': 'course.premium',
           },
         ],
@@ -108,6 +131,7 @@ void main() {
           {
             'key': 'basics',
             'access': 'free',
+            'delivery': 'built_in',
             'prerequisite_course_keys': ['missing'],
           },
         ],
@@ -120,7 +144,7 @@ void main() {
       () => LearningCatalog.fromDecoded({
         'version': 1,
         'courses': [
-          {'key': 'basics', 'access': 'free'},
+          {'key': 'basics', 'access': 'free', 'delivery': 'built_in'},
         ],
         'modules': [
           {
