@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import 'data/learning_materials_service.dart';
 import 'features/home/home_screen.dart';
 
 class MycologyApp extends StatefulWidget {
-  const MycologyApp({super.key});
+  const MycologyApp({super.key, this.learningMaterialsService});
+
+  final LearningMaterialsService? learningMaterialsService;
 
   @override
   State<MycologyApp> createState() => _MycologyAppState();
@@ -27,7 +30,11 @@ class _MycologyAppState extends State<MycologyApp> {
         colorSchemeSeed: Colors.green,
         useMaterial3: true,
       ),
-      home: HomeScreen(locale: _locale, onLocaleChanged: _setLocale),
+      home: HomeScreen(
+        locale: _locale,
+        onLocaleChanged: _setLocale,
+        learningMaterialsService: widget.learningMaterialsService,
+      ),
     );
   }
 }
