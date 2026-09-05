@@ -144,7 +144,8 @@ Map<String, dynamic> _decodedManifest({
     'database_schema_version': databaseSchemaVersion,
     'published_at': '2026-09-05T03:00:00Z',
     'package_url': 'https://updates.example.org/core-v$datasetVersion.zip',
-    'package_sha256': '0123456789abcdef' * 4,
+    'package_sha256':
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     'package_size_bytes': 123456,
     'components': [
       'species_catalog',
