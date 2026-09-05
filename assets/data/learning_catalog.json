@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "courses": [
+    {
+      "key": "determination-foundations",
+      "access": "free",
+      "group_key": "foundations",
+      "sort_order": 10
+    }
+  ],
+  "modules": [
+    {
+      "key": "observe-structures",
+      "course_key": "determination-foundations",
+      "lesson_ids": [1, 2, 3, 4, 5],
+      "sort_order": 10
+    },
+    {
+      "key": "field-evidence-and-context",
+      "course_key": "determination-foundations",
+      "lesson_ids": [6, 7, 8, 9],
+      "sort_order": 20,
+      "prerequisite_module_keys": ["observe-structures"]
+    },
+    {
+      "key": "documentation-and-safety",
+      "course_key": "determination-foundations",
+      "lesson_ids": [10, 11, 12],
+      "sort_order": 30,
+      "prerequisite_module_keys": ["field-evidence-and-context"]
+    }
+  ]
+}
