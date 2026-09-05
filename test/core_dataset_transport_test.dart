@@ -60,7 +60,7 @@ void main() {
         'database_schema_version': DatabaseSchema.currentVersion,
         'published_at': '2026-09-05T07:00:00Z',
         'package_url': packageUri.toString(),
-        'package_sha256': '0' * 64,
+        'package_sha256': List.filled(64, '0').join(),
         'package_size_bytes': packageBytes.length,
         'components': const ['species_catalog'],
       }),
