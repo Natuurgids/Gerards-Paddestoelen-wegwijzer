@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 
 import 'app_database.dart';
 import 'learning_access.dart';
+import 'learning_commerce.dart';
 import 'learning_offering.dart';
 import 'learning_package.dart';
 import 'learning_package_installer.dart';
@@ -47,6 +48,14 @@ abstract interface class LearningMaterialsService {
 
   Future<LearningMaterialsLocalSnapshot> loadLocal();
 
+  Future<Map<String, LearningProductQuote>> loadProductQuotes(
+    Iterable<LearningOffering> offerings,
+  );
+
+  Future<void> purchase(String productKey);
+
+  Future<void> restorePurchases();
+
   Future<Map<String, int>> loadRemoteVersions(
     Iterable<LearningOffering> offerings,
   );
@@ -60,11 +69,12 @@ class DefaultLearningMaterialsService implements LearningMaterialsService {
     required LearningPackageInstaller installer,
     required LearningMaterialsDatabaseProvider databaseProvider,
     required LearningOfferingCatalogLoader offeringLoader,
-    this.purchasesConfigured = false,
+    LearningCommerceCoordinator? commerce,
   })  : _entitlements = entitlements,
         _installer = installer,
         _databaseProvider = databaseProvider,
-        _offeringLoader = offeringLoader;
+        _offeringLoader = offeringLoader,
+        _commerce = commerce;
 
   factory DefaultLearningMaterialsService.standard() {
     const entitlements = EmptyEntitlementRepository();
@@ -83,9 +93,10 @@ class DefaultLearningMaterialsService implements LearningMaterialsService {
   final LearningPackageInstaller _installer;
   final LearningMaterialsDatabaseProvider _databaseProvider;
   final LearningOfferingCatalogLoader _offeringLoader;
+  final LearningCommerceCoordinator? _commerce;
 
   @override
-  final bool purchasesConfigured;
+  bool get purchasesConfigured => _commerce?.configured ?? false;
 
   @override
   bool get deliveryConfigured => _installer.catalogUrl.trim().isNotEmpty;
@@ -93,6 +104,7 @@ class DefaultLearningMaterialsService implements LearningMaterialsService {
   @override
   Future<LearningMaterialsLocalSnapshot> loadLocal() async {
     final catalog = await _offeringLoader();
+    _validateCommerceCatalog(catalog.offerings);
     final entitlements = await _entitlements.loadEntitlements();
     final db = await _databaseProvider();
     final materials = <LearningMaterialLocalState>[];
@@ -124,6 +136,36 @@ class DefaultLearningMaterialsService implements LearningMaterialsService {
   }
 
   @override
+  Future<Map<String, LearningProductQuote>> loadProductQuotes(
+    Iterable<LearningOffering> offerings,
+  ) async {
+    final commerce = _commerce;
+    if (commerce == null || !commerce.configured) {
+      return const <String, LearningProductQuote>{};
+    }
+    _validateCommerceCatalog(offerings);
+    return commerce.loadQuotes();
+  }
+
+  @override
+  Future<void> purchase(String productKey) async {
+    final commerce = _commerce;
+    if (commerce == null || !commerce.configured) {
+      throw StateError('Learning commerce is not configured');
+    }
+    await commerce.purchase(productKey);
+  }
+
+  @override
+  Future<void> restorePurchases() async {
+    final commerce = _commerce;
+    if (commerce == null || !commerce.configured) {
+      throw StateError('Learning commerce is not configured');
+    }
+    await commerce.restorePurchases();
+  }
+
+  @override
   Future<Map<String, int>> loadRemoteVersions(
     Iterable<LearningOffering> offerings,
   ) async {
@@ -147,6 +189,29 @@ class DefaultLearningMaterialsService implements LearningMaterialsService {
   Future<LearningPackageInstallResult> install(String packageKey) async {
     final db = await _databaseProvider();
     return _installer.install(db, packageKey);
+  }
+
+  void _validateCommerceCatalog(Iterable<LearningOffering> offerings) {
+    final commerce = _commerce;
+    if (commerce == null) return;
+    final expected = LearningCommerceCatalog.fromOfferings(offerings);
+    if (expected.productKeys.length != commerce.catalog.productKeys.length ||
+        !expected.productKeys.containsAll(commerce.catalog.productKeys)) {
+      throw StateError(
+        'Learning commerce catalog does not match bundled learning offerings',
+      );
+    }
+    for (final productKey in expected.productKeys) {
+      final expectedBinding = expected.bindingForProduct(productKey)!;
+      final actualBinding = commerce.catalog.bindingForProduct(productKey);
+      if (actualBinding == null ||
+          actualBinding.entitlementKey != expectedBinding.entitlementKey) {
+        throw StateError(
+          'Learning commerce binding does not match bundled learning offering: '
+          '$productKey',
+        );
+      }
+    }
   }
 }
 
