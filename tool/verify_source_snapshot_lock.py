@@ -25,6 +25,25 @@ def _count_conservation(species: list[dict], source_id: str) -> int:
     return sum(1 for item in species if item.get("conservation_source_id") == source_id)
 
 
+def _source_license_mismatches(catalog: dict, lock: dict) -> dict[str, dict[str, str | None]]:
+    source_by_id = {
+        str(item.get("id")): item
+        for item in catalog.get("sources") or []
+        if item.get("id") is not None
+    }
+    expected_licenses = lock.get("required_source_licenses") or {}
+    mismatches: dict[str, dict[str, str | None]] = {}
+    for source_id, expected_license in expected_licenses.items():
+        source = source_by_id.get(source_id)
+        actual_license = None if source is None else source.get("license")
+        if actual_license != expected_license:
+            mismatches[source_id] = {
+                "expected": expected_license,
+                "actual": actual_license,
+            }
+    return mismatches
+
+
 def verify(catalog_path: Path, lock_path: Path) -> None:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
@@ -43,17 +62,24 @@ def verify(catalog_path: Path, lock_path: Path) -> None:
 
     source_ids = {str(item.get("id")) for item in catalog.get("sources") or []}
     missing_sources = sorted(set(lock.get("required_sources") or []) - source_ids)
-    mismatches = {
+    license_mismatches = _source_license_mismatches(catalog, lock)
+    count_mismatches = {
         key: {"expected": expected[key], "actual": value}
         for key, value in actual.items()
         if value != expected.get(key)
     }
-    if missing_sources or mismatches:
+    if missing_sources or license_mismatches or count_mismatches:
         details = []
         if missing_sources:
             details.append(f"missing sources: {', '.join(missing_sources)}")
-        if mismatches:
-            details.append(f"count drift: {json.dumps(mismatches, sort_keys=True)}")
+        if license_mismatches:
+            details.append(
+                "license drift: " + json.dumps(license_mismatches, sort_keys=True)
+            )
+        if count_mismatches:
+            details.append(
+                f"count drift: {json.dumps(count_mismatches, sort_keys=True)}"
+            )
         raise ValueError(
             "Source snapshot drift detected; review upstream changes and update "
             f"{lock_path} deliberately. " + "; ".join(details)
@@ -62,6 +88,7 @@ def verify(catalog_path: Path, lock_path: Path) -> None:
     print(
         "Source snapshot lock verified: "
         + ", ".join(f"{key}={value}" for key, value in actual.items())
+        + f", licenses={len(lock.get('required_source_licenses') or {})}"
     )
 
 
