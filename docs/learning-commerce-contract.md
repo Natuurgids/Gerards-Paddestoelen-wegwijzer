@@ -17,7 +17,7 @@ Paid learning commerce is separate from learning content delivery and from the c
 
 As of 2026-09-05 the app adopts the official Flutter `in_app_purchase` 3.3.x line as its purchase SDK baseline. That line supports Android SDK 24+ and iOS 13.0+. Google Play Billing Library 7 reached its normal new-app/update deadline on 2026-08-31, so retaining an older purchase SDK solely to preserve Android 21 is not the release baseline.
 
-This repository generates Android and iOS scaffolding rather than committing the platform trees. After `flutter create`, run `python3 tool/configure_generated_platforms.py` before dependency installation or release builds. CI runs the same command and its regression tests. The script sets Android `minSdk` to 24, iOS deployment targets and `MinimumOSVersion` to 13.0, and fails if a future Flutter template no longer contains the expected declarations.
+This repository generates Android and iOS scaffolding rather than committing the platform trees. After `flutter create`, run `python3 tool/configure_generated_platforms.py` before dependency installation or release builds. CI runs the same command and its regression tests. The script sets Android `minSdk` to 24, ensures the generated Android release manifest includes `android.permission.INTERNET`, sets iOS deployment targets and `MinimumOSVersion` to 13.0, and fails if a future Flutter template no longer contains the expected declarations. Release Internet access is required by the existing core/package update channels and by trusted verifier HTTPS when those channels are configured.
 
 ## Store adapter configuration
 
@@ -67,4 +67,14 @@ The purchase verification request contains only contract version, provider, logi
 
 The entitlement-reconciliation endpoint returns the authoritative active logical entitlement keys for the authenticated session. Runtime authentication/session headers may be supplied through `LearningVerifierHeadersProvider`. No reusable verifier/backend secret may be embedded in source code, Dart defines or the APK. Endpoint URLs are public configuration; credentials are runtime state.
 
-The verifier transport alone does not enable production commerce. A release must still provide provider product-ID mappings, a real trusted verifier service, an authenticated session/account mechanism for full entitlement reconciliation, runtime purchase-stream processing, and controlled paid-content hosting. In the absence of those pieces the app must remain fail-closed rather than trusting receipts locally.
+## Runtime processing and UI refresh
+
+`LearningCommerceRuntime` is the long-lived processor for configured store purchase updates. It serializes completed purchase/restore evidence so verification, entitlement persistence and store completion cannot race. Pending, canceled and failed store states are not submitted for entitlement processing. A verification/persistence failure is reported on the runtime error stream but does not terminate the store subscription, so later valid purchases can still be processed.
+
+After a verified entitlement is persisted, the runtime emits an entitlement-change signal. `LearningMaterialsScreen` listens only when its service exposes this optional capability and reloads local state, so a purchase launched from the UI remains locked until the later trusted verification event actually changes the durable entitlement cache.
+
+`DefaultLearningMaterialsService.standard()` now reads `SqliteVerifiedEntitlementRepository` instead of an always-empty repository. This means previously verified ownership continues to work offline even when the store/verifier are currently unavailable. The same durable repository is used by the learning package installer, preserving one entitlement source of truth.
+
+A configured long-lived runtime may be injected through `DefaultLearningMaterialsService` and then through `MycologyApp`/`HomeScreen` into the materials screen. The default `main.dart` does not create such a runtime or invent authentication, provider IDs or verifier sessions. Production commerce therefore remains fail-closed until a real authenticated bootstrap supplies those dependencies; the runtime lifecycle is available without weakening the security boundary.
+
+The verifier transport and runtime still do not make the currently public repository a paid-content host. Commercial paid revisions must remain newly authored and hosted on separately controlled content infrastructure.

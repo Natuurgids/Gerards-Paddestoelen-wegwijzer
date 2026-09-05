@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../data/learning_materials_service.dart';
 import '../../widgets/safety_notice.dart';
 import '../identify/identify_screen.dart';
 import '../species/species_browser_screen.dart';
@@ -9,10 +10,16 @@ import '../training/training_screen.dart';
 import 'sources_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.locale, required this.onLocaleChanged});
+  const HomeScreen({
+    super.key,
+    required this.locale,
+    required this.onLocaleChanged,
+    this.learningMaterialsService,
+  });
 
   final Locale locale;
   final ValueChanged<Locale> onLocaleChanged;
+  final LearningMaterialsService? learningMaterialsService;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +79,10 @@ class HomeScreen extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => LearningMaterialsScreen(locale: locale),
+                        builder: (_) => LearningMaterialsScreen(
+                          locale: locale,
+                          service: learningMaterialsService,
+                        ),
                       ),
                     ),
                     icon: const Icon(Icons.download_for_offline_outlined),

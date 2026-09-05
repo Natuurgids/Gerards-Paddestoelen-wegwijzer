@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the release platform floor to Flutter-generated Android/iOS files."""
+"""Apply release platform requirements to Flutter-generated Android/iOS files."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 
 ANDROID_MIN_SDK = 24
+ANDROID_INTERNET_PERMISSION = "android.permission.INTERNET"
 IOS_MIN_VERSION = "13.0"
 
 
@@ -26,6 +27,20 @@ def configure_android(build_file: Path) -> None:
             build_file.write_text(updated, encoding="utf-8")
             return
     raise RuntimeError(f"Could not locate Android minSdk declaration in {build_file}")
+
+
+def configure_android_manifest(manifest_file: Path) -> None:
+    text = manifest_file.read_text(encoding="utf-8")
+    if ANDROID_INTERNET_PERMISSION in text:
+        return
+    match = re.search(r"<manifest\b[^>]*>", text)
+    if not match:
+        raise RuntimeError(f"Could not locate Android manifest root in {manifest_file}")
+    permission = (
+        f'    <uses-permission android:name="{ANDROID_INTERNET_PERMISSION}" />'
+    )
+    updated = f"{text[:match.end()]}\n{permission}{text[match.end():]}"
+    manifest_file.write_text(updated, encoding="utf-8")
 
 
 def configure_ios_project(project_file: Path) -> None:
@@ -64,6 +79,7 @@ def configure_ios_podfile(podfile: Path) -> None:
 
 def configure(root: Path) -> None:
     configure_android(root / "android/app/build.gradle.kts")
+    configure_android_manifest(root / "android/app/src/main/AndroidManifest.xml")
     configure_ios_project(root / "ios/Runner.xcodeproj/project.pbxproj")
     configure_ios_framework_info(root / "ios/Flutter/AppFrameworkInfo.plist")
     configure_ios_podfile(root / "ios/Podfile")
@@ -75,8 +91,8 @@ def main() -> None:
     args = parser.parse_args()
     configure(args.root)
     print(
-        f"Configured generated platforms: Android SDK {ANDROID_MIN_SDK}+, "
-        f"iOS {IOS_MIN_VERSION}+"
+        f"Configured generated platforms: Android SDK {ANDROID_MIN_SDK}+ with "
+        f"Internet access, iOS {IOS_MIN_VERSION}+"
     )
 
 
