@@ -10,6 +10,8 @@ void main() {
       observedYear: 2026,
       sourceId: 'ndff-open-data',
       sourceRetrievedAt: '2026-09-05',
+      sourceMinimumCellSizeMeters: 5000,
+      sourcePermitsPublicDisplay: true,
     );
 
     expect(cell.cellSizeMeters, 5000);
@@ -18,15 +20,49 @@ void main() {
     expect(cell.sourceRetrievedAt, '2026-09-05');
   });
 
-  test('rejects public locations more precise than one kilometre', () {
+  test('rejects cells more precise than the source-specific blur level', () {
+    expect(
+      () => PublicObservationCell.publicData(
+        speciesId: 42,
+        gridCell: 'too-precise-cell',
+        cellSizeMeters: 1000,
+        observedYear: 2026,
+        sourceId: 'ndff-open-data',
+        sourceRetrievedAt: '2026-09-05',
+        sourceMinimumCellSizeMeters: 5000,
+        sourcePermitsPublicDisplay: true,
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('rejects source policies more precise than the app minimum', () {
     expect(
       () => PublicObservationCell.publicData(
         speciesId: 42,
         gridCell: 'precise-cell',
-        cellSizeMeters: 999,
+        cellSizeMeters: 1000,
         observedYear: 2026,
         sourceId: 'ndff-open-data',
         sourceRetrievedAt: '2026-09-05',
+        sourceMinimumCellSizeMeters: 999,
+        sourcePermitsPublicDisplay: true,
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('rejects observations hidden by the source publication policy', () {
+    expect(
+      () => PublicObservationCell.publicData(
+        speciesId: 42,
+        gridCell: 'NL-123-456',
+        cellSizeMeters: 10000,
+        observedYear: 2026,
+        sourceId: 'ndff-open-data',
+        sourceRetrievedAt: '2026-09-05',
+        sourceMinimumCellSizeMeters: 10000,
+        sourcePermitsPublicDisplay: false,
       ),
       throwsArgumentError,
     );
@@ -41,6 +77,8 @@ void main() {
         observedYear: 2026,
         sourceId: ' ',
         sourceRetrievedAt: '2026-09-05',
+        sourceMinimumCellSizeMeters: 1000,
+        sourcePermitsPublicDisplay: true,
       ),
       throwsArgumentError,
     );
@@ -52,6 +90,8 @@ void main() {
         observedYear: 2026,
         sourceId: 'ndff-open-data',
         sourceRetrievedAt: '05-09-2026',
+        sourceMinimumCellSizeMeters: 1000,
+        sourcePermitsPublicDisplay: true,
       ),
       throwsArgumentError,
     );
@@ -65,6 +105,8 @@ void main() {
       observedYear: 2026,
       sourceId: 'ndff-open-data',
       sourceRetrievedAt: '2026-09-05',
+      sourceMinimumCellSizeMeters: 1000,
+      sourcePermitsPublicDisplay: true,
     ).toStorageMap();
 
     expect(
@@ -92,6 +134,8 @@ void main() {
       'observer',
       'identity',
       'related',
+      'minimum_cell',
+      'permits_public',
     ];
     for (final key in stored.keys) {
       expect(

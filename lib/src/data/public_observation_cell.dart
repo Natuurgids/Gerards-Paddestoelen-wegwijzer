@@ -29,6 +29,8 @@ class PublicObservationCell {
     required int observedYear,
     required String sourceId,
     required String sourceRetrievedAt,
+    required int sourceMinimumCellSizeMeters,
+    required bool sourcePermitsPublicDisplay,
   }) {
     final normalizedCell = gridCell.trim();
     final normalizedSourceId = sourceId.trim();
@@ -40,11 +42,25 @@ class PublicObservationCell {
     if (normalizedCell.isEmpty) {
       throw ArgumentError.value(gridCell, 'gridCell', 'must not be empty');
     }
-    if (cellSizeMeters < minimumCellSizeMeters) {
+    if (!sourcePermitsPublicDisplay) {
+      throw ArgumentError.value(
+        sourcePermitsPublicDisplay,
+        'sourcePermitsPublicDisplay',
+        'source policy does not permit public display for this observation',
+      );
+    }
+    if (sourceMinimumCellSizeMeters < minimumCellSizeMeters) {
+      throw ArgumentError.value(
+        sourceMinimumCellSizeMeters,
+        'sourceMinimumCellSizeMeters',
+        'source public precision must be at least 1 km',
+      );
+    }
+    if (cellSizeMeters < sourceMinimumCellSizeMeters) {
       throw ArgumentError.value(
         cellSizeMeters,
         'cellSizeMeters',
-        'public observation cells must be at least 1 km',
+        'public observation cell is more precise than source policy permits',
       );
     }
     if (observedYear < 1000 || observedYear > 9999) {
@@ -80,7 +96,8 @@ class PublicObservationCell {
   /// Deliberately excludes upstream observation identifiers, upload times,
   /// routes, observer identities, related-record keys, and exact timestamps.
   /// Those fields can correlate generalized records back to sensitive source
-  /// observations even when coordinates themselves are absent.
+  /// observations even when coordinates themselves are absent. Source policy
+  /// inputs are validation-only and are not persisted per observation.
   Map<String, Object?> toStorageMap() => {
         'species_id': speciesId,
         'grid_cell': gridCell,
