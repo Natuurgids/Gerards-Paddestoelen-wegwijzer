@@ -17,7 +17,7 @@ class TraitManifestImporter {
   }
 
   static Future<void> syncDecoded(
-    Database db,
+    DatabaseExecutor db,
     Map<String, dynamic> decoded, {
     Map<String, dynamic>? supplemental,
   }) async {
@@ -33,74 +33,86 @@ class TraitManifestImporter {
     _validate(traits, speciesTraits);
     _validateSupplementalProvenance(supplementalSpeciesTraits);
 
-    await db.transaction((txn) async {
-      final batch = txn.batch();
-      for (final item in traits) {
-        final trait = item as Map<String, dynamic>;
-        final traitId = trait['id'] as int;
-        _batchUpsertById(batch, 'trait', {
-          'id': traitId,
-          'code': trait['code'] as String,
-          'category': trait['category'] as String,
-          'value_type': 'choice',
+    if (db is Database) {
+      await db.transaction(
+        (txn) => _writeDecoded(txn, traits, speciesTraits),
+      );
+    } else {
+      await _writeDecoded(db, traits, speciesTraits);
+    }
+  }
+
+  static Future<void> _writeDecoded(
+    DatabaseExecutor db,
+    List<dynamic> traits,
+    List<dynamic> speciesTraits,
+  ) async {
+    final batch = db.batch();
+    for (final item in traits) {
+      final trait = item as Map<String, dynamic>;
+      final traitId = trait['id'] as int;
+      _batchUpsertById(batch, 'trait', {
+        'id': traitId,
+        'code': trait['code'] as String,
+        'category': trait['category'] as String,
+        'value_type': 'choice',
+      });
+
+      final labels = trait['labels'] as Map<String, dynamic>;
+      for (final entry in labels.entries) {
+        batch.insert(
+          'trait_text',
+          {
+            'trait_id': traitId,
+            'language_code': entry.key,
+            'label': entry.value,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      final options = trait['options'] as List<dynamic>;
+      for (final optionItem in options) {
+        final option = optionItem as Map<String, dynamic>;
+        final optionId = option['id'] as int;
+        _batchUpsertById(batch, 'trait_option', {
+          'id': optionId,
+          'trait_id': traitId,
+          'code': option['code'] as String,
+          'sort_order': option['sort_order'] as int? ?? 0,
         });
 
-        final labels = trait['labels'] as Map<String, dynamic>;
-        for (final entry in labels.entries) {
+        final optionLabels = option['labels'] as Map<String, dynamic>;
+        for (final entry in optionLabels.entries) {
           batch.insert(
-            'trait_text',
+            'trait_option_text',
             {
-              'trait_id': traitId,
+              'option_id': optionId,
               'language_code': entry.key,
               'label': entry.value,
             },
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
-
-        final options = trait['options'] as List<dynamic>;
-        for (final optionItem in options) {
-          final option = optionItem as Map<String, dynamic>;
-          final optionId = option['id'] as int;
-          _batchUpsertById(batch, 'trait_option', {
-            'id': optionId,
-            'trait_id': traitId,
-            'code': option['code'] as String,
-            'sort_order': option['sort_order'] as int? ?? 0,
-          });
-
-          final optionLabels = option['labels'] as Map<String, dynamic>;
-          for (final entry in optionLabels.entries) {
-            batch.insert(
-              'trait_option_text',
-              {
-                'option_id': optionId,
-                'language_code': entry.key,
-                'label': entry.value,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
-          }
-        }
       }
+    }
 
-      for (final item in speciesTraits) {
-        final relation = item as Map<String, dynamic>;
-        batch.insert(
-          'species_trait',
-          {
-            'species_id': relation['species_id'],
-            'trait_id': relation['trait_id'],
-            'option_id': relation['option_id'],
-            'weight': relation['weight'] ?? 1.0,
-            'source_id': relation['source_id'],
-            'source_record_id': relation['source_record_id'],
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
-      await batch.commit(noResult: true);
-    });
+    for (final item in speciesTraits) {
+      final relation = item as Map<String, dynamic>;
+      batch.insert(
+        'species_trait',
+        {
+          'species_id': relation['species_id'],
+          'trait_id': relation['trait_id'],
+          'option_id': relation['option_id'],
+          'weight': relation['weight'] ?? 1.0,
+          'source_id': relation['source_id'],
+          'source_record_id': relation['source_record_id'],
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
   }
 
   static void _batchUpsertById(

@@ -14,7 +14,7 @@ class SpeciesCatalogImporter {
   }
 
   static Future<void> syncDecoded(
-    Database db,
+    DatabaseExecutor db,
     Map<String, dynamic> decoded,
   ) async {
     final sources = decoded['sources'] as List<dynamic>? ?? const [];
@@ -22,92 +22,105 @@ class SpeciesCatalogImporter {
     final species = decoded['species'] as List<dynamic>? ?? const [];
     _validate(sources, taxa, species);
 
-    await db.transaction((txn) async {
-      final batch = txn.batch();
+    if (db is Database) {
+      await db.transaction(
+        (txn) => _writeDecoded(txn, sources, taxa, species),
+      );
+    } else {
+      await _writeDecoded(db, sources, taxa, species);
+    }
+  }
 
-      for (final rawSource in sources) {
-        final source = rawSource as Map<String, dynamic>;
+  static Future<void> _writeDecoded(
+    DatabaseExecutor db,
+    List<dynamic> sources,
+    List<dynamic> taxa,
+    List<dynamic> species,
+  ) async {
+    final batch = db.batch();
+
+    for (final rawSource in sources) {
+      final source = rawSource as Map<String, dynamic>;
+      batch.insert(
+        'reference_source',
+        {
+          'id': source['id'],
+          'title': source['title'],
+          'version': source['version'],
+          'url': source['url'],
+          'license': source['license'],
+          'citation': source['citation'],
+          'retrieved_at': source['retrieved_at'],
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    for (final rawTaxon in taxa) {
+      final taxon = rawTaxon as Map<String, dynamic>;
+      _queueUpsertById(batch, 'taxon', <String, Object?>{
+        'id': taxon['id'],
+        'parent_id': taxon['parent_id'],
+        'rank': taxon['rank'],
+        'scientific_name': taxon['scientific_name'],
+        'author_citation': taxon['author_citation'],
+      });
+    }
+
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      final speciesId = item['id'] as int;
+      _queueUpsertById(batch, 'species', <String, Object?>{
+        'id': speciesId,
+        'taxon_id': item['taxon_id'],
+        'edible_status': item['edible_status'] ?? 'unknown',
+        'toxicity_level': item['toxicity_level'] ?? 'unknown',
+        'conservation_status': item['conservation_status'],
+        'source_id': item['source_id'],
+        'source_record_id': item['source_record_id'],
+      });
+
+      batch.delete(
+        'species_conservation_status',
+        where: 'species_id=?',
+        whereArgs: [speciesId],
+      );
+      for (final status in _conservationStatuses(item)) {
         batch.insert(
-          'reference_source',
+          'species_conservation_status',
           {
-            'id': source['id'],
-            'title': source['title'],
-            'version': source['version'],
-            'url': source['url'],
-            'license': source['license'],
-            'citation': source['citation'],
-            'retrieved_at': source['retrieved_at'],
+            'species_id': speciesId,
+            'system': status['system'],
+            'scope': status['scope'],
+            'jurisdiction_code': status['jurisdiction_code'] ?? '',
+            'status': status['status'],
+            'source_id': status['source_id'],
+            'source_record_id': status['source_record_id'],
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
 
-      for (final rawTaxon in taxa) {
-        final taxon = rawTaxon as Map<String, dynamic>;
-        _queueUpsertById(batch, 'taxon', <String, Object?>{
-          'id': taxon['id'],
-          'parent_id': taxon['parent_id'],
-          'rank': taxon['rank'],
-          'scientific_name': taxon['scientific_name'],
-          'author_citation': taxon['author_citation'],
-        });
-      }
-
-      for (final rawSpecies in species) {
-        final item = rawSpecies as Map<String, dynamic>;
-        final speciesId = item['id'] as int;
-        _queueUpsertById(batch, 'species', <String, Object?>{
-          'id': speciesId,
-          'taxon_id': item['taxon_id'],
-          'edible_status': item['edible_status'] ?? 'unknown',
-          'toxicity_level': item['toxicity_level'] ?? 'unknown',
-          'conservation_status': item['conservation_status'],
-          'source_id': item['source_id'],
-          'source_record_id': item['source_record_id'],
-        });
-
-        batch.delete(
-          'species_conservation_status',
-          where: 'species_id=?',
-          whereArgs: [speciesId],
+      final texts = item['texts'] as Map<String, dynamic>;
+      for (final entry in texts.entries) {
+        final text = entry.value as Map<String, dynamic>;
+        batch.insert(
+          'species_text',
+          {
+            'species_id': speciesId,
+            'language_code': entry.key,
+            'common_name': text['common_name'],
+            'summary': text['summary'],
+            'description': text['description'],
+            'habitat_text': text['habitat'],
+            'lookalikes_text': text['lookalikes'],
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
         );
-        for (final status in _conservationStatuses(item)) {
-          batch.insert(
-            'species_conservation_status',
-            {
-              'species_id': speciesId,
-              'system': status['system'],
-              'scope': status['scope'],
-              'jurisdiction_code': status['jurisdiction_code'] ?? '',
-              'status': status['status'],
-              'source_id': status['source_id'],
-              'source_record_id': status['source_record_id'],
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        }
-
-        final texts = item['texts'] as Map<String, dynamic>;
-        for (final entry in texts.entries) {
-          final text = entry.value as Map<String, dynamic>;
-          batch.insert(
-            'species_text',
-            {
-              'species_id': speciesId,
-              'language_code': entry.key,
-              'common_name': text['common_name'],
-              'summary': text['summary'],
-              'description': text['description'],
-              'habitat_text': text['habitat'],
-              'lookalikes_text': text['lookalikes'],
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        }
       }
+    }
 
-      await batch.commit(noResult: true);
-    });
+    await batch.commit(noResult: true);
   }
 
   static List<Map<String, dynamic>> _conservationStatuses(
