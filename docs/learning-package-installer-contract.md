@@ -11,9 +11,11 @@ The downloadable learning package channel is separate from core reference-data u
 - The catalog endpoint must be explicit HTTPS without user info. Package paths resolve relative to the catalog and must remain on the same trusted origin.
 - Downloads use bounded responses with redirects disabled. Exact catalog-declared byte size and SHA-256 are checked before parsing or database writes.
 - Package metadata must exactly match its catalog descriptor and use `entitlement_required` + `downloadable` course access.
-- Training content is imported inside the same SQLite transaction that records installed package version state.
-- Installed state uses the namespaced `bundled_content_state` key `learning-package:<package_key>`; this is distinct from `reference-content` and `core-reference-content`.
-- Same or older installed versions do not download again. Downgrades are never applied automatically.
+- Training content is imported inside the same SQLite transaction that records installed package version state and package-to-lesson ownership.
+- Installed package state uses the namespaced `bundled_content_state` key `learning-package:<package_key>`; lesson ownership uses `learning-package-lesson:<lesson_id>:<package_key>`. Both are distinct from `reference-content` and `core-reference-content`.
+- A downloadable lesson id may belong to only one installed package. Cross-package lesson-id collisions reject the whole install transaction.
+- A package refresh replaces that package's ownership map. Lessons retired by the new package revision remain stored with their existing `training_progress`, but they are no longer exposed as belonging to the installed package.
+- Same or older installed versions do not download again once a lesson ownership map exists. A legacy installed state without ownership is re-downloaded and validated so the map can be backfilled safely.
 - Existing `training_progress` is never deleted or reset by installation or package refresh.
 - Built-in learning remains outside this channel and permanently free.
 - Store price/currency never belongs in either the public offering metadata or lesson payload. Displayed price must come from the configured commerce provider.
