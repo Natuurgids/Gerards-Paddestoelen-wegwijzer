@@ -21,7 +21,7 @@ class ImageManifestImporter {
   }
 
   static Future<void> syncDecoded(
-    Database db,
+    DatabaseExecutor db,
     Map<String, dynamic> decoded,
   ) async {
     final species = decoded['species'] as List<dynamic>? ?? const [];
@@ -133,28 +133,37 @@ class ImageManifestImporter {
       }
     }
 
-    await db.transaction((txn) async {
-      final batch = txn.batch();
-      batch.delete('species_image');
-      for (final rawSpecies in species) {
-        final item = rawSpecies as Map<String, dynamic>;
-        final speciesId = item['speciesId'] as int;
-        for (final rawImage in item['images'] as List<dynamic>) {
-          final image = rawImage as Map<String, dynamic>;
-          batch.insert('species_image', {
-            'species_id': speciesId,
-            'asset_path': image['path'] as String,
-            'thumbnail_path': image['thumbnailPath'] as String?,
-            'angle_code': image['angle'] as String,
-            'photographer': image['photographer'] as String?,
-            'license': image['license'] as String?,
-            'sort_order': image['order'] as int,
-            'is_primary': image['primary'] == true ? 1 : 0,
-            'is_placeholder': image['placeholder'] == true ? 1 : 0,
-          });
-        }
+    if (db is Database) {
+      await db.transaction((txn) => _writeDecoded(txn, species));
+    } else {
+      await _writeDecoded(db, species);
+    }
+  }
+
+  static Future<void> _writeDecoded(
+    DatabaseExecutor db,
+    List<dynamic> species,
+  ) async {
+    final batch = db.batch();
+    batch.delete('species_image');
+    for (final rawSpecies in species) {
+      final item = rawSpecies as Map<String, dynamic>;
+      final speciesId = item['speciesId'] as int;
+      for (final rawImage in item['images'] as List<dynamic>) {
+        final image = rawImage as Map<String, dynamic>;
+        batch.insert('species_image', {
+          'species_id': speciesId,
+          'asset_path': image['path'] as String,
+          'thumbnail_path': image['thumbnailPath'] as String?,
+          'angle_code': image['angle'] as String,
+          'photographer': image['photographer'] as String?,
+          'license': image['license'] as String?,
+          'sort_order': image['order'] as int,
+          'is_primary': image['primary'] == true ? 1 : 0,
+          'is_placeholder': image['placeholder'] == true ? 1 : 0,
+        });
       }
-      await batch.commit(noResult: true);
-    });
+    }
+    await batch.commit(noResult: true);
   }
 }
