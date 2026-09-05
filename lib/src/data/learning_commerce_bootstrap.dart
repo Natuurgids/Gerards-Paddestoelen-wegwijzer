@@ -217,7 +217,7 @@ class LearningCommerceBootstrap {
     return DefaultLearningMaterialsService(
       entitlements: entitlements,
       installer: LearningPackageInstaller(
-        catalogUrl: learningPackageCatalogUrl,
+        catalogUrl: '',
         entitlements: entitlements,
       ),
       databaseProvider: databaseProvider,
