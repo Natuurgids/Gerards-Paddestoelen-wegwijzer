@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'database_schema.dart';
 
 const coreDatasetKey = 'core-reference-content';
+const bundledCoreDatasetVersion = 1;
 
 const coreDatasetComponents = <String>{
   'species_catalog',
@@ -99,9 +100,9 @@ class CoreDatasetUpdateManifest {
       throw const FormatException('package_url must be an HTTPS URL without user info');
     }
 
-    final sha256 = decoded['package_sha256'];
-    if (sha256 is! String ||
-        !RegExp(r'^[0-9a-f]{64}$').hasMatch(sha256)) {
+    final sha256Value = decoded['package_sha256'];
+    if (sha256Value is! String ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(sha256Value)) {
       throw const FormatException('package_sha256 must be 64 lowercase hex characters');
     }
 
@@ -126,7 +127,7 @@ class CoreDatasetUpdateManifest {
       ),
       publishedAt: publishedAt,
       packageUri: packageUri,
-      packageSha256: sha256,
+      packageSha256: sha256Value,
       packageSizeBytes: _positiveInt(
         decoded['package_size_bytes'],
         'package_size_bytes',

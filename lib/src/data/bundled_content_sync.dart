@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
+import 'core_dataset_update.dart';
+
 typedef BundledContentSyncRunner = Future<List<String>> Function();
 
 class BundledContentSync {
@@ -12,6 +14,25 @@ class BundledContentSync {
     Database db,
     BundledContentSyncRunner sync,
   ) async {
+    final remoteRows = await db.query(
+      'bundled_content_state',
+      columns: const ['revision'],
+      where: 'content_key=?',
+      whereArgs: const [coreDatasetKey],
+      limit: 1,
+    );
+    if (remoteRows.isNotEmpty) {
+      final remoteRevision = remoteRows.single['revision'];
+      if (remoteRevision is! int || remoteRevision <= 0) {
+        throw StateError(
+          'Installed core dataset revision is invalid: $remoteRevision',
+        );
+      }
+      if (remoteRevision > bundledCoreDatasetVersion) {
+        return const [];
+      }
+    }
+
     final rows = await db.query(
       'bundled_content_state',
       columns: const ['revision'],
