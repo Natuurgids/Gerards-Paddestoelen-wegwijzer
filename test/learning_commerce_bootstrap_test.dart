@@ -31,7 +31,7 @@ void main() {
         platformProvider: () => provider,
         sessionHeadersProvider:
             withSession ? () async => const {'Authorization': 'Bearer test'} : null,
-        offeringLoader: () async => LearningOfferingCatalog([_offering]),
+        offeringLoader: () async => const LearningOfferingCatalog([_offering]),
         databaseProvider: () async => db,
         productIds: LearningStoreProductIds(
           provider: provider ?? LearningCommerceProvider.googlePlay,
@@ -123,7 +123,7 @@ void main() {
     final result = await LearningCommerceBootstrap.fromEnvironment(
       platformProvider: () => LearningCommerceProvider.appStore,
       sessionHeadersProvider: () async => const {'Authorization': 'Bearer test'},
-      offeringLoader: () async => LearningOfferingCatalog([_offering]),
+      offeringLoader: () async => const LearningOfferingCatalog([_offering]),
       databaseProvider: () async => db,
       productIds: LearningStoreProductIds(
         provider: LearningCommerceProvider.googlePlay,
