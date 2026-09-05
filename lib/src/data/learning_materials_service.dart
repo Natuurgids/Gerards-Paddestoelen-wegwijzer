@@ -3,9 +3,11 @@ import 'package:sqflite/sqflite.dart';
 import 'app_database.dart';
 import 'learning_access.dart';
 import 'learning_commerce.dart';
+import 'learning_commerce_runtime.dart';
 import 'learning_offering.dart';
 import 'learning_package.dart';
 import 'learning_package_installer.dart';
+import 'verified_entitlement_cache.dart';
 
 typedef LearningMaterialsDatabaseProvider = Future<Database> Function();
 typedef LearningOfferingCatalogLoader = Future<LearningOfferingCatalog> Function();
@@ -63,24 +65,42 @@ abstract interface class LearningMaterialsService {
   Future<LearningPackageInstallResult> install(String packageKey);
 }
 
-class DefaultLearningMaterialsService implements LearningMaterialsService {
+/// Optional capability implemented by services whose verified entitlement state
+/// can change asynchronously after store purchase/restore events.
+abstract interface class LearningMaterialsEntitlementChangeSource {
+  Stream<void> get entitlementChanges;
+}
+
+class DefaultLearningMaterialsService
+    implements LearningMaterialsService, LearningMaterialsEntitlementChangeSource {
   DefaultLearningMaterialsService({
     required EntitlementRepository entitlements,
     required LearningPackageInstaller installer,
     required LearningMaterialsDatabaseProvider databaseProvider,
     required LearningOfferingCatalogLoader offeringLoader,
     LearningCommerceCoordinator? commerce,
+    LearningCommerceRuntime? runtime,
   })  : _entitlements = entitlements,
         _installer = installer,
         _databaseProvider = databaseProvider,
         _offeringLoader = offeringLoader,
-        _commerce = commerce;
+        _runtime = runtime,
+        _commerce = runtime?.commerce ?? commerce {
+    if (runtime != null && commerce != null && !identical(runtime.commerce, commerce)) {
+      throw ArgumentError(
+        'Learning materials commerce and runtime must use one coordinator',
+      );
+    }
+    runtime?.start();
+  }
 
   factory DefaultLearningMaterialsService.standard() {
-    const entitlements = EmptyEntitlementRepository();
+    final entitlements = SqliteVerifiedEntitlementRepository(
+      databaseProvider: () => AppDatabase.instance.database,
+    );
     return DefaultLearningMaterialsService(
       entitlements: entitlements,
-      installer: const LearningPackageInstaller(
+      installer: LearningPackageInstaller(
         catalogUrl: learningPackageCatalogUrl,
         entitlements: entitlements,
       ),
@@ -93,6 +113,7 @@ class DefaultLearningMaterialsService implements LearningMaterialsService {
   final LearningPackageInstaller _installer;
   final LearningMaterialsDatabaseProvider _databaseProvider;
   final LearningOfferingCatalogLoader _offeringLoader;
+  final LearningCommerceRuntime? _runtime;
   final LearningCommerceCoordinator? _commerce;
 
   @override
@@ -100,6 +121,10 @@ class DefaultLearningMaterialsService implements LearningMaterialsService {
 
   @override
   bool get deliveryConfigured => _installer.catalogUrl.trim().isNotEmpty;
+
+  @override
+  Stream<void> get entitlementChanges =>
+      _runtime?.entitlementChanges ?? const Stream<void>.empty();
 
   @override
   Future<LearningMaterialsLocalSnapshot> loadLocal() async {
@@ -161,6 +186,11 @@ class DefaultLearningMaterialsService implements LearningMaterialsService {
     final commerce = _commerce;
     if (commerce == null || !commerce.configured) {
       throw StateError('Learning commerce is not configured');
+    }
+    final runtime = _runtime;
+    if (runtime != null) {
+      await runtime.restoreAndReconcile();
+      return;
     }
     await commerce.restorePurchases();
   }
