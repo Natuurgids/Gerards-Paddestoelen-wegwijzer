@@ -29,7 +29,7 @@ void main() {
     final bytes = _FakeByteSource(const {});
     final result = await LearningPackageInstaller(
       catalogUrl: ' ',
-      entitlements: _Entitlements(const []),
+      entitlements: const _Entitlements([]),
       byteSource: bytes,
     ).install(db, 'boletes-pores');
 
@@ -43,7 +43,7 @@ void main() {
 
     final result = await LearningPackageInstaller(
       catalogUrl: fixture.catalogUri.toString(),
-      entitlements: _Entitlements(const []),
+      entitlements: const _Entitlements([]),
       byteSource: bytes,
     ).install(db, fixture.packageKey);
 
