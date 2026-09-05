@@ -29,10 +29,17 @@ jobs:
         run: flutter create . --platforms=android,ios --project-name gerards_paddestoelen_wegwijzer --org nl.natuurgids
       - name: Install dependencies
         run: flutter pub get
+      - name: Restore reviewed vernacular source pages
+        uses: actions/cache@v4
+        with:
+          path: .cache/source-enrichment
+          key: vernacular-source-pages-v1
+      - name: Test vernacular source cache
+        run: python3 -m unittest tool/test_enrich_vernacular_cache.py
       - name: Generate Dutch Species Register Fungi catalogue
         run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
       - name: Enrich English and German vernacular names
-        run: python3 tool/enrich_vernacular_names.py --min-de 100 --min-en 10
+        run: python3 tool/enrich_vernacular_names.py --min-de 100 --min-en 10 --cache-dir .cache/source-enrichment
       - name: Enrich IUCN conservation status
         run: python3 tool/enrich_conservation_status.py --min-matches 1
       - name: Verify reviewed source snapshot
