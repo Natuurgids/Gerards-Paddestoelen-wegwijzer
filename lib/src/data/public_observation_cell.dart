@@ -6,7 +6,6 @@ class PublicObservationCell {
     required this.observedYear,
     required this.sourceId,
     required this.sourceRetrievedAt,
-    this.sourceRecordId,
   });
 
   /// Minimum public spatial resolution accepted by the app.
@@ -22,7 +21,6 @@ class PublicObservationCell {
   final int observedYear;
   final String sourceId;
   final String sourceRetrievedAt;
-  final String? sourceRecordId;
 
   factory PublicObservationCell.publicData({
     required int speciesId,
@@ -31,12 +29,10 @@ class PublicObservationCell {
     required int observedYear,
     required String sourceId,
     required String sourceRetrievedAt,
-    String? sourceRecordId,
   }) {
     final normalizedCell = gridCell.trim();
     final normalizedSourceId = sourceId.trim();
     final normalizedRetrievedAt = sourceRetrievedAt.trim();
-    final normalizedRecordId = sourceRecordId?.trim();
 
     if (speciesId <= 0) {
       throw ArgumentError.value(speciesId, 'speciesId', 'must be positive');
@@ -76,13 +72,15 @@ class PublicObservationCell {
       observedYear: observedYear,
       sourceId: normalizedSourceId,
       sourceRetrievedAt: normalizedRetrievedAt,
-      sourceRecordId:
-          normalizedRecordId == null || normalizedRecordId.isEmpty
-              ? null
-              : normalizedRecordId,
     );
   }
 
+  /// Whitelisted public storage representation.
+  ///
+  /// Deliberately excludes upstream observation identifiers, upload times,
+  /// routes, observer identities, related-record keys, and exact timestamps.
+  /// Those fields can correlate generalized records back to sensitive source
+  /// observations even when coordinates themselves are absent.
   Map<String, Object?> toStorageMap() => {
         'species_id': speciesId,
         'grid_cell': gridCell,
@@ -90,7 +88,6 @@ class PublicObservationCell {
         'observed_year': observedYear,
         'source_id': sourceId,
         'source_retrieved_at': sourceRetrievedAt,
-        'source_record_id': sourceRecordId,
       };
 
   static bool _isIsoDate(String value) {
