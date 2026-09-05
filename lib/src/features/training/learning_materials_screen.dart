@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../data/app_database.dart';
+import '../../data/learning_commerce.dart';
 import '../../data/learning_materials_service.dart';
 import '../../data/learning_package_installer.dart';
 import '../../data/training_data_repository.dart';
@@ -28,9 +29,14 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
   late final LearningMaterialsService _service;
   LearningMaterialsLocalSnapshot? _local;
   Map<String, int> _remoteVersions = const <String, int>{};
+  Map<String, LearningProductQuote> _productQuotes =
+      const <String, LearningProductQuote>{};
   Object? _loadError;
   bool _remoteUnavailable = false;
+  bool _storeUnavailable = false;
+  bool _restoring = false;
   String? _busyPackageKey;
+  String? _busyProductKey;
 
   @override
   void initState() {
@@ -49,6 +55,9 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
       });
       if (local.deliveryConfigured) {
         unawaited(_refreshRemote(local));
+      }
+      if (local.purchasesConfigured) {
+        unawaited(_refreshCommerce(local));
       }
     } on Object catch (error) {
       if (!mounted) return;
@@ -69,6 +78,54 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
     } on Object {
       if (!mounted) return;
       setState(() => _remoteUnavailable = true);
+    }
+  }
+
+  Future<void> _refreshCommerce(LearningMaterialsLocalSnapshot local) async {
+    try {
+      final quotes = await _service.loadProductQuotes(
+        local.materials.map((item) => item.offering),
+      );
+      if (!mounted) return;
+      setState(() {
+        _productQuotes = quotes;
+        _storeUnavailable = false;
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() {
+        _productQuotes = const <String, LearningProductQuote>{};
+        _storeUnavailable = true;
+      });
+    }
+  }
+
+  Future<void> _purchase(LearningMaterialLocalState item) async {
+    final productKey = item.offering.productKey;
+    if (_busyProductKey != null || item.entitlementGranted) return;
+    setState(() => _busyProductKey = productKey);
+    final l10n = AppLocalizations.of(context);
+    try {
+      await _service.purchase(productKey);
+      if (mounted) _showMessage(l10n.learningMaterialsPurchaseStarted);
+    } on Object {
+      if (mounted) _showMessage(l10n.learningMaterialsPurchaseError);
+    } finally {
+      if (mounted) setState(() => _busyProductKey = null);
+    }
+  }
+
+  Future<void> _restorePurchases() async {
+    if (_restoring) return;
+    setState(() => _restoring = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      await _service.restorePurchases();
+      if (mounted) await _load();
+    } on Object {
+      if (mounted) _showMessage(l10n.learningMaterialsRestoreError);
+    } finally {
+      if (mounted) setState(() => _restoring = false);
     }
   }
 
@@ -191,6 +248,38 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
               ),
             ),
           ),
+        ] else ...[
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const ValueKey('learning-materials-restore'),
+              onPressed: _restoring ? null : _restorePurchases,
+              icon: _restoring
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.restore),
+              label: Text(l10n.learningMaterialsRestorePurchases),
+            ),
+          ),
+        ],
+        if (_storeUnavailable) ...[
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.storefront_outlined),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(l10n.learningMaterialsStoreUnavailable)),
+                ],
+              ),
+            ),
+          ),
         ],
         if (_remoteUnavailable) ...[
           const SizedBox(height: 12),
@@ -221,6 +310,7 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
   ) {
     final text = item.offering.textFor(widget.locale.languageCode);
     final remoteVersion = _remoteVersions[item.offering.packageKey];
+    final quote = _productQuotes[item.offering.productKey];
     final installedVersion = item.installed?.contentVersion;
     final updateAvailable = item.entitlementGranted &&
         item.hasInstalledContent &&
@@ -233,7 +323,9 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
     final canRepair = item.entitlementGranted &&
         item.needsOwnershipBackfill &&
         remoteVersion != null;
-    final isBusy = _busyPackageKey == item.offering.packageKey;
+    final canPurchase = !item.entitlementGranted && quote != null;
+    final isInstallBusy = _busyPackageKey == item.offering.packageKey;
+    final isPurchaseBusy = _busyProductKey == item.offering.productKey;
 
     return Card(
       key: ValueKey('learning-material-${item.offering.packageKey}'),
@@ -256,6 +348,14 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
               ),
               style: Theme.of(context).textTheme.labelLarge,
             ),
+            if (quote != null && !item.entitlementGranted) ...[
+              const SizedBox(height: 6),
+              Text(
+                quote.displayPrice,
+                key: ValueKey('learning-material-price-${item.offering.packageKey}'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -263,14 +363,28 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
               children: [
                 if (item.canOpen)
                   OutlinedButton.icon(
-                    onPressed: isBusy ? null : () => _open(item),
+                    onPressed: isInstallBusy ? null : () => _open(item),
                     icon: const Icon(Icons.school_outlined),
                     label: Text(l10n.learningMaterialsOpen),
                   ),
+                if (canPurchase)
+                  FilledButton.icon(
+                    key: ValueKey('learning-material-buy-${item.offering.packageKey}'),
+                    onPressed: isPurchaseBusy ? null : () => _purchase(item),
+                    icon: isPurchaseBusy
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.shopping_bag_outlined),
+                    label: Text(
+                      '${l10n.learningMaterialsPurchase} · ${quote.displayPrice}',
+                    ),
+                  ),
                 if (updateAvailable)
                   FilledButton.icon(
-                    onPressed: isBusy ? null : () => _install(item),
-                    icon: isBusy
+                    onPressed: isInstallBusy ? null : () => _install(item),
+                    icon: isInstallBusy
                         ? const SizedBox.square(
                             dimension: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
@@ -280,14 +394,14 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
                   )
                 else if (canRepair)
                   FilledButton.icon(
-                    onPressed: isBusy ? null : () => _install(item),
+                    onPressed: isInstallBusy ? null : () => _install(item),
                     icon: const Icon(Icons.build_outlined),
                     label: Text(l10n.learningMaterialsRepair),
                   )
                 else if (canDownload)
                   FilledButton.icon(
-                    onPressed: isBusy ? null : () => _install(item),
-                    icon: isBusy
+                    onPressed: isInstallBusy ? null : () => _install(item),
+                    icon: isInstallBusy
                         ? const SizedBox.square(
                             dimension: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
