@@ -36,6 +36,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/app_icon.png
+    - assets/splash.png
     - assets/images/
     - assets/images/traits/bruising/
     - assets/images/traits/cap_color/
