@@ -8,6 +8,7 @@ import '../../data/learning_commerce.dart';
 import '../../data/learning_materials_service.dart';
 import '../../data/learning_package_installer.dart';
 import '../../data/training_data_repository.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/safety_notice.dart';
 import 'training_screen.dart';
 
@@ -220,6 +221,8 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Icon(Icons.error_outline, color: AppTheme.forest, size: 40),
+              const SizedBox(height: 12),
               Text(
                 l10n.learningMaterialsLoadError,
                 textAlign: TextAlign.center,
@@ -241,82 +244,141 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          l10n.learningMaterialsIntro,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        if (!local.purchasesConfigured) ...[
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.storefront_outlined),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(l10n.learningMaterialsPurchasesUnavailable)),
-                ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final horizontal = constraints.maxWidth >= 840 ? 28.0 : 14.0;
+        return ListView(
+          padding: EdgeInsets.fromLTRB(horizontal, 14, horizontal, 20),
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 980),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _introPanel(context, l10n),
+                    if (!local.purchasesConfigured) ...[
+                      const SizedBox(height: 12),
+                      _statusPanel(
+                        icon: Icons.storefront_outlined,
+                        message: l10n.learningMaterialsPurchasesUnavailable,
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          key: const ValueKey('learning-materials-restore'),
+                          onPressed: _restoring ? null : _restorePurchases,
+                          icon: _restoring
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.restore),
+                          label: Text(l10n.learningMaterialsRestorePurchases),
+                        ),
+                      ),
+                    ],
+                    if (_storeUnavailable) ...[
+                      const SizedBox(height: 12),
+                      _statusPanel(
+                        icon: Icons.storefront_outlined,
+                        message: l10n.learningMaterialsStoreUnavailable,
+                      ),
+                    ],
+                    if (_remoteUnavailable) ...[
+                      const SizedBox(height: 12),
+                      _statusPanel(
+                        icon: Icons.cloud_off_outlined,
+                        message: l10n.learningMaterialsRemoteUnavailable,
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    ...local.materials.map(
+                      (item) => _materialCard(context, l10n, item),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ] else ...[
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              key: const ValueKey('learning-materials-restore'),
-              onPressed: _restoring ? null : _restorePurchases,
-              icon: _restoring
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.restore),
-              label: Text(l10n.learningMaterialsRestorePurchases),
-            ),
-          ),
-        ],
-        if (_storeUnavailable) ...[
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.storefront_outlined),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(l10n.learningMaterialsStoreUnavailable)),
-                ],
-              ),
-            ),
-          ),
-        ],
-        if (_remoteUnavailable) ...[
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.cloud_off_outlined),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(l10n.learningMaterialsRemoteUnavailable)),
-                ],
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        ...local.materials.map((item) => _materialCard(context, l10n, item)),
-      ],
+          ],
+        );
+      },
     );
   }
+
+  Widget _introPanel(BuildContext context, AppLocalizations l10n) => Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppTheme.forest, AppTheme.forestDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.download_for_offline_outlined,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.learningMaterialsTitle,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.learningMaterialsIntro,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.white.withValues(alpha: .9),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _statusPanel({required IconData icon, required String message}) => Card(
+        margin: EdgeInsets.zero,
+        elevation: 0,
+        color: AppTheme.creamStrong,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppTheme.border),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: AppTheme.forest),
+              const SizedBox(width: 12),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        ),
+      );
 
   Widget _materialCard(
     BuildContext context,
@@ -342,36 +404,91 @@ class _LearningMaterialsScreenState extends State<LearningMaterialsScreen> {
     final isInstallBusy = _busyPackageKey == item.offering.packageKey;
     final isPurchaseBusy = _busyProductKey == item.offering.productKey;
 
+    final status = _statusText(
+      l10n,
+      item,
+      updateAvailable: updateAvailable,
+      remoteVersion: remoteVersion,
+    );
+
     return Card(
       key: ValueKey('learning-material-${item.offering.packageKey}'),
       margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      color: AppTheme.creamStrong,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppTheme.border),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(text.title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(text.summary),
-            const SizedBox(height: 12),
-            Text(
-              _statusText(
-                l10n,
-                item,
-                updateAvailable: updateAvailable,
-                remoteVersion: remoteVersion,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE7F1E5),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(
+                    item.entitlementGranted
+                        ? Icons.school_outlined
+                        : Icons.workspace_premium_outlined,
+                    color: AppTheme.forest,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        text.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: AppTheme.ink,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(text.summary),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE7F1E5),
+                borderRadius: BorderRadius.circular(999),
               ),
-              style: Theme.of(context).textTheme.labelLarge,
+              child: Text(
+                status,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: AppTheme.forestDark,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
             ),
             if (quote != null && !item.entitlementGranted) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
               Text(
                 quote.displayPrice,
                 key: ValueKey('learning-material-price-${item.offering.packageKey}'),
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppTheme.forest,
+                      fontWeight: FontWeight.w800,
+                    ),
               ),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Wrap(
               spacing: 8,
               runSpacing: 8,
