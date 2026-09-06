@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Collect a deterministic, reviewable pilot set of iNaturalist reference images.
+"""Collect reviewable iNaturalist reference images in resumable batches.
 
 This tool is for curation, not runtime identification. It queries research-grade
 observations by exact scientific name, accepts only CC0/CC BY media, downloads one
 photo per species, removes source metadata by decoding/re-encoding the pixels, and
 writes a provenance report without observation coordinates or location fields.
+
+Large catalogue runs can be split deterministically with --batch-index/--batch-count
+and resumed from the report/output files with --resume. Retryable request/download
+failures are distinguished from genuine no-eligible-photo outcomes so a temporary
+source outage is never counted as confirmed missing coverage.
 
 The generated files are review artifacts. They are not silently treated as verified
 identifications of user observations and are not committed automatically.
@@ -15,14 +20,16 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import socket
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 API = "https://api.inaturalist.org/v1/observations"
 USER_AGENT = "Gerards-Paddestoelen-Wegwijzer/1.0 reference-image-curation"
@@ -54,7 +61,12 @@ def _large_url(photo: dict[str, Any]) -> str:
     return url
 
 
-def _species_rows(catalog: dict[str, Any], limit: int | None) -> list[tuple[int, str]]:
+def _species_rows(
+    catalog: dict[str, Any],
+    limit: int | None,
+    batch_index: int,
+    batch_count: int,
+) -> list[tuple[int, str]]:
     taxa = {
         int(t["id"]): str(t["scientific_name"]).strip()
         for t in catalog.get("taxa", [])
@@ -67,10 +79,16 @@ def _species_rows(catalog: dict[str, Any], limit: int | None) -> list[tuple[int,
         if scientific:
             rows.append((species_id, scientific))
     rows.sort(key=lambda item: item[0])
-    return rows[:limit] if limit is not None else rows
+    if limit is not None:
+        rows = rows[:limit]
+    if batch_count < 1:
+        raise ValueError("batch_count must be at least 1")
+    if batch_index < 0 or batch_index >= batch_count:
+        raise ValueError("batch_index must be in the range 0..batch_count-1")
+    return [row for position, row in enumerate(rows) if position % batch_count == batch_index]
 
 
-def _candidate(scientific_name: str) -> tuple[dict[str, Any], dict[str, Any]] | None:
+def _candidate(scientific_name: str) -> tuple[str, dict[str, Any] | None, dict[str, Any] | None]:
     params = urllib.parse.urlencode({
         "taxon_name": scientific_name,
         "quality_grade": "research",
@@ -81,15 +99,24 @@ def _candidate(scientific_name: str) -> tuple[dict[str, Any], dict[str, Any]] | 
         "order": "desc",
     })
     payload = _get_json(f"{API}?{params}")
-    for observation in payload.get("results", []):
+    results = payload.get("results", [])
+    if not results:
+        return "no_research_grade_observations", None, None
+
+    exact_match_seen = False
+    for observation in results:
         taxon = observation.get("taxon") or {}
         if str(taxon.get("name") or "").casefold() != scientific_name.casefold():
             continue
+        exact_match_seen = True
         for photo in observation.get("photos") or []:
             license_code = str(photo.get("license_code") or "").lower()
             if license_code in ALLOWED_LICENSES and photo.get("url"):
-                return observation, photo
-    return None
+                return "eligible_photo", observation, photo
+
+    if exact_match_seen:
+        return "no_eligible_cc0_or_cc_by_photo", None, None
+    return "no_exact_taxon_match", None, None
 
 
 def _sanitize_jpeg(raw: bytes, output: Path) -> tuple[int, int]:
@@ -105,19 +132,135 @@ def _sanitize_jpeg(raw: bytes, output: Path) -> tuple[int, int]:
         return width, height
 
 
-def collect(catalog_path: Path, output_dir: Path, report_path: Path, limit: int | None, delay: float) -> dict[str, Any]:
+def _load_resume_state(report_path: Path) -> tuple[dict[int, dict[str, Any]], dict[int, dict[str, Any]]]:
+    if not report_path.exists():
+        return {}, {}
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    images = {int(item["species_id"]): item for item in payload.get("images", [])}
+    unsuccessful = {int(item["species_id"]): item for item in payload.get("missing", [])}
+    return images, unsuccessful
+
+
+def _error_record(species_id: int, scientific_name: str, exc: Exception) -> dict[str, Any]:
+    if isinstance(exc, urllib.error.HTTPError):
+        retryable = exc.code == 429 or 500 <= exc.code <= 599
+        return {
+            "species_id": species_id,
+            "scientific_name": scientific_name,
+            "status": "transient_http_error" if retryable else "http_error",
+            "retryable": retryable,
+            "http_status": exc.code,
+        }
+    if isinstance(exc, (urllib.error.URLError, TimeoutError, socket.timeout)):
+        return {
+            "species_id": species_id,
+            "scientific_name": scientific_name,
+            "status": "transient_request_error",
+            "retryable": True,
+            "error_type": type(exc).__name__,
+        }
+    if isinstance(exc, (UnidentifiedImageError, OSError)):
+        return {
+            "species_id": species_id,
+            "scientific_name": scientific_name,
+            "status": "image_decode_or_write_error",
+            "retryable": True,
+            "error_type": type(exc).__name__,
+        }
+    return {
+        "species_id": species_id,
+        "scientific_name": scientific_name,
+        "status": "unexpected_error",
+        "retryable": True,
+        "error_type": type(exc).__name__,
+    }
+
+
+def _report(
+    species_rows: list[tuple[int, str]],
+    collected: list[dict[str, Any]],
+    missing: list[dict[str, Any]],
+    batch_index: int,
+    batch_count: int,
+) -> dict[str, Any]:
+    retryable_errors = sum(1 for item in missing if item.get("retryable"))
+    unavailable = len(missing) - retryable_errors
+    return {
+        "version": 2,
+        "source": "iNaturalist",
+        "batch": {"index": batch_index, "count": batch_count},
+        "policy": {
+            "quality_grade": "research",
+            "allowed_photo_licenses": ["cc0", "cc-by"],
+            "exact_scientific_name_match": True,
+            "max_image_pixels": MAX_IMAGE_PIXELS,
+            "jpeg_quality": JPEG_QUALITY,
+            "location_metadata_stored": False,
+            "source_metadata_stripped_from_jpeg": True,
+            "human_review_required_before_commit": True,
+            "identification_note": "Reference imagery supports educational comparison only; it does not verify a user's observation or imply edibility/safety.",
+        },
+        "catalog_species_considered": len(species_rows),
+        "images_collected": len(collected),
+        "species_unavailable_usable_image": unavailable,
+        "retryable_errors": retryable_errors,
+        # Retain the old aggregate key for report consumers while making its
+        # transient-vs-terminal composition explicit above and per record below.
+        "species_missing_usable_image": len(missing),
+        "images": collected,
+        "missing": missing,
+    }
+
+
+def _write_report(report_path: Path, report: dict[str, Any]) -> None:
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def collect(
+    catalog_path: Path,
+    output_dir: Path,
+    report_path: Path,
+    limit: int | None,
+    delay: float,
+    batch_index: int = 0,
+    batch_count: int = 1,
+    resume: bool = False,
+) -> dict[str, Any]:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-    species_rows = _species_rows(catalog, limit)
+    species_rows = _species_rows(catalog, limit, batch_index, batch_count)
+    selected_ids = {species_id for species_id, _ in species_rows}
+
+    previous_images, previous_missing = _load_resume_state(report_path) if resume else ({}, {})
     collected: list[dict[str, Any]] = []
     missing: list[dict[str, Any]] = []
 
     for index, (species_id, scientific_name) in enumerate(species_rows, start=1):
+        previous_image = previous_images.get(species_id)
+        if previous_image:
+            previous_asset = Path(str(previous_image.get("asset_path") or ""))
+            if previous_asset.exists():
+                collected.append(previous_image)
+                print(f"[{index}/{len(species_rows)}] {scientific_name}: resumed_collected", flush=True)
+                continue
+
+        previous_failure = previous_missing.get(species_id)
+        if previous_failure and not previous_failure.get("retryable", False):
+            missing.append(previous_failure)
+            print(f"[{index}/{len(species_rows)}] {scientific_name}: resumed_unavailable", flush=True)
+            continue
+
         try:
-            found = _candidate(scientific_name)
-            if found is None:
-                missing.append({"species_id": species_id, "scientific_name": scientific_name, "reason": "no_cc0_or_cc_by_research_grade_photo"})
+            status, observation, photo = _candidate(scientific_name)
+            if status != "eligible_photo" or observation is None or photo is None:
+                missing.append({
+                    "species_id": species_id,
+                    "scientific_name": scientific_name,
+                    "status": status,
+                    "retryable": False,
+                })
+                result_status = status
             else:
-                observation, photo = found
                 image_url = _large_url(photo)
                 output = output_dir / f"species_{species_id}" / "1.jpg"
                 width, height = _sanitize_jpeg(_get_bytes(image_url), output)
@@ -144,35 +287,34 @@ def collect(catalog_path: Path, output_dir: Path, report_path: Path, limit: int 
                         "de": f"Referenzfoto von {scientific_name} zum Vergleich sichtbarer Merkmale.",
                     },
                 })
+                result_status = "collected"
         except Exception as exc:
-            missing.append({"species_id": species_id, "scientific_name": scientific_name, "reason": f"request_or_decode_error:{type(exc).__name__}"})
-        print(f"[{index}/{len(species_rows)}] {scientific_name}: {'collected' if collected and collected[-1]['species_id'] == species_id else 'missing'}", flush=True)
+            failure = _error_record(species_id, scientific_name, exc)
+            missing.append(failure)
+            result_status = str(failure["status"])
+
+        print(f"[{index}/{len(species_rows)}] {scientific_name}: {result_status}", flush=True)
+        # Checkpoint every species so an interrupted bulk batch can continue without
+        # repeating already-completed API and image work.
+        _write_report(report_path, _report(species_rows, collected, missing, batch_index, batch_count))
         if delay > 0 and index < len(species_rows):
             time.sleep(delay)
 
-    report = {
-        "version": 1,
-        "source": "iNaturalist",
-        "policy": {
-            "quality_grade": "research",
-            "allowed_photo_licenses": ["cc0", "cc-by"],
-            "exact_scientific_name_match": True,
-            "max_image_pixels": MAX_IMAGE_PIXELS,
-            "jpeg_quality": JPEG_QUALITY,
-            "location_metadata_stored": False,
-            "source_metadata_stripped_from_jpeg": True,
-            "human_review_required_before_commit": True,
-            "identification_note": "Reference imagery supports educational comparison only; it does not verify a user's observation or imply edibility/safety.",
-        },
-        "catalog_species_considered": len(species_rows),
-        "images_collected": len(collected),
-        "species_missing_usable_image": len(missing),
-        "images": collected,
-        "missing": missing,
-    }
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({k: report[k] for k in ("catalog_species_considered", "images_collected", "species_missing_usable_image")}), flush=True)
+    # Filter defensive resume state leakage if a report from a differently-shaped
+    # batch is supplied manually.
+    collected = [item for item in collected if int(item["species_id"]) in selected_ids]
+    missing = [item for item in missing if int(item["species_id"]) in selected_ids]
+    report = _report(species_rows, collected, missing, batch_index, batch_count)
+    _write_report(report_path, report)
+    print(json.dumps({
+        key: report[key]
+        for key in (
+            "catalog_species_considered",
+            "images_collected",
+            "species_unavailable_usable_image",
+            "retryable_errors",
+        )
+    }), flush=True)
     return report
 
 
@@ -183,8 +325,20 @@ def main() -> None:
     parser.add_argument("--report", default="build/inaturalist-reference-report.json")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--delay", type=float, default=0.35, help="Polite delay between species API requests")
+    parser.add_argument("--batch-index", type=int, default=0, help="Zero-based deterministic batch index")
+    parser.add_argument("--batch-count", type=int, default=1, help="Number of deterministic batches")
+    parser.add_argument("--resume", action="store_true", help="Reuse completed records from the existing report/output")
     args = parser.parse_args()
-    collect(Path(args.catalog), Path(args.output_dir), Path(args.report), args.limit, args.delay)
+    collect(
+        Path(args.catalog),
+        Path(args.output_dir),
+        Path(args.report),
+        args.limit,
+        args.delay,
+        args.batch_index,
+        args.batch_count,
+        args.resume,
+    )
 
 
 if __name__ == "__main__":
