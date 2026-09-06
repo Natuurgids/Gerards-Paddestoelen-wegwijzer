@@ -54,6 +54,12 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.text('Determineren'), findsOneWidget);
+    expect(find.byIcon(Icons.menu), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+
     expect(find.byType(Drawer), findsOneWidget);
     expect(find.text('Determineren'), findsWidgets);
     expect(find.text('Leren'), findsWidgets);
