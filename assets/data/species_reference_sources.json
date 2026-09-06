@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "policy": {
+    "purpose": "Curated species reference imagery for educational identification support.",
+    "allowed_licenses": ["CC BY 2.0", "CC BY 3.0", "CC BY 4.0", "CC BY-SA 2.5", "CC BY-SA 3.0", "CC BY-SA 4.0", "CC0"],
+    "location_metadata": "Do not store or expose source GPS/location metadata.",
+    "identification_note": "A reference photo supports educational comparison only and is not a verified identification of a user's observation."
+  },
+  "images": [
+    {
+      "species_id": 1,
+      "scientific_name": "Amanita muscaria",
+      "source": "Wikimedia Commons",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Amanita_muscaria_.jpg",
+      "source_file_name": "Amanita_muscaria_.jpg",
+      "creator": "Dezidor",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "review_status": "vetted",
+      "intended_role": "primary_reference"
+    },
+    {
+      "species_id": 2,
+      "scientific_name": "Amanita phalloides",
+      "source": "Wikimedia Commons",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Mushroom_Amanita_phalloides.jpg",
+      "source_file_name": "Mushroom_Amanita_phalloides.jpg",
+      "creator": "Aleksey Gnilenkov",
+      "license": "CC BY 2.0",
+      "license_url": "https://creativecommons.org/licenses/by/2.0/",
+      "review_status": "vetted",
+      "intended_role": "primary_reference"
+    },
+    {
+      "species_id": 3,
+      "scientific_name": "Boletus edulis",
+      "source": "Wikimedia Commons",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Boletus_edulis.jpeg",
+      "source_file_name": "Boletus_edulis.jpeg",
+      "creator": "Dezidor",
+      "license": "CC BY-SA 2.5",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "review_status": "vetted",
+      "intended_role": "primary_reference"
+    }
+  ]
+}
