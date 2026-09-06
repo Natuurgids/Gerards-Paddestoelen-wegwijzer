@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "species": [
+    {
+      "scientific_name": "Cantharellus cibarius",
+      "source_id": "first-nature",
+      "source_record_id": "https://www.first-nature.com/fungi/cantharellus-cibarius.php",
+      "habitat_nl": "Ectomycorrhizaal in loofbos, vooral bij eik, kastanje of hazelaar; ook onder naaldbomen en soms langs wegbermen onder loofhout. Heeft vaak een voorkeur voor zure bodem.",
+      "lookalikes_nl": "Kan worden verward met Hygrophoropsis aurantiaca (valse hanenkam); die heeft echte plaatjes in plaats van de dikke, geplooide aders van een hanenkam."
+    },
+    {
+      "scientific_name": "Lactarius deliciosus",
+      "source_id": "first-nature",
+      "source_record_id": "https://www.first-nature.com/fungi/lactarius-deliciosus.php",
+      "habitat_nl": "Mycorrhizaal in naaldbos, vooral onder dennen.",
+      "lookalikes_nl": "Lactarius torminosus is rozer en heeft een wollige hoedrand en staat bij berk; Lactarius deterrimus heeft een gladdere steel en anders verkleurende melk."
+    },
+    {
+      "scientific_name": "Macrolepiota procera",
+      "source_id": "first-nature",
+      "source_record_id": "https://www.first-nature.com/fungi/macrolepiota-procera.php",
+      "habitat_nl": "Saprotroof; vooral op open plekken in bos en in graslanden langs bosranden, soms ook in blijvend grasland, stabiele duinen en verstoorde grond.",
+      "lookalikes_nl": "Kan worden verward met Chlorophyllum rhacodes (knolparasolzwam); die is doorgaans kleiner, heeft grovere schubben en mist het typische bruine slangenhuidpatroon op de steel."
+    }
+  ]
+}
