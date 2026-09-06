@@ -21,9 +21,34 @@ void main() {
       expect(item['edible_status'], 'unknown');
       expect(item['toxicity_level'], 'unknown');
       final texts = item['texts'] as Map<String, dynamic>;
-      for (final rawText in texts.values) {
-        final text = rawText as Map<String, dynamic>;
-        expect(text.keys, unorderedEquals(const ['common_name']));
+      for (final entry in texts.entries) {
+        final text = entry.value as Map<String, dynamic>;
+        final isReviewedDutchEcology =
+            entry.key == 'nl' && text['habitat_basis'] == 'species';
+        if (isReviewedDutchEcology) {
+          expect(
+            text.keys,
+            unorderedEquals(const [
+              'common_name',
+              'habitat',
+              'habitat_source_id',
+              'habitat_basis',
+              'lookalikes',
+              'lookalikes_source_id',
+              'lookalikes_source_record_id',
+            ]),
+          );
+          expect(text['habitat_source_id'], 'first-nature');
+          expect(text['lookalikes_source_id'], 'first-nature');
+          expect(
+            (text['lookalikes_source_record_id'] as String).trim(),
+            isNotEmpty,
+          );
+          expect((text['habitat'] as String).trim(), isNotEmpty);
+          expect((text['lookalikes'] as String).trim(), isNotEmpty);
+        } else {
+          expect(text.keys, unorderedEquals(const ['common_name']));
+        }
         expect((text['common_name'] as String).trim(), isNotEmpty);
       }
     }
