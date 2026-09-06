@@ -46,7 +46,7 @@ void main() {
     await tester.enterText(capField, 'not-a-number');
 
     final button = find.widgetWithText(FilledButton, 'Show candidates');
-    await tester.ensureVisible(button);
+    await _bringIntoView(tester, button);
     await tester.tap(button);
     await tester.pump();
 
@@ -69,7 +69,7 @@ void main() {
     await tester.enterText(capField, '0');
 
     final button = find.widgetWithText(FilledButton, 'Kandidaten anzeigen');
-    await tester.ensureVisible(button);
+    await _bringIntoView(tester, button);
     await tester.tap(button);
     await tester.pump();
 
@@ -95,7 +95,7 @@ void main() {
 
     final seasonReference =
         find.widgetWithText(DropdownButtonFormField<String?>, 'Season reference');
-    await _dragUntilBuilt(tester, seasonReference);
+    await _bringIntoView(tester, seasonReference);
     await tester.tap(seasonReference);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Britain & Ireland').last);
@@ -104,7 +104,7 @@ void main() {
     expect(find.text('Observation month'), findsOneWidget);
 
     final button = find.widgetWithText(FilledButton, 'Show candidates');
-    await _dragUntilBuilt(tester, button);
+    await _bringIntoView(tester, button);
     await tester.tap(button);
     await tester.pump();
 
@@ -127,7 +127,7 @@ void main() {
 
     final seasonReference =
         find.widgetWithText(DropdownButtonFormField<String?>, 'Season reference');
-    await _dragUntilBuilt(tester, seasonReference);
+    await _bringIntoView(tester, seasonReference);
     await tester.tap(seasonReference);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Britain & Ireland').last);
@@ -135,14 +135,14 @@ void main() {
 
     final month =
         find.widgetWithText(DropdownButtonFormField<int>, 'Observation month');
-    await _dragUntilBuilt(tester, month);
+    await _bringIntoView(tester, month);
     await tester.tap(month);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Oct').last);
     await tester.pumpAndSettle();
 
     final button = find.widgetWithText(FilledButton, 'Show candidates');
-    await _dragUntilBuilt(tester, button);
+    await _bringIntoView(tester, button);
     await tester.tap(button);
     await tester.pumpAndSettle();
 
@@ -153,14 +153,19 @@ void main() {
   });
 }
 
-Future<void> _dragUntilBuilt(WidgetTester tester, Finder target) async {
+Future<void> _bringIntoView(WidgetTester tester, Finder target) async {
   final scrollView = find.byType(CustomScrollView);
   expect(scrollView, findsOneWidget);
-  for (var attempt = 0; attempt < 8 && target.evaluate().isEmpty; attempt++) {
-    await tester.drag(scrollView, const Offset(0, -240));
+  for (var attempt = 0; attempt < 12; attempt++) {
+    if (target.evaluate().isNotEmpty) {
+      final center = tester.getCenter(target);
+      if (center.dy >= 80 && center.dy <= 460) return;
+    }
+    await tester.drag(scrollView, const Offset(0, -160));
     await tester.pumpAndSettle();
   }
   expect(target, findsOneWidget);
+  expect(tester.getCenter(target).dy, lessThanOrEqualTo(460));
 }
 
 class _FakeIdentificationRepository extends IdentificationRepository {
