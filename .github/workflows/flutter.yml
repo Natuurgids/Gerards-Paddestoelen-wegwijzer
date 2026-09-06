@@ -82,8 +82,10 @@ jobs:
       - name: Test
         run: flutter test
       - name: Build Android release APK
+        if: github.event_name == 'push'
         run: flutter build apk --release
       - name: Upload Android release APK
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: gerards-paddestoelen-wegwijzer-android-release
@@ -92,6 +94,7 @@ jobs:
           retention-days: 14
 
   windows-release:
+    if: github.event_name == 'push'
     needs: quality
     runs-on: windows-latest
     steps:
