@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
 import '../../data/training_data_repository.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/safety_notice.dart';
 
 class TrainingScreen extends StatefulWidget {
@@ -47,11 +48,114 @@ class _TrainingScreenState extends State<TrainingScreen> {
     setState(_reload);
   }
 
+  ShapeBorder get _cardShape => RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppTheme.border),
+      );
+
+  Widget _lessonCard(
+    BuildContext context,
+    AppLocalizations l10n,
+    LessonSummary lesson,
+    int index,
+  ) {
+    final score = (lesson.bestScore * 100).round();
+    return Card(
+      elevation: 0,
+      color: AppTheme.creamStrong,
+      shape: _cardShape,
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LessonScreen(
+                locale: widget.locale,
+                lesson: lesson,
+                repository: _repo,
+              ),
+            ),
+          );
+          if (mounted) setState(_reload);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppTheme.moss.withValues(alpha: .14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${index + 1}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppTheme.forest,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lesson.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: AppTheme.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      lesson.body,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.ink.withValues(alpha: .78),
+                            height: 1.4,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _ProgressBadge(
+                          icon: Icons.workspace_premium_outlined,
+                          label: '${l10n.trainingBestScore}: $score%',
+                        ),
+                        _ProgressBadge(
+                          icon: Icons.replay,
+                          label:
+                              '${l10n.trainingAttempts}: ${lesson.attempts}',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Icon(Icons.chevron_right, color: AppTheme.forest),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final title = widget.title ?? l10n.trainingTitle;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title ?? l10n.trainingTitle)),
+      appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: Column(
           children: [
@@ -72,34 +176,44 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final lessons = snapshot.data ?? const <LessonSummary>[];
-                  return ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: lessons
-                        .map(
-                          (lesson) => Card(
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(16),
-                              title: Text(lesson.title),
-                              subtitle: Text(
-                                '${lesson.body}\n\n${l10n.trainingBestScore}: ${(lesson.bestScore * 100).round()}% · ${l10n.trainingAttempts}: ${lesson.attempts}',
-                              ),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () async {
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => LessonScreen(
-                                      locale: widget.locale,
-                                      lesson: lesson,
-                                      repository: _repo,
-                                    ),
-                                  ),
-                                );
-                                if (mounted) setState(_reload);
-                              },
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final horizontalPadding = constraints.maxWidth >= 900
+                          ? 32.0
+                          : 16.0;
+                      return ListView(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          16,
+                          horizontalPadding,
+                          16,
+                        ),
+                        children: [
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 900),
+                              child: _LearningHeader(title: title),
                             ),
                           ),
-                        )
-                        .toList(),
+                          const SizedBox(height: 12),
+                          ...List.generate(
+                            lessons.length,
+                            (index) => Center(
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 900),
+                                child: _lessonCard(
+                                  context,
+                                  l10n,
+                                  lessons[index],
+                                  index,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
@@ -152,10 +266,12 @@ class _LessonScreenState extends State<LessonScreen> {
   Future<void> _submit(List<QuizQuestion> questions) async {
     if (questions.isEmpty) return;
     var correct = 0;
-    for (final q in questions) {
-      final selected = _answers[q.id];
+    for (final question in questions) {
+      final selected = _answers[question.id];
       if (selected != null &&
-          q.answers.any((a) => a.id == selected && a.isCorrect)) {
+          question.answers.any(
+            (answer) => answer.id == selected && answer.isCorrect,
+          )) {
         correct++;
       }
     }
@@ -163,6 +279,104 @@ class _LessonScreenState extends State<LessonScreen> {
     await _repo.saveScore(widget.lesson.id, score);
     if (mounted) setState(() => _score = score);
   }
+
+  ShapeBorder get _cardShape => RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppTheme.border),
+      );
+
+  Widget _questionCard(
+    BuildContext context,
+    QuizQuestion question,
+    int index,
+  ) =>
+      Card(
+        elevation: 0,
+        color: AppTheme.creamStrong,
+        shape: _cardShape,
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppTheme.moss.withValues(alpha: .14),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${index + 1}',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: AppTheme.forest,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 5),
+                      child: Text(
+                        question.prompt,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: AppTheme.ink,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              RadioGroup<int>(
+                groupValue: _answers[question.id],
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _answers[question.id] = value);
+                },
+                child: Column(
+                  children: question.answers
+                      .map(
+                        (answer) => RadioListTile<int>(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                          ),
+                          title: Text(answer.label),
+                          value: answer.id,
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+              if (_score != null && question.explanation != null)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.moss.withValues(alpha: .1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    question.explanation!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.ink,
+                          height: 1.4,
+                        ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -189,66 +403,118 @@ class _LessonScreenState extends State<LessonScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final questions = snapshot.data ?? const <QuizQuestion>[];
-                  return ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      Text(
-                        widget.lesson.body,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: 24),
-                      ...questions.map(
-                        (question) => Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  question.prompt,
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
-                                RadioGroup<int>(
-                                  groupValue: _answers[question.id],
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    setState(() => _answers[question.id] = value);
-                                  },
-                                  child: Column(
-                                    children: question.answers
-                                        .map(
-                                          (answer) => RadioListTile<int>(
-                                            title: Text(answer.label),
-                                            value: answer.id,
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final horizontalPadding = constraints.maxWidth >= 900
+                          ? 32.0
+                          : 16.0;
+                      return ListView(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          16,
+                          horizontalPadding,
+                          16,
+                        ),
+                        children: [
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 900),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(18),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          AppTheme.moss.withValues(alpha: .12),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: AppTheme.border),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          width: 42,
+                                          height: 42,
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.forest,
+                                            borderRadius:
+                                                BorderRadius.circular(13),
                                           ),
-                                        )
-                                        .toList(),
+                                          child: const Icon(
+                                            Icons.menu_book_outlined,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Text(
+                                            widget.lesson.body,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.copyWith(
+                                                  color: AppTheme.ink,
+                                                  height: 1.5,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                if (_score != null &&
-                                    question.explanation != null)
-                                  Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: Text(question.explanation!),
+                                  const SizedBox(height: 16),
+                                  ...List.generate(
+                                    questions.length,
+                                    (index) => _questionCard(
+                                      context,
+                                      questions[index],
+                                      index,
+                                    ),
                                   ),
-                              ],
+                                  SizedBox(
+                                    height: 48,
+                                    child: FilledButton.icon(
+                                      onPressed: () => _submit(questions),
+                                      icon: const Icon(Icons.check_circle_outline),
+                                      label: Text(l10n.trainingCheckAnswers),
+                                    ),
+                                  ),
+                                  if (_score != null)
+                                    Container(
+                                      margin: const EdgeInsets.only(top: 14),
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.forest,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.school_outlined,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            '${l10n.trainingScore}: ${(_score! * 100).round()}%',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      FilledButton(
-                        onPressed: () => _submit(questions),
-                        child: Text(l10n.trainingCheckAnswers),
-                      ),
-                      if (_score != null)
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            '${l10n.trainingScore}: ${(_score! * 100).round()}%',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ),
-                    ],
+                        ],
+                      );
+                    },
                   );
                 },
               ),
@@ -259,4 +525,76 @@ class _LessonScreenState extends State<LessonScreen> {
       ),
     );
   }
+}
+
+class _LearningHeader extends StatelessWidget {
+  const _LearningHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppTheme.forest, AppTheme.forestDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.school_outlined, color: Colors.white),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+class _ProgressBadge extends StatelessWidget {
+  const _ProgressBadge({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.moss.withValues(alpha: .11),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: AppTheme.forest),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppTheme.forest,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ],
+        ),
+      );
 }
