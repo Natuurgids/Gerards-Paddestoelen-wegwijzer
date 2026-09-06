@@ -20,8 +20,8 @@ class EcologyEnrichmentTest(unittest.TestCase):
                     {"id": 2, "rank": "species", "scientific_name": "Example testii"}
                 ],
                 "species": [
-                    {"id": 1, "taxon_id": 1, "texts": {"nl": {}}},
-                    {"id": 2, "taxon_id": 2, "texts": {"nl": {"habitat": "Bestaande soortspecifieke habitat."}}}
+                    {"id": 1, "taxon_id": 1, "texts": {}},
+                    {"id": 2, "taxon_id": 2, "texts": {"nl": {"common_name": "Voorbeeld", "habitat": "Bestaande soortspecifieke habitat."}}}
                 ]
             }), encoding="utf-8")
             reviewed.write_text(json.dumps({"species": [{
@@ -46,9 +46,11 @@ class EcologyEnrichmentTest(unittest.TestCase):
 
             self.assertEqual(habitat_count, 1)
             self.assertEqual(lookalike_count, 1)
+            self.assertEqual(first["common_name"], "Cantharellus cibarius")
             self.assertEqual(first["habitat"], "Soortspecifieke habitat.")
             self.assertEqual(first["habitat_basis"], "species")
             self.assertEqual(first["lookalikes"], "Verwar met Example similare.")
+            self.assertEqual(second["common_name"], "Voorbeeld")
             self.assertEqual(second["habitat"], "Bestaande soortspecifieke habitat.")
             self.assertTrue(any(s["id"] == "fungaltraits-globi" for s in result["sources"]))
 
