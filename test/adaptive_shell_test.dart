@@ -77,7 +77,8 @@ void main() {
     );
 
     expect(find.text('Gerards Paddestoelen Wegwijzer'), findsOneWidget);
-    expect(find.text('Identify • Learn • Explore'), findsOneWidget);
+    expect(find.text('Ontdek. Leer. Bescherm.'), findsOneWidget);
+    expect(find.text('Met respect voor natuur en soorten'), findsOneWidget);
     expect(find.textContaining('Natuurgids.org'), findsOneWidget);
     expect(find.textContaining('Bronnen en beeldrechten'), findsOneWidget);
 
