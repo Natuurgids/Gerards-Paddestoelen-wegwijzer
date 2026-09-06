@@ -1,10 +1,11 @@
 {
-  "version": 1,
+  "version": 2,
   "policy": {
     "purpose": "Curated species reference imagery for educational identification support.",
     "allowed_licenses": ["CC BY 2.0", "CC BY 3.0", "CC BY 4.0", "CC BY-SA 2.5", "CC BY-SA 3.0", "CC BY-SA 4.0", "CC0"],
     "location_metadata": "Do not store or expose source GPS/location metadata.",
-    "identification_note": "A reference photo supports educational comparison only and is not a verified identification of a user's observation."
+    "identification_note": "A reference photo supports educational comparison only and is not a verified identification of a user's observation.",
+    "text_languages": ["nl", "en", "de"]
   },
   "images": [
     {
@@ -17,7 +18,12 @@
       "license": "CC BY 3.0",
       "license_url": "https://creativecommons.org/licenses/by/3.0/",
       "review_status": "vetted",
-      "intended_role": "primary_reference"
+      "intended_role": "primary_reference",
+      "alt_text": {
+        "nl": "Vliegenzwam als referentiefoto voor vergelijking van zichtbare kenmerken.",
+        "en": "Fly agaric reference photo for comparing visible characteristics.",
+        "de": "Fliegenpilz als Referenzfoto zum Vergleich sichtbarer Merkmale."
+      }
     },
     {
       "species_id": 2,
@@ -29,7 +35,12 @@
       "license": "CC BY 2.0",
       "license_url": "https://creativecommons.org/licenses/by/2.0/",
       "review_status": "vetted",
-      "intended_role": "primary_reference"
+      "intended_role": "primary_reference",
+      "alt_text": {
+        "nl": "Groene knolamaniet als referentiefoto voor vergelijking van zichtbare kenmerken.",
+        "en": "Death cap reference photo for comparing visible characteristics.",
+        "de": "Grüner Knollenblätterpilz als Referenzfoto zum Vergleich sichtbarer Merkmale."
+      }
     },
     {
       "species_id": 3,
@@ -41,7 +52,63 @@
       "license": "CC BY-SA 2.5",
       "license_url": "https://creativecommons.org/licenses/by-sa/2.5/",
       "review_status": "vetted",
-      "intended_role": "primary_reference"
+      "intended_role": "primary_reference",
+      "alt_text": {
+        "nl": "Gewoon eekhoorntjesbrood als referentiefoto voor vergelijking van zichtbare kenmerken.",
+        "en": "Penny bun reference photo for comparing visible characteristics.",
+        "de": "Steinpilz als Referenzfoto zum Vergleich sichtbarer Merkmale."
+      }
+    },
+    {
+      "species_id": 4,
+      "scientific_name": "Cantharellus cibarius",
+      "source": "Wikimedia Commons",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Cantharellus_cibarius_146146552.jpg",
+      "source_file_name": "Cantharellus_cibarius_146146552.jpg",
+      "creator": "Francois Morillon",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "review_status": "vetted",
+      "intended_role": "primary_reference",
+      "alt_text": {
+        "nl": "Hanenkam als referentiefoto voor vergelijking van zichtbare kenmerken.",
+        "en": "Chanterelle reference photo for comparing visible characteristics.",
+        "de": "Pfifferling als Referenzfoto zum Vergleich sichtbarer Merkmale."
+      }
+    },
+    {
+      "species_id": 5,
+      "scientific_name": "Agaricus campestris",
+      "source": "Wikimedia Commons",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Agaricus_campestris_324490339.jpg",
+      "source_file_name": "Agaricus_campestris_324490339.jpg",
+      "creator": "Michel Langeveld",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "review_status": "vetted",
+      "intended_role": "primary_reference",
+      "alt_text": {
+        "nl": "Weidechampignon als referentiefoto voor vergelijking van zichtbare kenmerken.",
+        "en": "Field mushroom reference photo for comparing visible characteristics.",
+        "de": "Wiesen-Champignon als Referenzfoto zum Vergleich sichtbarer Merkmale."
+      }
+    },
+    {
+      "species_id": 6,
+      "scientific_name": "Lactarius deliciosus",
+      "source": "Wikimedia Commons",
+      "source_page": "https://commons.wikimedia.org/wiki/File:2011-11-26_Lactarius_deliciosus_(L.)_Gray_187160.jpg",
+      "source_file_name": "2011-11-26_Lactarius_deliciosus_(L.)_Gray_187160.jpg",
+      "creator": "zaca",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "review_status": "vetted",
+      "intended_role": "primary_reference",
+      "alt_text": {
+        "nl": "Smakelijke melkzwam als referentiefoto voor vergelijking van zichtbare kenmerken.",
+        "en": "Saffron milkcap reference photo for comparing visible characteristics.",
+        "de": "Edel-Reizker als Referenzfoto zum Vergleich sichtbarer Merkmale."
+      }
     }
   ]
 }
