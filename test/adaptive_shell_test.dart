@@ -76,11 +76,15 @@ void main() {
       ),
     );
 
-    expect(find.text('Gerards Paddestoelen Wegwijzer'), findsOneWidget);
-    expect(find.text('Ontdek. Leer. Bescherm.'), findsOneWidget);
-    expect(find.text('Met respect voor natuur en soorten'), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(
+        "Gerard's Paddestoelen Wegwijzer. Ontdek. Leer. Beleef de natuur.",
+      ),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.text('Gerards Paddestoelen Wegwijzer'));
+    await tester.tap(find.byType(GestureDetector));
     expect(continued, isTrue);
   });
 }
