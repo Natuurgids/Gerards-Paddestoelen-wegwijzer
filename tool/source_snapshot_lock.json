@@ -1,5 +1,5 @@
 {
-  "snapshot_date": "2026-09-04",
+  "snapshot_date": "2026-09-06",
   "catalogue": {
     "total_species": 12525,
     "nsr_species": 12509,
@@ -11,12 +11,14 @@
     "nsr-dutch-species-register",
     "dgfm-german-fungi",
     "uksi-natural-history-museum",
-    "iucn-red-list"
+    "iucn-red-list",
+    "fungaltraits-globi"
   ],
   "required_source_licenses": {
     "nsr-dutch-species-register": "CC BY 4.0",
     "dgfm-german-fungi": "CC BY 4.0",
     "uksi-natural-history-museum": "CC BY 4.0",
-    "iucn-red-list": "CC BY 4.0"
+    "iucn-red-list": "CC BY 4.0",
+    "fungaltraits-globi": "CC BY 4.0"
   }
 }
