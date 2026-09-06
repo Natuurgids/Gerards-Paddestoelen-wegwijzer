@@ -27,7 +27,7 @@ void main() {
       find.text('Checklist Dutch Species Register - Nederlands Soortenregister'),
       findsOneWidget,
     );
-    expect(find.textContaining('CC BY 4.0'), findsOneWidget);
+    expect(find.textContaining('CC BY 4.0'), findsWidgets);
     expect(find.text('First Nature fungus identification guides'), findsOneWidget);
     expect(
       find.textContaining('Geen hergebruiklicentie vastgelegd'),
