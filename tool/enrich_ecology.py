@@ -108,6 +108,13 @@ def _habitat_text(genus: str, row: dict[str, str]) -> str | None:
     )
 
 
+def _dutch_text(species: dict, scientific: str) -> dict:
+    nl = species.setdefault("texts", {}).setdefault("nl", {})
+    if not _clean(nl.get("common_name")):
+        nl["common_name"] = scientific
+    return nl
+
+
 def enrich(
     catalog_path: Path,
     source_text: str,
@@ -143,7 +150,7 @@ def enrich(
         trait = traits.get(genus.casefold())
         if trait is None:
             continue
-        nl = species.setdefault("texts", {}).setdefault("nl", {})
+        nl = _dutch_text(species, scientific)
         if _clean(nl.get("habitat")):
             continue
         habitat = _habitat_text(genus, trait)
@@ -168,7 +175,7 @@ def enrich(
             entry = by_name.get(scientific.casefold())
             if entry is None:
                 continue
-            nl = species.setdefault("texts", {}).setdefault("nl", {})
+            nl = _dutch_text(species, scientific)
             habitat = _clean(entry.get("habitat_nl"))
             lookalikes = _clean(entry.get("lookalikes_nl"))
             source_id = _clean(entry.get("source_id"))
