@@ -27,6 +27,8 @@ from PIL import Image
 API = "https://api.inaturalist.org/v1/observations"
 USER_AGENT = "Gerards-Paddestoelen-Wegwijzer/1.0 reference-image-curation"
 ALLOWED_LICENSES = {"cc0": "CC0", "cc-by": "CC BY"}
+MAX_IMAGE_PIXELS = 600
+JPEG_QUALITY = 80
 
 
 def _get_json(url: str) -> dict[str, Any]:
@@ -94,12 +96,12 @@ def _sanitize_jpeg(raw: bytes, output: Path) -> tuple[int, int]:
     with Image.open(io.BytesIO(raw)) as image:
         image.load()
         image = image.convert("RGB")
-        image.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
+        image.thumbnail((MAX_IMAGE_PIXELS, MAX_IMAGE_PIXELS), Image.Resampling.LANCZOS)
         width, height = image.size
         output.parent.mkdir(parents=True, exist_ok=True)
         # Re-encoding pixels without EXIF/ICC/comment parameters deliberately drops
         # location and other source metadata from the distributable review asset.
-        image.save(output, format="JPEG", quality=88, optimize=True, progressive=True)
+        image.save(output, format="JPEG", quality=JPEG_QUALITY, optimize=True, progressive=True)
         return width, height
 
 
@@ -142,7 +144,7 @@ def collect(catalog_path: Path, output_dir: Path, report_path: Path, limit: int 
                         "de": f"Referenzfoto von {scientific_name} zum Vergleich sichtbarer Merkmale.",
                     },
                 })
-        except Exception as exc:  # report per-species failures without losing the batch
+        except Exception as exc:
             missing.append({"species_id": species_id, "scientific_name": scientific_name, "reason": f"request_or_decode_error:{type(exc).__name__}"})
         print(f"[{index}/{len(species_rows)}] {scientific_name}: {'collected' if collected and collected[-1]['species_id'] == species_id else 'missing'}", flush=True)
         if delay > 0 and index < len(species_rows):
@@ -155,6 +157,8 @@ def collect(catalog_path: Path, output_dir: Path, report_path: Path, limit: int 
             "quality_grade": "research",
             "allowed_photo_licenses": ["cc0", "cc-by"],
             "exact_scientific_name_match": True,
+            "max_image_pixels": MAX_IMAGE_PIXELS,
+            "jpeg_quality": JPEG_QUALITY,
             "location_metadata_stored": False,
             "source_metadata_stripped_from_jpeg": True,
             "human_review_required_before_commit": True,
