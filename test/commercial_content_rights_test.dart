@@ -25,6 +25,10 @@ void main() {
         final text = entry.value as Map<String, dynamic>;
         final isReviewedDutchEcology =
             entry.key == 'nl' && text['habitat_basis'] == 'species';
+        final isGenusEcology =
+            entry.key == 'nl' &&
+            text['habitat_basis'] == 'genus' &&
+            text['habitat_source_id'] == 'fungaltraits-globi';
         if (isReviewedDutchEcology) {
           expect(
             text.keys,
@@ -46,6 +50,17 @@ void main() {
           );
           expect((text['habitat'] as String).trim(), isNotEmpty);
           expect((text['lookalikes'] as String).trim(), isNotEmpty);
+        } else if (isGenusEcology) {
+          expect(
+            text.keys,
+            unorderedEquals(const [
+              'common_name',
+              'habitat',
+              'habitat_source_id',
+              'habitat_basis',
+            ]),
+          );
+          expect((text['habitat'] as String).trim(), isNotEmpty);
         } else {
           expect(text.keys, unorderedEquals(const ['common_name']));
         }
