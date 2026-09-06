@@ -92,6 +92,8 @@ jobs:
         run: dart run flutter_launcher_icons -f tool/windows_launcher_icons.yaml
       - name: Generate Dutch Species Register Fungi catalogue
         run: python tool/build_nsr_fungi_catalog.py --min-species 10000
+      - name: Enrich IUCN conservation status
+        run: python tool/enrich_conservation_status.py --min-matches 1
       - name: Generate packaged reference database
         shell: pwsh
         run: |
