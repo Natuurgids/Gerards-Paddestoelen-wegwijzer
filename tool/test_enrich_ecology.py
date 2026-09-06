@@ -37,7 +37,9 @@ class EcologyEnrichmentTest(unittest.TestCase):
                 "Example,wood_saprotroph,,wood,non-aquatic,\n"
             )
 
-            habitat_count, lookalike_count = enrich(catalog, source, reviewed, 1)
+            habitat_count, lookalike_count = enrich(
+                catalog, source, reviewed, 1, "2026-09-06"
+            )
             result = json.loads(catalog.read_text(encoding="utf-8"))
             first = result["species"][0]["texts"]["nl"]
             second = result["species"][1]["texts"]["nl"]
