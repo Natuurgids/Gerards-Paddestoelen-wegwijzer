@@ -198,6 +198,8 @@ class _HomeContent extends StatelessWidget {
         ),
         children: [
           _HomeHero(intro: intro, desktop: desktop),
+          const SizedBox(height: 18),
+          const SafetyNotice(),
           const SizedBox(height: 20),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -224,8 +226,6 @@ class _HomeContent extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _DiscoveryPanel(desktop: desktop),
-          const SizedBox(height: 18),
-          const SafetyNotice(),
         ],
       ),
     );
@@ -466,7 +466,7 @@ class _DesktopSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
+    return Material(
       color: AppTheme.forestDark,
       child: SafeArea(
         child: Column(
@@ -519,18 +519,18 @@ class _SidebarHomeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(10, 12, 10, 4),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 4),
+      child: Material(
         color: const Color(0xFF1F6A46),
         borderRadius: BorderRadius.circular(10),
-      ),
-      child: const ListTile(
-        dense: true,
-        leading: Icon(Icons.home_outlined, color: Colors.white),
-        title: Text(
-          'Home',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        child: const ListTile(
+          dense: true,
+          leading: Icon(Icons.home_outlined, color: Colors.white),
+          title: Text(
+            'Home',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
         ),
       ),
     );
@@ -567,7 +567,7 @@ class _MobileDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
+    return Material(
       color: AppTheme.forestDark,
       child: SafeArea(
         child: Column(
