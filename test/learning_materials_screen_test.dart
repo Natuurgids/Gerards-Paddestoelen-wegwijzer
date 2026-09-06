@@ -16,6 +16,14 @@ void main() {
         home: home,
       );
 
+  Future<void> tapVisible(WidgetTester tester, Finder target) async {
+    while (target.hitTestable().evaluate().isEmpty) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(target.hitTestable());
+  }
+
   testWidgets('unowned offering shows no fake purchase or price action', (
     tester,
   ) async {
@@ -75,7 +83,7 @@ void main() {
     expect(find.text('Kopen · € 2,99'), findsOneWidget);
     expect(find.byKey(const ValueKey('learning-materials-restore')), findsOneWidget);
 
-    await tester.tap(find.text('Kopen · € 2,99'));
+    await tapVisible(tester, find.text('Kopen · € 2,99'));
     await tester.pumpAndSettle();
 
     expect(service.purchaseCalls, ['learning_pack_boletes_pores']);
@@ -184,7 +192,7 @@ void main() {
     expect(find.text('In bezit'), findsOneWidget);
     expect(find.text('Downloaden'), findsOneWidget);
 
-    await tester.tap(find.text('Downloaden'));
+    await tapVisible(tester, find.text('Downloaden'));
     await tester.pumpAndSettle();
 
     expect(service.installCalls, ['boletes-pores']);
