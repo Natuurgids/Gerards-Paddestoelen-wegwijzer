@@ -68,56 +68,39 @@ class BrandSplashScreen extends StatelessWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              _SplashBackdrop(wide: wide),
-              SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: wide ? 72 : 28,
-                    vertical: wide ? 40 : 24,
-                  ),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 900),
-                            child: wide
-                                ? Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const AppBrandMark(
-                                        size: 220,
-                                        borderRadius: 44,
-                                      ),
-                                      const SizedBox(width: 52),
-                                      Flexible(
-                                        child: _SplashIdentity(
-                                          appTitle: l10n.appTitle,
-                                          alignment: CrossAxisAlignment.start,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : _SplashIdentity(
-                                    appTitle: l10n.appTitle,
-                                    alignment: CrossAxisAlignment.center,
-                                    showMark: true,
-                                  ),
-                          ),
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onContinue,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _SplashBackdrop(wide: wide),
+                SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: wide ? 72 : 28,
+                      vertical: wide ? 44 : 28,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 980),
+                        child: Column(
+                          children: [
+                            const Spacer(flex: 2),
+                            _SplashIdentity(
+                              appTitle: l10n.appTitle,
+                              wide: wide,
+                            ),
+                            const Spacer(flex: 3),
+                            const _NatureRespectMessage(),
+                          ],
                         ),
                       ),
-                      _CreditsPanel(
-                        wide: wide,
-                        onContinue: onContinue,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -126,108 +109,94 @@ class BrandSplashScreen extends StatelessWidget {
 }
 
 class _SplashIdentity extends StatelessWidget {
-  const _SplashIdentity({
-    required this.appTitle,
-    required this.alignment,
-    this.showMark = false,
-  });
+  const _SplashIdentity({required this.appTitle, required this.wide});
 
   final String appTitle;
-  final CrossAxisAlignment alignment;
-  final bool showMark;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) {
-    final centered = alignment == CrossAxisAlignment.center;
+    final textTheme = Theme.of(context).textTheme;
+    final markSize = wide ? 176.0 : 138.0;
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: alignment,
       children: [
-        if (showMark) ...[
-          const AppBrandMark(size: 150, borderRadius: 34),
-          const SizedBox(height: 28),
-        ],
-        Text(
-          appTitle,
-          textAlign: centered ? TextAlign.center : TextAlign.left,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                height: 1.02,
-              ),
+        AppBrandMark(
+          size: markSize,
+          borderRadius: wide ? 38 : 30,
         ),
-        const SizedBox(height: 14),
-        Text(
-          'Identify • Learn • Explore',
-          textAlign: centered ? TextAlign.center : TextAlign.left,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: const Color(0xFFE7E2D5),
-                letterSpacing: 0.5,
-              ),
+        SizedBox(height: wide ? 30 : 24),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: wide ? 620 : 360),
+          child: Text(
+            appTitle,
+            textAlign: TextAlign.center,
+            style: (wide ? textTheme.displayMedium : textTheme.displaySmall)
+                ?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              height: 1.02,
+              shadows: const [
+                Shadow(
+                  blurRadius: 12,
+                  color: Color(0x99000000),
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 28),
-        const SizedBox(
-          width: 300,
-          child: LinearProgressIndicator(minHeight: 7),
-        ),
-        const SizedBox(height: 14),
+        SizedBox(height: wide ? 18 : 14),
         Text(
-          'De natuur dichterbij…',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: const Color(0xFFE7E2D5),
+          'Ontdek. Leer. Bescherm.',
+          textAlign: TextAlign.center,
+          style: textTheme.titleLarge?.copyWith(
+            color: const Color(0xFFF3EEDC),
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.35,
+            shadows: const [
+              Shadow(
+                blurRadius: 8,
+                color: Color(0x99000000),
+                offset: Offset(0, 1),
               ),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-class _CreditsPanel extends StatelessWidget {
-  const _CreditsPanel({required this.wide, required this.onContinue});
-
-  final bool wide;
-  final VoidCallback? onContinue;
+class _NatureRespectMessage extends StatelessWidget {
+  const _NatureRespectMessage();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onContinue,
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 980),
-        padding: EdgeInsets.symmetric(
-          horizontal: wide ? 28 : 20,
-          vertical: wide ? 20 : 16,
-        ),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F0E5).withValues(alpha: 0.97),
-          borderRadius: BorderRadius.circular(22),
-        ),
-        child: Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          runSpacing: 8,
-          spacing: 24,
-          children: [
-            const Text(
-              'Een app van Natuurgids.org',
-              style: TextStyle(
-                color: AppTheme.ink,
-                fontWeight: FontWeight.w700,
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+      decoration: BoxDecoration(
+        color: AppTheme.forestDark.withValues(alpha: 0.58),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.eco_outlined,
+            size: 18,
+            color: Color(0xFFE8E3C9),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Met respect voor natuur en soorten',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFFF3EEDC),
+              fontWeight: FontWeight.w500,
             ),
-            const Text(
-              'Bronnen en beeldrechten: zie Bronnen & licenties',
-              style: TextStyle(color: AppTheme.ink),
-            ),
-            Text(
-              'Tik om door te gaan',
-              style: TextStyle(
-                color: AppTheme.forest.withValues(alpha: 0.78),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -262,10 +231,11 @@ class _SplashBackdrop extends StatelessWidget {
               begin: wide ? Alignment.centerLeft : Alignment.topCenter,
               end: wide ? Alignment.centerRight : Alignment.bottomCenter,
               colors: [
-                AppTheme.forestDark.withValues(alpha: 0.92),
-                AppTheme.forest.withValues(alpha: 0.78),
-                AppTheme.forestDark.withValues(alpha: 0.88),
+                AppTheme.forestDark.withValues(alpha: 0.38),
+                AppTheme.forest.withValues(alpha: 0.18),
+                AppTheme.forestDark.withValues(alpha: 0.68),
               ],
+              stops: const [0, 0.48, 1],
             ),
           ),
         ),
