@@ -13,6 +13,7 @@ import csv
 import io
 import json
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 SOURCE_ID = "fungaltraits-globi"
@@ -112,6 +113,7 @@ def enrich(
     source_text: str,
     reviewed_path: Path | None,
     min_habitat: int,
+    retrieved_at: str,
 ) -> tuple[int, int]:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     traits = _traits_by_genus(source_text)
@@ -126,6 +128,7 @@ def enrich(
             "url": SOURCE_PAGE,
             "license": "CC BY 4.0",
             "citation": SOURCE_CITATION,
+            "retrieved_at": retrieved_at,
         }
     )
     catalog["sources"] = sources
@@ -206,6 +209,9 @@ def main() -> None:
         "--reviewed", default="assets/data/reviewed_species_ecology.json"
     )
     parser.add_argument("--min-habitat", type=int, default=100)
+    parser.add_argument(
+        "--retrieved-at", default=datetime.now(timezone.utc).date().isoformat()
+    )
     args = parser.parse_args()
 
     source_text = (
@@ -218,6 +224,7 @@ def main() -> None:
         source_text,
         Path(args.reviewed) if args.reviewed else None,
         args.min_habitat,
+        args.retrieved_at,
     )
 
 
