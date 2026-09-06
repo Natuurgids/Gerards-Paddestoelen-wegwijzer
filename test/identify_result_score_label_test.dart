@@ -71,15 +71,12 @@ Future<void> _bringIntoView(WidgetTester tester, Finder target) async {
   final scrollView = find.byType(CustomScrollView);
   expect(scrollView, findsOneWidget);
   for (var attempt = 0; attempt < 12; attempt++) {
-    if (target.evaluate().isNotEmpty) {
-      final center = tester.getCenter(target);
-      if (center.dy >= 80 && center.dy <= 460) return;
-    }
+    if (target.hitTestable().evaluate().isNotEmpty) return;
     await tester.drag(scrollView, const Offset(0, -160));
     await tester.pumpAndSettle();
   }
   expect(target, findsOneWidget);
-  expect(tester.getCenter(target).dy, lessThanOrEqualTo(460));
+  expect(target.hitTestable(), findsOneWidget);
 }
 
 Future<void> _scrollResultIntoView(
