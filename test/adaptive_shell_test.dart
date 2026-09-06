@@ -66,7 +66,7 @@ void main() {
     expect(find.text('Nieuwe leermaterialen'), findsWidgets);
   });
 
-  testWidgets('brand splash shows app name, credits and can be skipped', (
+  testWidgets('brand splash shows approved identity and can be skipped', (
     tester,
   ) async {
     var continued = false;
@@ -79,10 +79,8 @@ void main() {
     expect(find.text('Gerards Paddestoelen Wegwijzer'), findsOneWidget);
     expect(find.text('Ontdek. Leer. Bescherm.'), findsOneWidget);
     expect(find.text('Met respect voor natuur en soorten'), findsOneWidget);
-    expect(find.textContaining('Natuurgids.org'), findsOneWidget);
-    expect(find.textContaining('Bronnen en beeldrechten'), findsOneWidget);
 
-    await tester.tap(find.text('Tik om door te gaan'));
+    await tester.tap(find.text('Gerards Paddestoelen Wegwijzer'));
     expect(continued, isTrue);
   });
 }
