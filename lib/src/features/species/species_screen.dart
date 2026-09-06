@@ -194,50 +194,52 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
         ),
       );
 
-  Widget _identityCard(BuildContext context, SpeciesDetail species) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.forest, AppTheme.forestDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  Widget _identityCard(BuildContext context, SpeciesDetail species) {
+    final description = species.description ?? species.summary ?? '';
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.forest, AppTheme.forestDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            species.commonName,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
           ),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              species.commonName,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              species.scientificName,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: .88),
-                    fontStyle: FontStyle.italic,
-                  ),
-            ),
+          const SizedBox(height: 3),
+          Text(
+            species.scientificName,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: .88),
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
+          const SizedBox(height: 10),
+          ConservationWarning(speciesId: species.id),
+          if (description.isNotEmpty) ...[
             const SizedBox(height: 10),
-            ConservationWarning(speciesId: species.id),
-            final description = species.description ?? species.summary ?? '',
-            if (description.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: .9),
-                      height: 1.45,
-                    ),
-              ),
-            ],
+            Text(
+              description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: .9),
+                    height: 1.45,
+                  ),
+            ),
           ],
-        ),
-      );
+        ],
+      ),
+    );
+  }
 
   Widget _gallery(
     BuildContext context,
