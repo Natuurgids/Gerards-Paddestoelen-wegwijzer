@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
 import '../../data/species_browser_repository.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/safety_notice.dart';
 import 'species_screen.dart';
 
@@ -122,6 +123,70 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
     }
   }
 
+  ShapeBorder get _cardShape => RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppTheme.border),
+      );
+
+  Widget _searchPanel(BuildContext context, AppLocalizations l10n) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppTheme.forest, AppTheme.forestDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(Icons.menu_book_outlined, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l10n.speciesBrowserTitle,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _search,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: l10n.speciesBrowserSearchHint,
+                filled: true,
+                fillColor: AppTheme.creamStrong,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: _onSearchChanged,
+            ),
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -130,76 +195,144 @@ class _SpeciesBrowserScreenState extends State<SpeciesBrowserScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: TextField(
-                controller: _search,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: l10n.speciesBrowserSearchHint,
-                  border: const OutlineInputBorder(),
-                ),
-                onChanged: _onSearchChanged,
-              ),
-            ),
             Expanded(
-              child: _loadingInitial
-                  ? const Center(child: CircularProgressIndicator())
-                  : _loadFailed
-                      ? Center(
-                          child: IconButton(
-                            onPressed: _loadFirstPage,
-                            icon: const Icon(Icons.refresh),
-                            iconSize: 40,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final horizontal = constraints.maxWidth >= 840 ? 28.0 : 14.0;
+                  return CustomScrollView(
+                    controller: _scroll,
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(horizontal, 14, horizontal, 10),
+                        sliver: SliverToBoxAdapter(
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 980),
+                              child: _searchPanel(context, l10n),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_loadingInitial)
+                        const SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (_loadFailed)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(
+                            child: IconButton.filledTonal(
+                              onPressed: _loadFirstPage,
+                              icon: const Icon(Icons.refresh),
+                              iconSize: 32,
+                            ),
                           ),
                         )
-                      : _items.isEmpty
-                          ? Center(child: Text(l10n.speciesBrowserEmpty))
-                          : ListView.separated(
-                              controller: _scroll,
-                              padding: const EdgeInsets.all(12),
-                              itemCount:
-                                  _items.length + (_loadingMore ? 1 : 0),
-                              separatorBuilder: (_, __) =>
-                                  const Divider(height: 1),
-                              itemBuilder: (context, index) {
-                                if (index == _items.length) {
-                                  return const Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  );
-                                }
-                                final s = _items[index];
-                                return ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 8,
-                                  ),
-                                  leading: SizedBox(
-                                    width: 64,
-                                    height: 64,
-                                    child: _Thumb(path: s.imagePath),
-                                  ),
-                                  title: Text(s.commonName),
-                                  subtitle: Text(
-                                    '${s.scientificName}\n${s.summary ?? ''}',
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  isThreeLine: true,
-                                  onTap: () => Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => SpeciesScreen(
-                                        locale: widget.locale,
-                                        speciesId: s.id,
+                      else if (_items.isEmpty)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(child: Text(l10n.speciesBrowserEmpty)),
+                        )
+                      else
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(horizontal, 2, horizontal, 18),
+                          sliver: SliverList.builder(
+                            itemCount: _items.length + (_loadingMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _items.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(18),
+                                  child: Center(child: CircularProgressIndicator()),
+                                );
+                              }
+                              final s = _items[index];
+                              return Center(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 980),
+                                  child: Card(
+                                    elevation: 0,
+                                    color: AppTheme.creamStrong,
+                                    shape: _cardShape,
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: InkWell(
+                                      onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => SpeciesScreen(
+                                            locale: widget.locale,
+                                            speciesId: s.id,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 76,
+                                              height: 76,
+                                              child: _Thumb(path: s.imagePath),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    s.commonName,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleMedium
+                                                        ?.copyWith(
+                                                          color: AppTheme.ink,
+                                                          fontWeight: FontWeight.w700,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    s.scientificName,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.copyWith(
+                                                          color: AppTheme.forest,
+                                                          fontStyle: FontStyle.italic,
+                                                        ),
+                                                  ),
+                                                  if ((s.summary ?? '').isNotEmpty) ...[
+                                                    const SizedBox(height: 5),
+                                                    Text(
+                                                      s.summary!,
+                                                      maxLines: 2,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .bodySmall,
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: AppTheme.forest,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                );
-                              },
-                            ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
             ),
             const SafetyNotice(),
           ],
@@ -216,16 +349,19 @@ class _Thumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (path == null) return const Icon(Icons.image_not_supported_outlined);
+    final fallback = ColoredBox(
+      color: AppTheme.cream,
+      child: const Center(
+        child: Icon(Icons.image_not_supported_outlined, color: AppTheme.moss),
+      ),
+    );
+    if (path == null) return fallback;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(12),
       child: Image.asset(
         path!,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => ColoredBox(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          child: const Icon(Icons.image_not_supported_outlined),
-        ),
+        errorBuilder: (_, __, ___) => fallback,
       ),
     );
   }
