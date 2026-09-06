@@ -19,7 +19,7 @@ flutter pub get
 Write-Host 'Generating launcher icons...'
 dart run flutter_launcher_icons
 if (Test-Path 'windows') {
-  dart run flutter_launcher_icons -f flutter_launcher_icons-windows.yaml
+  dart run flutter_launcher_icons -f tool/windows_launcher_icons.yaml
 }
 
 Write-Host 'Running analyzer...'

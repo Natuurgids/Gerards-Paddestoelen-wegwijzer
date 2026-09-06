@@ -89,7 +89,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate Windows launcher icon
-        run: dart run flutter_launcher_icons -f flutter_launcher_icons-windows.yaml
+        run: dart run flutter_launcher_icons -f tool/windows_launcher_icons.yaml
       - name: Generate packaged reference database
         shell: pwsh
         run: |
