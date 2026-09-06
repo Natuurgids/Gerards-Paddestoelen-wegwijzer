@@ -62,9 +62,21 @@ void main() {
 
 Future<void> _showResults(WidgetTester tester, String buttonLabel) async {
   final button = find.widgetWithText(FilledButton, buttonLabel);
-  await tester.ensureVisible(button);
+  await _bringIntoView(tester, button);
   await tester.tap(button);
   await tester.pumpAndSettle();
+}
+
+Future<void> _bringIntoView(WidgetTester tester, Finder target) async {
+  final scrollView = find.byType(CustomScrollView);
+  expect(scrollView, findsOneWidget);
+  for (var attempt = 0; attempt < 12; attempt++) {
+    if (target.hitTestable().evaluate().isNotEmpty) return;
+    await tester.drag(scrollView, const Offset(0, -160));
+    await tester.pumpAndSettle();
+  }
+  expect(target, findsOneWidget);
+  expect(target.hitTestable(), findsOneWidget);
 }
 
 Future<void> _scrollResultIntoView(
