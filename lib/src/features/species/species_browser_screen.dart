@@ -349,9 +349,9 @@ class _Thumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fallback = ColoredBox(
+    const fallback = ColoredBox(
       color: AppTheme.cream,
-      child: const Center(
+      child: Center(
         child: Icon(Icons.image_not_supported_outlined, color: AppTheme.moss),
       ),
     );
