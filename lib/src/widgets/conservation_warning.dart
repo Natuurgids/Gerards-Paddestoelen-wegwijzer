@@ -123,36 +123,88 @@ class ConservationWarning extends StatelessWidget {
 
   Widget _card(BuildContext context, ConservationStatusRecord record) {
     final copy = _copy(context, record);
-    final colors = Theme.of(context).colorScheme;
-    return Card(
-      color: colors.errorContainer,
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.errorContainer,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.error.withValues(alpha: 0.22)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.eco_outlined, color: colors.onErrorContainer),
-            const SizedBox(width: 10),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.error.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(9),
+                child: Icon(
+                  Icons.eco_outlined,
+                  size: 22,
+                  color: colors.onErrorContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     copy.title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: colors.onErrorContainer,
-                        ),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colors.onErrorContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     copy.detail,
-                    style: TextStyle(color: colors.onErrorContainer),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colors.onErrorContainer,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _compactBadge(
+    BuildContext context,
+    ConservationStatusRecord record,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: colors.errorContainer,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colors.error.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.eco_outlined, size: 17, color: colors.onErrorContainer),
+          const SizedBox(width: 6),
+          Text(
+            _copy(context, record).compactLabel,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: colors.onErrorContainer,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -169,18 +221,14 @@ class ConservationWarning extends StatelessWidget {
 
         if (compact) {
           return Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: 6),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Wrap(
-                spacing: 6,
-                runSpacing: 4,
+                spacing: 8,
+                runSpacing: 6,
                 children: [
-                  for (final record in records)
-                    Chip(
-                      avatar: const Icon(Icons.eco_outlined, size: 18),
-                      label: Text(_copy(context, record).compactLabel),
-                    ),
+                  for (final record in records) _compactBadge(context, record),
                 ],
               ),
             ),
@@ -189,10 +237,18 @@ class ConservationWarning extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: Column(
-            children: [
-              for (final record in records) _card(context, record),
-            ],
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: Column(
+                children: [
+                  for (var index = 0; index < records.length; index++) ...[
+                    if (index > 0) const SizedBox(height: 10),
+                    _card(context, records[index]),
+                  ],
+                ],
+              ),
+            ),
           ),
         );
       },
