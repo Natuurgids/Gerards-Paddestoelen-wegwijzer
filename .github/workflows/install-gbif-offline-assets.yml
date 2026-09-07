@@ -60,11 +60,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p assets/images/species assets/data
+          mkdir -p assets/images assets/data
           rm -rf assets/images/species
           mkdir -p assets/images/species
-          cp -a /tmp/gbif-images/images/species_* assets/images/species/
+          while IFS= read -r source; do
+            species_dir="$(basename "$(dirname "$source")")"
+            species_id="${species_dir#species_}"
+            cp "$source" "assets/images/species/${species_id}.jpg"
+          done < <(find /tmp/gbif-images/images -type f -path '*/species_*/1.jpg' | sort)
           cp /tmp/gbif-catalogue/species_catalog.json assets/data/species_catalog.json
+          echo "Installed $(find assets/images/species -maxdepth 1 -type f -name '*.jpg' | wc -l) flat species images."
 
       - name: Build app image manifest with credits and licences
         shell: bash
@@ -82,11 +87,11 @@ jobs:
               report = json.loads(report_path.read_text(encoding='utf-8'))
               for image in report.get('images', []):
                   species_id = int(image['species_id'])
-                  installed = installed_root / f'species_{species_id}' / '1.jpg'
+                  installed = installed_root / f'{species_id}.jpg'
                   if not installed.is_file():
                       continue
                   entry = {
-                      'path': f'assets/images/species/species_{species_id}/1.jpg',
+                      'path': f'assets/images/species/{species_id}.jpg',
                       'angle': 'reference',
                       'order': 0,
                       'primary': True,
@@ -136,14 +141,21 @@ jobs:
               for image in item.get('images', []):
                   if not Path(image['path']).is_file():
                       missing.append(sid)
+          flat_images = list(Path('assets/images/species').glob('*.jpg'))
+          nested_images = list(Path('assets/images/species').glob('*/*.jpg'))
           if len(catalogue_ids) != 12525:
               raise SystemExit(f'Expected 12525 catalogue species, got {len(catalogue_ids)}')
           if len(image_species) != 7483:
               raise SystemExit(f'Expected 7483 image species, got {len(image_species)}')
+          if len(flat_images) != 7483:
+              raise SystemExit(f'Expected 7483 flat image assets, got {len(flat_images)}')
+          if nested_images:
+              raise SystemExit(f'Unexpected nested image assets: {len(nested_images)}')
           if missing:
               raise SystemExit(f'Missing/mismatched image assets for {len(missing)} species')
           print('catalogue_species=12525')
           print('offline_gbif_images=7483')
+          print('image_layout=flat')
           print('validation=ok')
           PY
 
@@ -158,5 +170,5 @@ jobs:
             echo 'Offline content already installed.'
             exit 0
           fi
-          git commit -m 'Bundle full catalogue and GBIF offline images'
+          git commit -m 'Flatten bundled GBIF images for Flutter assets'
           git push origin HEAD:feature/full-catalogue-offline-images
