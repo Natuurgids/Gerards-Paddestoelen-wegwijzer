@@ -93,5 +93,9 @@
   "identifyTraits": "traits",
   "identifyField": "field",
   "identifyMatchScore": "match score",
+  "localImageChoose": "Choose a photo from your own collection",
+  "localImageReference": "Your reference photo",
+  "localImageRemove": "Remove your reference photo",
+  "localImageReadError": "The selected image could not be read locally.",
   "safetyNotice": "Safety notice: Never consume a mushroom based solely on identification by this app. Mistakes may cause serious poisoning or death. Always have edible mushrooms verified by a qualified local expert."
 }
