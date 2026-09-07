@@ -135,8 +135,14 @@ jobs:
         run: |
           $env:REFERENCE_DATABASE_OUTPUT = 'assets/data/reference.sqlite'
           flutter test tool/reference_database_builder_test.dart
+      - name: Prepare collected species assets for Windows release
+        run: |
+          python tool/prepare_nested_species_assets.py
+          flutter pub get
       - name: Build Windows release
         run: flutter build windows --release
+      - name: Verify collected species images in Windows release
+        run: python tool/verify_windows_species_assets.py
       - name: Upload Windows release
         uses: actions/upload-artifact@v4
         with:
