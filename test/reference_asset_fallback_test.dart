@@ -31,12 +31,11 @@ void main() {
     );
   });
 
-  test('bundled species detail contains gallery and field data', () async {
+  test('bundled species detail contains field data even without a collected image', () async {
     final detail = await ReferenceAssetStore.instance.speciesDetail(1, 'nl');
 
     expect(detail, isNotNull);
     expect(detail!.scientificName, 'Amanita muscaria');
-    expect(detail.images, hasLength(5));
     expect(detail.measurements, isNotEmpty);
     expect(detail.season, isNotEmpty);
   });
@@ -48,7 +47,6 @@ void main() {
 
     expect(detail, isNotNull);
     expect(detail!.scientificName, 'Amanita phalloides');
-    expect(detail.images, hasLength(5));
   });
 
   test('determination falls back to bundled traits and mappings', () async {
