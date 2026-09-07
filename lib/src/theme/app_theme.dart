@@ -9,6 +9,7 @@ class AppTheme {
   static const cream = Color(0xFFF7F3EA);
   static const creamStrong = Color(0xFFFFFCF6);
   static const ink = Color(0xFF173326);
+  static const inkMuted = Color(0xFF607069);
   static const border = Color(0xFFD9DED8);
 
   static ThemeData get light {
