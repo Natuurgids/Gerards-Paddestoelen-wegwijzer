@@ -302,14 +302,23 @@ def collect(
         previous_image = previous_images.get(species_id)
         if previous_image:
             if audit_only and previous_image.get("source_photo_id"):
-                collected.append(previous_image)
+                resumed_record = dict(previous_image)
+                resumed_record["audit_only"] = True
+                resumed_record.pop("asset_path", None)
+                resumed_record.pop("pixel_width", None)
+                resumed_record.pop("pixel_height", None)
+                collected.append(resumed_record)
                 print(
                     f"[{index}/{len(species_rows)}] {scientific_name}: resumed_eligible",
                     flush=True,
                 )
                 continue
-            previous_asset = Path(str(previous_image.get("asset_path") or ""))
-            if previous_asset.exists():
+            previous_asset_path = str(previous_image.get("asset_path") or "").strip()
+            if (
+                not previous_image.get("audit_only", False)
+                and previous_asset_path
+                and Path(previous_asset_path).is_file()
+            ):
                 collected.append(previous_image)
                 print(
                     f"[{index}/{len(species_rows)}] {scientific_name}: resumed_collected",
