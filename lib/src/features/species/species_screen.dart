@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../data/image_attribution_store.dart';
 import '../../data/models.dart';
 import '../../data/repositories.dart';
 import '../../data/resilient_species_repository.dart';
@@ -29,6 +30,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
   final _controller = PageController();
   late Future<SpeciesDetail?> _future;
   List<SeasonRegionOption> _regionOptions = const [];
+  Map<String, String> _imageSources = const {};
   int _page = 0;
 
   @override
@@ -41,6 +43,11 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
     FieldDataRepository().seasonRegions(widget.locale.languageCode).then(
       (regions) {
         if (mounted) setState(() => _regionOptions = regions);
+      },
+    );
+    ImageAttributionStore.instance.sourcesByPath().then(
+      (sources) {
+        if (mounted) setState(() => _imageSources = sources);
       },
     );
   }
@@ -295,11 +302,13 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
     final image = images[index];
     final photographer = image.photographer?.trim() ?? '';
     final license = image.license?.trim() ?? '';
-    if (photographer.isEmpty && license.isEmpty) {
+    final source = _imageSources[image.path]?.trim() ?? '';
+    if (photographer.isEmpty && license.isEmpty && source.isEmpty) {
       return const SizedBox.shrink();
     }
     final attribution = [
       if (photographer.isNotEmpty) photographer,
+      if (source.isNotEmpty) source,
       if (license.isNotEmpty) license,
     ].join(' · ');
     return Padding(
