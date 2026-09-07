@@ -1,0 +1,162 @@
+name: Install GBIF offline assets
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/full-catalogue-offline-images
+    paths:
+      - .github/workflows/install-gbif-offline-assets.yml
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: install-gbif-offline-assets
+  cancel-in-progress: true
+
+jobs:
+  install:
+    name: install-collected-images-and-catalogue
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GBIF_IMAGES_ARTIFACT_ID: '10031052670'
+      GBIF_CATALOGUE_ARTIFACT_ID: '10023727071'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download completed GBIF image pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${GBIF_IMAGES_ARTIFACT_ID}/zip" \
+            > /tmp/gbif-images.zip
+          rm -rf /tmp/gbif-images
+          mkdir -p /tmp/gbif-images
+          unzip -q /tmp/gbif-images.zip -d /tmp/gbif-images
+          echo "Downloaded $(find /tmp/gbif-images/images -type f -name '*.jpg' | wc -l) GBIF images."
+
+      - name: Download full catalogue used by collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${GBIF_CATALOGUE_ARTIFACT_ID}/zip" \
+            > /tmp/gbif-catalogue.zip
+          rm -rf /tmp/gbif-catalogue
+          mkdir -p /tmp/gbif-catalogue
+          unzip -q /tmp/gbif-catalogue.zip -d /tmp/gbif-catalogue
+          test -s /tmp/gbif-catalogue/species_catalog.json
+
+      - name: Install images and catalogue text
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/images/species assets/data
+          rm -rf assets/images/species
+          mkdir -p assets/images/species
+          cp -a /tmp/gbif-images/images/species_* assets/images/species/
+          cp /tmp/gbif-catalogue/species_catalog.json assets/data/species_catalog.json
+
+      - name: Build app image manifest with credits and licences
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          report_dir = Path('/tmp/gbif-images/reports')
+          installed_root = Path('assets/images/species')
+          species = {}
+
+          for report_path in sorted(report_dir.glob('batch-*.json')):
+              report = json.loads(report_path.read_text(encoding='utf-8'))
+              for image in report.get('images', []):
+                  species_id = int(image['species_id'])
+                  installed = installed_root / f'species_{species_id}' / '1.jpg'
+                  if not installed.is_file():
+                      continue
+                  entry = {
+                      'path': f'assets/images/species/species_{species_id}/1.jpg',
+                      'angle': 'reference',
+                      'order': 0,
+                      'primary': True,
+                      'photographer': image.get('creator_attribution') or None,
+                      'license': image.get('license') or None,
+                      'source': 'GBIF',
+                      'sourceUrl': image.get('source_occurrence_url') or None,
+                      'originalPhotoUrl': image.get('source_photo_url') or None,
+                      'retrievedAt': image.get('retrieved_at') or None,
+                      'reviewStatus': image.get('review_status') or None,
+                  }
+                  entry = {key: value for key, value in entry.items() if value is not None}
+                  species[species_id] = {
+                      'speciesId': species_id,
+                      'images': [entry],
+                  }
+
+          manifest = {
+              'version': 4,
+              'source': 'GBIF offline reference image collection',
+              'species': [species[key] for key in sorted(species)],
+          }
+          Path('assets/data/species_images.json').write_text(
+              json.dumps(manifest, ensure_ascii=False, separators=(',', ':')) + '\n',
+              encoding='utf-8',
+          )
+          print(f"Manifest species with images: {len(species)}")
+          PY
+
+      - name: Validate installed catalogue and images
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          catalogue = json.loads(Path('assets/data/species_catalog.json').read_text(encoding='utf-8'))
+          manifest = json.loads(Path('assets/data/species_images.json').read_text(encoding='utf-8'))
+          catalogue_ids = {int(item['id']) for item in catalogue.get('species', [])}
+          image_species = manifest.get('species', [])
+          missing = []
+          for item in image_species:
+              sid = int(item['speciesId'])
+              if sid not in catalogue_ids:
+                  missing.append(sid)
+              for image in item.get('images', []):
+                  if not Path(image['path']).is_file():
+                      missing.append(sid)
+          if len(catalogue_ids) != 12525:
+              raise SystemExit(f'Expected 12525 catalogue species, got {len(catalogue_ids)}')
+          if len(image_species) != 7483:
+              raise SystemExit(f'Expected 7483 image species, got {len(image_species)}')
+          if missing:
+              raise SystemExit(f'Missing/mismatched image assets for {len(missing)} species')
+          print('catalogue_species=12525')
+          print('offline_gbif_images=7483')
+          print('validation=ok')
+          PY
+
+      - name: Commit installed offline content
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Natuurgids.org'
+          git config user.email 'Snippit@chimaera-management.com'
+          git add assets/data/species_catalog.json assets/data/species_images.json assets/images/species
+          if git diff --cached --quiet; then
+            echo 'Offline content already installed.'
+            exit 0
+          fi
+          git commit -m 'Bundle full catalogue and GBIF offline images'
+          git push origin HEAD:feature/full-catalogue-offline-images
