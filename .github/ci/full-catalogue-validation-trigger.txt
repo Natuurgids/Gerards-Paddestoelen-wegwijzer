@@ -1,0 +1,3 @@
+Validate bundled full catalogue and GBIF offline assets.
+
+Target content commit: e2c882fe304d0cc547927abc8960aff44f665d78
