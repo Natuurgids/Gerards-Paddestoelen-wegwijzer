@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Collect or audit reviewable iNaturalist reference images in resumable batches.
 
-This tool is for curation, not runtime identification. It queries research-grade
-observations by exact scientific name and accepts only CC0/CC BY media. Collection
-mode downloads one photo per species and removes source metadata by re-encoding the
-pixels. Audit mode records eligible coverage/provenance without downloading media.
+This tool is for curation, not runtime identification. It normalizes catalogue
+scientific names by removing taxonomic authorship before querying iNaturalist,
+then prefers research-grade observations and falls back to other verifiable
+observations for the same exact normalized taxon. Only redistributable CC0,
+CC BY, and CC BY-SA media are accepted.
+
+Collection mode downloads one photo per species and removes source metadata by
+re-encoding the pixels. Audit mode records eligible coverage/provenance without
+downloading media.
 
 Large catalogue runs can be split deterministically with --batch-index/--batch-count
 and resumed with --resume. Retryable request/download failures are distinguished
@@ -17,6 +22,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import re
 import socket
 import time
 import urllib.error
@@ -30,10 +36,16 @@ from PIL import Image, UnidentifiedImageError
 
 API = "https://api.inaturalist.org/v1/observations"
 USER_AGENT = "Gerards-Paddestoelen-Wegwijzer/1.0 reference-image-curation"
-ALLOWED_LICENSES = {"cc0": "CC0", "cc-by": "CC BY"}
+SEARCH_STRATEGY_VERSION = 2
+ALLOWED_LICENSES = {
+    "cc0": "CC0",
+    "cc-by": "CC BY",
+    "cc-by-sa": "CC BY-SA",
+}
 LICENSE_URLS = {
     "cc0": "https://creativecommons.org/publicdomain/zero/1.0/",
     "cc-by": "https://creativecommons.org/licenses/by/4.0/",
+    "cc-by-sa": "https://creativecommons.org/licenses/by-sa/4.0/",
 }
 MAX_IMAGE_PIXELS = 600
 JPEG_QUALITY = 80
@@ -64,6 +76,25 @@ def _large_url(photo: dict[str, Any]) -> str:
     return url
 
 
+def _canonical_scientific_name(scientific_name: str) -> str:
+    """Return the taxon name without author/year text.
+
+    NSR catalogue names commonly include authorship, while iNaturalist taxon names
+    normally do not. Keep genus + species, and retain an infraspecific epithet when
+    an explicit rank marker is present.
+    """
+    cleaned = re.sub(r"\s+", " ", scientific_name.strip())
+    parts = cleaned.split(" ")
+    if len(parts) < 2:
+        return cleaned
+
+    canonical = parts[:2]
+    rank_markers = {"subsp.", "ssp.", "var.", "f.", "forma"}
+    if len(parts) >= 4 and parts[2].casefold() in rank_markers:
+        canonical.extend(parts[2:4])
+    return " ".join(canonical)
+
+
 def _species_rows(
     catalog: dict[str, Any],
     limit: int | None,
@@ -91,39 +122,63 @@ def _species_rows(
     return [row for position, row in enumerate(rows) if position % batch_count == batch_index]
 
 
-def _candidate(
-    scientific_name: str,
-) -> tuple[str, dict[str, Any] | None, dict[str, Any] | None]:
-    params = urllib.parse.urlencode(
-        {
-            "taxon_name": scientific_name,
-            "quality_grade": "research",
-            "photos": "true",
-            "photo_license": "cc0,cc-by",
-            "per_page": 20,
-            "order_by": "votes",
-            "order": "desc",
-        }
-    )
+def _query_candidates(
+    canonical_name: str,
+    *,
+    quality_grade: str | None = None,
+    verifiable: bool = False,
+) -> list[dict[str, Any]]:
+    query: dict[str, str] = {
+        "taxon_name": canonical_name,
+        "photos": "true",
+        "photo_license": "cc0,cc-by,cc-by-sa",
+        "per_page": "50",
+        "order_by": "votes",
+        "order": "desc",
+    }
+    if quality_grade:
+        query["quality_grade"] = quality_grade
+    if verifiable:
+        query["verifiable"] = "true"
+    params = urllib.parse.urlencode(query)
     payload = _get_json(f"{API}?{params}")
-    results = payload.get("results", [])
-    if not results:
-        return "no_research_grade_observations", None, None
+    return list(payload.get("results", []))
 
-    exact_match_seen = False
+
+def _pick_exact_photo(
+    results: list[dict[str, Any]], canonical_name: str
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    wanted = canonical_name.casefold()
     for observation in results:
         taxon = observation.get("taxon") or {}
-        if str(taxon.get("name") or "").casefold() != scientific_name.casefold():
+        observed_name = _canonical_scientific_name(str(taxon.get("name") or ""))
+        if observed_name.casefold() != wanted:
             continue
-        exact_match_seen = True
         for photo in observation.get("photos") or []:
             license_code = str(photo.get("license_code") or "").lower()
             if license_code in ALLOWED_LICENSES and photo.get("url"):
-                return "eligible_photo", observation, photo
+                return observation, photo
+    return None, None
 
-    if exact_match_seen:
-        return "no_eligible_cc0_or_cc_by_photo", None, None
-    return "no_exact_taxon_match", None, None
+
+def _candidate(
+    scientific_name: str,
+) -> tuple[str, dict[str, Any] | None, dict[str, Any] | None, str]:
+    canonical_name = _canonical_scientific_name(scientific_name)
+
+    research = _query_candidates(canonical_name, quality_grade="research")
+    observation, photo = _pick_exact_photo(research, canonical_name)
+    if observation is not None and photo is not None:
+        return "eligible_research_photo", observation, photo, canonical_name
+
+    verifiable = _query_candidates(canonical_name, verifiable=True)
+    observation, photo = _pick_exact_photo(verifiable, canonical_name)
+    if observation is not None and photo is not None:
+        return "eligible_verifiable_photo", observation, photo, canonical_name
+
+    if research or verifiable:
+        return "no_exact_licensed_taxon_photo", None, None, canonical_name
+    return "no_verifiable_observations", None, None, canonical_name
 
 
 def _sanitize_jpeg(raw: bytes, output: Path) -> tuple[int, int]:
@@ -157,34 +212,36 @@ def _load_resume_state(
 def _error_record(
     species_id: int, scientific_name: str, exc: Exception
 ) -> dict[str, Any]:
+    base = {
+        "species_id": species_id,
+        "scientific_name": scientific_name,
+        "search_name": _canonical_scientific_name(scientific_name),
+        "strategy_version": SEARCH_STRATEGY_VERSION,
+    }
     if isinstance(exc, urllib.error.HTTPError):
         retryable = exc.code == 429 or 500 <= exc.code <= 599
         return {
-            "species_id": species_id,
-            "scientific_name": scientific_name,
+            **base,
             "status": "transient_http_error" if retryable else "http_error",
             "retryable": retryable,
             "http_status": exc.code,
         }
     if isinstance(exc, (urllib.error.URLError, TimeoutError, socket.timeout)):
         return {
-            "species_id": species_id,
-            "scientific_name": scientific_name,
+            **base,
             "status": "transient_request_error",
             "retryable": True,
             "error_type": type(exc).__name__,
         }
     if isinstance(exc, (UnidentifiedImageError, OSError)):
         return {
-            "species_id": species_id,
-            "scientific_name": scientific_name,
+            **base,
             "status": "image_decode_or_write_error",
             "retryable": True,
             "error_type": type(exc).__name__,
         }
     return {
-        "species_id": species_id,
-        "scientific_name": scientific_name,
+        **base,
         "status": "unexpected_error",
         "retryable": True,
         "error_type": type(exc).__name__,
@@ -194,15 +251,27 @@ def _error_record(
 def _provenance_record(
     species_id: int,
     scientific_name: str,
+    canonical_name: str,
+    observation: dict[str, Any],
     photo: dict[str, Any],
+    match_status: str,
     audit_only: bool,
 ) -> dict[str, Any]:
     license_code = str(photo["license_code"]).lower()
     photo_id = int(photo["id"])
+    observation_id = int(observation["id"])
+    observed_taxon = observation.get("taxon") or {}
     return {
         "species_id": species_id,
         "scientific_name": scientific_name,
+        "search_name": canonical_name,
+        "matched_taxon_name": str(observed_taxon.get("name") or canonical_name),
+        "match_status": match_status,
+        "observation_quality_grade": str(observation.get("quality_grade") or ""),
+        "strategy_version": SEARCH_STRATEGY_VERSION,
         "source": "iNaturalist",
+        "source_observation_id": observation_id,
+        "source_observation_url": f"https://www.inaturalist.org/observations/{observation_id}",
         "source_photo_id": photo_id,
         "source_photo_url": f"https://www.inaturalist.org/photos/{photo_id}",
         "creator_attribution": str(photo.get("attribution") or "").strip(),
@@ -233,20 +302,23 @@ def _report(
     unavailable = len(missing) - retryable_errors
     status_counts: dict[str, int] = {}
     for item in collected:
-        status = "eligible_photo" if item.get("audit_only") else "collected"
+        status = str(item.get("match_status") or ("eligible_photo" if item.get("audit_only") else "collected"))
         status_counts[status] = status_counts.get(status, 0) + 1
     for item in missing:
         status = str(item.get("status") or "unknown")
         status_counts[status] = status_counts.get(status, 0) + 1
     return {
-        "version": 3,
+        "version": 4,
         "source": "iNaturalist",
         "mode": "audit" if audit_only else "collect",
         "batch": {"index": batch_index, "count": batch_count},
         "policy": {
-            "quality_grade": "research",
-            "allowed_photo_licenses": ["cc0", "cc-by"],
-            "exact_scientific_name_match": True,
+            "search_strategy_version": SEARCH_STRATEGY_VERSION,
+            "preferred_quality_grade": "research",
+            "fallback": "verifiable exact normalized taxon",
+            "allowed_photo_licenses": ["cc0", "cc-by", "cc-by-sa"],
+            "catalog_authorship_removed_for_search": True,
+            "exact_normalized_scientific_name_match": True,
             "max_image_pixels": MAX_IMAGE_PIXELS,
             "jpeg_quality": JPEG_QUALITY,
             "location_metadata_stored": False,
@@ -327,7 +399,11 @@ def collect(
                 continue
 
         previous_failure = previous_missing.get(species_id)
-        if previous_failure and not previous_failure.get("retryable", False):
+        if (
+            previous_failure
+            and not previous_failure.get("retryable", False)
+            and int(previous_failure.get("strategy_version") or 0) == SEARCH_STRATEGY_VERSION
+        ):
             missing.append(previous_failure)
             print(
                 f"[{index}/{len(species_rows)}] {scientific_name}: resumed_unavailable",
@@ -336,12 +412,14 @@ def collect(
             continue
 
         try:
-            status, observation, photo = _candidate(scientific_name)
-            if status != "eligible_photo" or observation is None or photo is None:
+            status, observation, photo, canonical_name = _candidate(scientific_name)
+            if not status.startswith("eligible_") or observation is None or photo is None:
                 missing.append(
                     {
                         "species_id": species_id,
                         "scientific_name": scientific_name,
+                        "search_name": canonical_name,
+                        "strategy_version": SEARCH_STRATEGY_VERSION,
                         "status": status,
                         "retryable": False,
                     }
@@ -349,11 +427,17 @@ def collect(
                 result_status = status
             else:
                 record = _provenance_record(
-                    species_id, scientific_name, photo, audit_only
+                    species_id,
+                    scientific_name,
+                    canonical_name,
+                    observation,
+                    photo,
+                    status,
+                    audit_only,
                 )
                 if audit_only:
                     collected.append(record)
-                    result_status = "eligible_photo"
+                    result_status = status
                 else:
                     image_url = _large_url(photo)
                     output = output_dir / f"species_{species_id}" / "1.jpg"
@@ -366,7 +450,7 @@ def collect(
                         }
                     )
                     collected.append(record)
-                    result_status = "collected"
+                    result_status = f"collected_{status.removeprefix('eligible_')}"
         except Exception as exc:
             failure = _error_record(species_id, scientific_name, exc)
             missing.append(failure)
@@ -433,7 +517,7 @@ def main() -> None:
     parser.add_argument(
         "--resume",
         action="store_true",
-        help="Reuse completed records from the existing report/output",
+        help="Reuse completed records from the existing report/output; old-strategy misses are retried",
     )
     parser.add_argument(
         "--audit-only",
