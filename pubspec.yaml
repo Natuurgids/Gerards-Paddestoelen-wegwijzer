@@ -17,6 +17,7 @@ dependencies:
   path: ^1.9.0
   crypto: ^3.0.6
   in_app_purchase: ^3.3.0
+  file_picker: ^12.2.0
 
 dev_dependencies:
   flutter_test:
