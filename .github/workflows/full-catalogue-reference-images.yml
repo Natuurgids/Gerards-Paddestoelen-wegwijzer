@@ -6,67 +6,65 @@ on:
 permissions:
   contents: read
 
-# This is intentionally conservative. iNaturalist started returning transient
-# HTTP errors when four catalogue shards queried it concurrently. One runner
-# keeps the request rate bounded and avoids cancelling useful work whenever
-# unrelated commits land on the feature branch.
 concurrency:
   group: full-catalogue-reference-images
   cancel-in-progress: false
 
 jobs:
   collect:
-    name: collect-${{ matrix.batch }}
+    name: collect-full-catalogue
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        batch: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v5
       - name: Install image tooling
         run: python3 -m pip install Pillow
-      - name: Generate full Dutch Species Register fungi catalogue
-        run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
-      - name: Collect small offline reference images
+      - name: Generate catalogue once
         run: |
-          python3 tool/collect_inaturalist_reference_images.py \
-            --output-dir build/reference-image-shards/images \
-            --report build/reference-image-shards/reports/batch-${{ matrix.batch }}.json \
-            --batch-index ${{ matrix.batch }} \
-            --batch-count 16 \
-            --delay 0.75
-      - name: Upload collected shard
+          python3 tool/build_nsr_fungi_catalog.py --min-species 10000
+          mkdir -p build/reference-image-shards/catalog
+          cp assets/data/species_catalog.json build/reference-image-shards/catalog/species_catalog.json
+      - name: Collect catalogue incrementally
+        run: |
+          set +e
+          status=0
+          for batch in $(seq 0 15); do
+            echo "=== collecting batch ${batch}/15 ==="
+            python3 tool/collect_inaturalist_reference_images.py \
+              --catalog build/reference-image-shards/catalog/species_catalog.json \
+              --output-dir build/reference-image-shards/images \
+              --report build/reference-image-shards/reports/batch-${batch}.json \
+              --batch-index ${batch} \
+              --batch-count 16 \
+              --delay 0.75
+            rc=$?
+            if [ $rc -ne 0 ]; then
+              echo "batch ${batch} exited ${rc}; preserving completed data"
+              status=$rc
+              break
+            fi
+          done
+          exit $status
+      - name: Preserve collection progress
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reference-image-shard-${{ matrix.batch }}
+          name: full-catalogue-reference-image-progress
           path: |
+            build/reference-image-shards/catalog/species_catalog.json
             build/reference-image-shards/images/
-            build/reference-image-shards/reports/batch-${{ matrix.batch }}.json
-          if-no-files-found: error
+            build/reference-image-shards/reports/
+          if-no-files-found: warn
           retention-days: 14
-
-  combine:
-    name: combine-offline-media-pack
-    needs: collect
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Download all collected shards
-        uses: actions/download-artifact@v5
-        with:
-          pattern: reference-image-shard-*
-          path: build/reference-image-shards
-          merge-multiple: true
-      - name: Merge images and provenance
+      - name: Merge completed batches
+        if: success()
         run: |
           python3 tool/merge_reference_image_batches.py \
             --input-dir build/reference-image-shards \
             --output-dir build/offline-reference-images \
             --report build/full-catalogue-reference-images.json
       - name: Upload full offline media pack
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: full-catalogue-offline-reference-images
