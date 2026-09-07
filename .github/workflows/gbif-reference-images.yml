@@ -15,90 +15,133 @@ permissions:
 
 concurrency:
   group: gbif-reference-images
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
+  prepare:
+    name: prepare-gbif-catalogue
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Generate catalogue
+        run: |
+          python3 tool/build_nsr_fungi_catalog.py --min-species 10000
+          test -s assets/data/species_catalog.json
+
+      - name: Upload catalogue
+        uses: actions/upload-artifact@v4
+        with:
+          name: gbif-species-catalogue
+          path: assets/data/species_catalog.json
+          if-no-files-found: error
+          retention-days: 2
+
   collect:
-    name: collect-gbif-full-catalogue
+    name: collect-gbif-batch-${{ matrix.batch }}
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 360
-    env:
-      GH_TOKEN: ${{ github.token }}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        batch: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79]
+
     steps:
       - uses: actions/checkout@v5
 
       - name: Install image tooling
         run: python3 -m pip install Pillow
 
-      - name: Restore latest GBIF progress
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p build/gbif-shards
-          artifact_id="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=gbif-reference-image-progress&per_page=100" \
-            --jq '[.artifacts[] | select(.expired == false)] | sort_by(.created_at) | reverse | .[0].id // empty')"
-          if [ -z "$artifact_id" ]; then
-            echo "No previous GBIF progress artifact; starting fresh."
-            exit 0
-          fi
-          echo "Restoring GBIF progress artifact ${artifact_id}"
-          gh api \
-            -H 'Accept: application/vnd.github+json' \
-            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > /tmp/gbif-progress.zip
-          unzip -q -o /tmp/gbif-progress.zip -d build/gbif-shards
+      - name: Download catalogue
+        uses: actions/download-artifact@v5
+        with:
+          name: gbif-species-catalogue
+          path: build/gbif-shards/catalog
 
-      - name: Generate catalogue once when needed
-        run: |
-          if [ ! -s build/gbif-shards/catalog/species_catalog.json ]; then
-            python3 tool/build_nsr_fungi_catalog.py --min-species 10000
-            mkdir -p build/gbif-shards/catalog
-            cp assets/data/species_catalog.json build/gbif-shards/catalog/species_catalog.json
-          else
-            echo "Reusing catalogue from previous GBIF collection progress."
-          fi
-
-      - name: Collect GBIF images excluding iNaturalist-derived records
+      - name: Collect cross-shard with retries
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build/gbif-shards/images build/gbif-shards/reports
+          report="build/gbif-shards/reports/batch-${{ matrix.batch }}.json"
+
           for pass in 1 2 3; do
-            echo "=== GBIF pass ${pass}/3 ==="
-            retryable=0
-            for batch in $(seq 0 15); do
-              report="build/gbif-shards/reports/batch-${batch}.json"
-              python3 tool/collect_gbif_reference_images.py \
-                --catalog build/gbif-shards/catalog/species_catalog.json \
-                --output-dir build/gbif-shards/images \
-                --report "$report" \
-                --batch-index "$batch" \
-                --batch-count 16 \
-                --delay 0.6 \
-                --resume
-              batch_retryable="$(python3 - "$report" <<'PY'
+            echo "=== GBIF batch ${{ matrix.batch }}/79 pass ${pass}/3 ==="
+            python3 tool/collect_gbif_reference_images.py \
+              --catalog build/gbif-shards/catalog/species_catalog.json \
+              --output-dir build/gbif-shards/images \
+              --report "$report" \
+              --batch-index "${{ matrix.batch }}" \
+              --batch-count 80 \
+              --delay 2.0 \
+              --resume
+
+            retryable="$(python3 - "$report" <<'PY'
           import json, sys
           with open(sys.argv[1], encoding='utf-8') as fh:
               print(int(json.load(fh).get('retryable_errors', 0)))
           PY
-              )"
-              retryable=$((retryable + batch_retryable))
-            done
-            echo "GBIF retryable failures remaining after pass ${pass}: ${retryable}"
+            )"
+            echo "Retryable failures for batch ${{ matrix.batch }} after pass ${pass}: ${retryable}"
             if [ "$retryable" -eq 0 ]; then
               break
             fi
             sleep $((pass * 60))
           done
 
-      - name: Show GBIF collection totals
+      - name: Show batch totals
         if: always()
+        shell: bash
+        run: |
+          report="build/gbif-shards/reports/batch-${{ matrix.batch }}.json"
+          if [ -s "$report" ]; then
+            python3 - "$report" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1], encoding='utf-8'))
+          print('catalog_species_considered:', data.get('catalog_species_considered', 0))
+          print('gbif_images_collected:', data.get('images_collected', 0))
+          print('gbif_unavailable:', data.get('species_unavailable_usable_image', 0))
+          print('retryable_errors:', data.get('retryable_errors', 0))
+          PY
+          fi
+
+      - name: Upload batch result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gbif-batch-${{ matrix.batch }}
+          path: |
+            build/gbif-shards/images/
+            build/gbif-shards/reports/batch-${{ matrix.batch }}.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  merge:
+    name: merge-gbif-cross-shards
+    needs: collect
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download all completed shards
+        uses: actions/download-artifact@v5
+        with:
+          pattern: gbif-batch-*
+          path: build/gbif-shards
+          merge-multiple: true
+
+      - name: Show combined totals
         shell: bash
         run: |
           python3 - <<'PY'
           import json
           from pathlib import Path
+
           reports = sorted(Path('build/gbif-shards/reports').glob('batch-*.json'))
           considered = images = unavailable = retryable = 0
           for path in reports:
@@ -107,26 +150,15 @@ jobs:
               images += int(data.get('images_collected', 0))
               unavailable += int(data.get('species_unavailable_usable_image', 0))
               retryable += int(data.get('retryable_errors', 0))
+
+          print(f'batches_present: {len(reports)}/80')
           print(f'catalog_species_considered: {considered}')
           print(f'gbif_images_collected: {images}')
           print(f'gbif_unavailable: {unavailable}')
           print(f'retryable_errors: {retryable}')
           PY
 
-      - name: Preserve GBIF collection progress
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gbif-reference-image-progress
-          path: |
-            build/gbif-shards/catalog/species_catalog.json
-            build/gbif-shards/images/
-            build/gbif-shards/reports/
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: Upload GBIF offline media pack
-        if: always()
+      - name: Upload combined GBIF offline media pack
         uses: actions/upload-artifact@v4
         with:
           name: gbif-offline-reference-images
