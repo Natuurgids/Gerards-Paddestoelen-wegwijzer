@@ -1,0 +1,62 @@
+name: Full catalogue English and German offline text
+
+on:
+  push:
+    branches:
+      - feature/full-catalogue-offline-images
+    paths:
+      - tool/enrich_localized_ecology.py
+      - tool/enrich_vernacular_names.py
+      - assets/data/species_catalog.json
+      - .github/workflows/full-catalogue-localized-text.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enrich English and German common names
+        run: |
+          mkdir -p build/localized-text/cache
+          cp assets/data/species_catalog.json build/localized-text/species_catalog.json
+          python tool/enrich_vernacular_names.py \
+            --catalog build/localized-text/species_catalog.json \
+            --cache-dir build/localized-text/cache \
+            --retrieved-at 2026-09-07
+      - name: Enrich English and German ecology text
+        run: |
+          python tool/enrich_localized_ecology.py \
+            --catalog build/localized-text/species_catalog.json \
+            --retrieved-at 2026-09-07 \
+            --min-added 100
+      - name: Report localized coverage
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('build/localized-text/species_catalog.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          fields = ('common_name', 'summary', 'description', 'habitat', 'lookalikes')
+          report = {'species': len(data.get('species', []))}
+          for locale in ('en', 'de'):
+              for field in fields:
+                  report[f'{locale}_{field}'] = sum(bool(str((s.get('texts', {}).get(locale, {}).get(field) or '')).strip()) for s in data.get('species', []))
+          Path('build/localized-text/coverage.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: full-catalogue-en-de-offline-text
+          path: |
+            build/localized-text/species_catalog.json
+            build/localized-text/coverage.json
+          if-no-files-found: error
+          retention-days: 14
