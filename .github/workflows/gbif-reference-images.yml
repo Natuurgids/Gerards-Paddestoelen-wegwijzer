@@ -1,0 +1,137 @@
+name: GBIF offline reference images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/full-catalogue-offline-images
+    paths:
+      - .github/workflows/gbif-reference-images.yml
+      - tool/collect_gbif_reference_images.py
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: gbif-reference-images
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: collect-gbif-full-catalogue
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install image tooling
+        run: python3 -m pip install Pillow
+
+      - name: Restore latest GBIF progress
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/gbif-shards
+          artifact_id="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=gbif-reference-image-progress&per_page=100" \
+            --jq '[.artifacts[] | select(.expired == false)] | sort_by(.created_at) | reverse | .[0].id // empty')"
+          if [ -z "$artifact_id" ]; then
+            echo "No previous GBIF progress artifact; starting fresh."
+            exit 0
+          fi
+          echo "Restoring GBIF progress artifact ${artifact_id}"
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > /tmp/gbif-progress.zip
+          unzip -q -o /tmp/gbif-progress.zip -d build/gbif-shards
+
+      - name: Generate catalogue once when needed
+        run: |
+          if [ ! -s build/gbif-shards/catalog/species_catalog.json ]; then
+            python3 tool/build_nsr_fungi_catalog.py --min-species 10000
+            mkdir -p build/gbif-shards/catalog
+            cp assets/data/species_catalog.json build/gbif-shards/catalog/species_catalog.json
+          else
+            echo "Reusing catalogue from previous GBIF collection progress."
+          fi
+
+      - name: Collect GBIF images excluding iNaturalist-derived records
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/gbif-shards/images build/gbif-shards/reports
+          for pass in 1 2 3; do
+            echo "=== GBIF pass ${pass}/3 ==="
+            retryable=0
+            for batch in $(seq 0 15); do
+              report="build/gbif-shards/reports/batch-${batch}.json"
+              python3 tool/collect_gbif_reference_images.py \
+                --catalog build/gbif-shards/catalog/species_catalog.json \
+                --output-dir build/gbif-shards/images \
+                --report "$report" \
+                --batch-index "$batch" \
+                --batch-count 16 \
+                --delay 0.6 \
+                --resume
+              batch_retryable="$(python3 - "$report" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8') as fh:
+              print(int(json.load(fh).get('retryable_errors', 0)))
+          PY
+              )"
+              retryable=$((retryable + batch_retryable))
+            done
+            echo "GBIF retryable failures remaining after pass ${pass}: ${retryable}"
+            if [ "$retryable" -eq 0 ]; then
+              break
+            fi
+            sleep $((pass * 60))
+          done
+
+      - name: Show GBIF collection totals
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          reports = sorted(Path('build/gbif-shards/reports').glob('batch-*.json'))
+          considered = images = unavailable = retryable = 0
+          for path in reports:
+              data = json.loads(path.read_text(encoding='utf-8'))
+              considered += int(data.get('catalog_species_considered', 0))
+              images += int(data.get('images_collected', 0))
+              unavailable += int(data.get('species_unavailable_usable_image', 0))
+              retryable += int(data.get('retryable_errors', 0))
+          print(f'catalog_species_considered: {considered}')
+          print(f'gbif_images_collected: {images}')
+          print(f'gbif_unavailable: {unavailable}')
+          print(f'retryable_errors: {retryable}')
+          PY
+
+      - name: Preserve GBIF collection progress
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gbif-reference-image-progress
+          path: |
+            build/gbif-shards/catalog/species_catalog.json
+            build/gbif-shards/images/
+            build/gbif-shards/reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload GBIF offline media pack
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gbif-offline-reference-images
+          path: |
+            build/gbif-shards/images/
+            build/gbif-shards/reports/
+          if-no-files-found: warn
+          retention-days: 14
