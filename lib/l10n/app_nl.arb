@@ -93,5 +93,9 @@
   "identifyTraits": "kenmerken",
   "identifyField": "veld",
   "identifyMatchScore": "matchscore",
+  "localImageChoose": "Kies foto uit je eigen verzameling",
+  "localImageReference": "Eigen referentiefoto",
+  "localImageRemove": "Verwijder eigen referentiefoto",
+  "localImageReadError": "De gekozen afbeelding kon niet lokaal worden gelezen.",
   "safetyNotice": "Veiligheidswaarschuwing: eet nooit een paddenstoel uitsluitend op basis van identificatie door deze app. Vergissingen kunnen ernstige vergiftiging of overlijden veroorzaken. Laat eetbare paddenstoelen altijd controleren door een gekwalificeerde lokale deskundige."
 }
