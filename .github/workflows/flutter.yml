@@ -81,9 +81,17 @@ jobs:
         run: flutter analyze
       - name: Test
         run: flutter test
+      - name: Prepare collected species assets for Android release
+        if: github.event_name == 'push'
+        run: |
+          python3 tool/prepare_nested_species_assets.py
+          flutter pub get
       - name: Build Android release APK
         if: github.event_name == 'push'
         run: flutter build apk --release
+      - name: Verify collected species images in Android APK
+        if: github.event_name == 'push'
+        run: python3 tool/verify_android_species_assets.py
       - name: Upload Android release APK
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
