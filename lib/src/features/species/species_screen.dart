@@ -286,6 +286,49 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
         ),
       );
 
+  Widget _imageAttribution(
+    BuildContext context,
+    List<SpeciesImage> images,
+  ) {
+    if (images.isEmpty) return const SizedBox.shrink();
+    final index = _page < images.length ? _page : images.length - 1;
+    final image = images[index];
+    final photographer = image.photographer?.trim() ?? '';
+    final license = image.license?.trim() ?? '';
+    if (photographer.isEmpty && license.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final attribution = [
+      if (photographer.isNotEmpty) photographer,
+      if (license.isNotEmpty) license,
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 7, 4, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.photo_camera_outlined,
+              size: 15,
+              color: AppTheme.moss,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              attribution,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.inkMuted,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -334,6 +377,7 @@ class _SpeciesScreenState extends State<SpeciesScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   _gallery(context, l10n, images),
+                                  _imageAttribution(context, images),
                                   const SizedBox(height: 12),
                                   _identityCard(context, species),
                                   const SizedBox(height: 12),
