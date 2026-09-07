@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 'feature/**'
+      - 'test/**'
   pull_request:
     branches: [main]
 
@@ -86,18 +87,18 @@ jobs:
         run: |
           python3 tool/prepare_nested_species_assets.py
           flutter pub get
-      - name: Build Android release APK
+      - name: Build Android release AAB
         if: github.event_name == 'push'
-        run: flutter build apk --release
-      - name: Verify collected species images in Android APK
+        run: flutter build appbundle --release
+      - name: Verify Google Play release AAB
         if: github.event_name == 'push'
-        run: python3 tool/verify_android_species_assets.py
-      - name: Upload Android release APK
+        run: python3 tool/verify_android_app_bundle.py
+      - name: Upload Android release AAB
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: gerards-paddestoelen-wegwijzer-android-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: gerards-paddestoelen-wegwijzer-android-play-release
+          path: build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 14
 
