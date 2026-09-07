@@ -30,16 +30,25 @@ class _LocalReferenceImageOverlayState
   String? _fileName;
 
   Future<void> _pickImage() async {
-    final result = await FilePicker.platform.pickFiles(
+    final file = await FilePicker.pickFile(
       type: FileType.image,
-      allowMultiple: false,
-      withData: true,
     );
-    if (!mounted || result == null || result.files.isEmpty) return;
+    if (!mounted || file == null) return;
 
-    final file = result.files.single;
-    final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) {
+    Uint8List bytes;
+    try {
+      bytes = await file.readAsBytes();
+    } catch (_) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.localImageReadError)),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    if (bytes.isEmpty) {
       final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(content: Text(l10n.localImageReadError)),
