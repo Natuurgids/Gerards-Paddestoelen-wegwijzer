@@ -39,6 +39,7 @@ flutter:
     - assets/app_icon.png
     - assets/splash.png
     - assets/images/
+    - assets/images/species/
     - assets/images/traits/bruising/
     - assets/images/traits/cap_color/
     - assets/images/traits/cap_shape/
