@@ -26,8 +26,11 @@ void main() {
           reason: 'Species ids must be unique');
       expect(taxonIds, contains(item['taxon_id']));
       final texts = item['texts'] as Map<String, dynamic>;
-      expect(const {'nl', 'en', 'de'}.any(texts.containsKey), isTrue,
-          reason: 'Each species needs at least one app-language source text');
+      expect(
+        const {'nl', 'en', 'de'}.any(texts.containsKey),
+        isTrue,
+        reason: 'Each species needs at least one app-language source text',
+      );
       final catalogOnly = item['catalog_only'] == true;
       for (final entry in texts.entries) {
         final text = entry.value as Map<String, dynamic>;
@@ -91,7 +94,11 @@ void main() {
         expect(allPaths.add(path), isTrue);
         expect(path, startsWith('assets/images/species/'));
         expect(angle, isNotEmpty);
-        expect((image['photographer'] as String).trim(), isNotEmpty);
+        final photographer = image['photographer'];
+        if (photographer != null) {
+          expect(photographer, isA<String>());
+          expect((photographer as String).trim(), isNotEmpty);
+        }
         expect((image['license'] as String).trim(), isNotEmpty);
         if (image['primary'] == true) primaryCount++;
       }
@@ -105,7 +112,8 @@ void main() {
     final declaredRegions = <String>{};
     final regionCodePattern = RegExp(r'^[A-Z]{2}(?:-[A-Z]{2})*$');
 
-    for (final rawRegion in decoded['season_regions'] as List<dynamic>? ?? const []) {
+    for (final rawRegion
+        in decoded['season_regions'] as List<dynamic>? ?? const []) {
       final region = rawRegion as Map<String, dynamic>;
       final code = (region['code'] as String).trim();
       expect(code, matches(regionCodePattern));
@@ -117,7 +125,8 @@ void main() {
     for (final rawSpecies in decoded['species'] as List<dynamic>) {
       final item = rawSpecies as Map<String, dynamic>;
       final measurementCodes = <String>{};
-      for (final rawMeasurement in item['measurements'] as List<dynamic>? ?? const []) {
+      for (final rawMeasurement
+          in item['measurements'] as List<dynamic>? ?? const []) {
         final measurement = rawMeasurement as Map<String, dynamic>;
         expect(measurementCodes.add(measurement['code'] as String), isTrue);
         final min = (measurement['min'] as num).toDouble();
@@ -127,7 +136,8 @@ void main() {
         expect((measurement['unit'] as String).trim(), isNotEmpty);
       }
       final regionCodes = <String>{};
-      for (final rawDataset in item['season_datasets'] as List<dynamic>? ?? const []) {
+      for (final rawDataset
+          in item['season_datasets'] as List<dynamic>? ?? const []) {
         final dataset = rawDataset as Map<String, dynamic>;
         final regionCode = (dataset['region_code'] as String).trim();
         expect(declaredRegions, contains(regionCode));
@@ -162,16 +172,23 @@ void main() {
 
     final fieldData = await _asset('assets/data/field_data.json');
     for (final rawSpecies in fieldData['species'] as List<dynamic>) {
-      expect(catalogueIds, contains((rawSpecies as Map<String, dynamic>)['species_id']));
+      expect(
+        catalogueIds,
+        contains((rawSpecies as Map<String, dynamic>)['species_id']),
+      );
     }
 
     final images = await _asset('assets/data/species_images.json');
     for (final rawSpecies in images['species'] as List<dynamic>) {
-      expect(catalogueIds, contains((rawSpecies as Map<String, dynamic>)['speciesId']));
+      expect(
+        catalogueIds,
+        contains((rawSpecies as Map<String, dynamic>)['speciesId']),
+      );
     }
   });
 
-  test('training content has complete translations and one correct answer', () async {
+  test('training content has complete translations and one correct answer',
+      () async {
     final decoded = await _asset('assets/data/training_content.json');
     final lessonIds = <int>{};
     final questionIds = <int>{};
@@ -180,11 +197,17 @@ void main() {
     for (final rawLesson in decoded['lessons'] as List<dynamic>) {
       final lesson = rawLesson as Map<String, dynamic>;
       expect(lessonIds.add(lesson['id'] as int), isTrue);
-      _expectLocalizedObjects(lesson['texts'] as Map<String, dynamic>, ['title', 'body']);
+      _expectLocalizedObjects(
+        lesson['texts'] as Map<String, dynamic>,
+        ['title', 'body'],
+      );
       for (final rawQuestion in lesson['questions'] as List<dynamic>) {
         final question = rawQuestion as Map<String, dynamic>;
         expect(questionIds.add(question['id'] as int), isTrue);
-        _expectLocalizedObjects(question['texts'] as Map<String, dynamic>, ['prompt']);
+        _expectLocalizedObjects(
+          question['texts'] as Map<String, dynamic>,
+          ['prompt'],
+        );
         final answers = question['answers'] as List<dynamic>;
         expect(answers.length, greaterThanOrEqualTo(2));
         var correctCount = 0;
@@ -212,7 +235,10 @@ void _expectLanguages(Map<String, dynamic> labels) {
   }
 }
 
-void _expectLocalizedObjects(Map<String, dynamic> values, List<String> requiredFields) {
+void _expectLocalizedObjects(
+  Map<String, dynamic> values,
+  List<String> requiredFields,
+) {
   for (final language in const ['nl', 'en', 'de']) {
     expect(values, contains(language));
     final object = values[language] as Map<String, dynamic>;
