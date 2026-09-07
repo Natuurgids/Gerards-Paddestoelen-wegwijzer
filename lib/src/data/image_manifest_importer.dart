@@ -24,6 +24,8 @@ class ImageManifestImporter {
     DatabaseExecutor db,
     Map<String, dynamic> decoded,
   ) async {
+    final version = decoded['version'] as int? ?? 1;
+    final flexibleGallery = version >= 4;
     final species = decoded['species'] as List<dynamic>? ?? const [];
     final speciesIds = <int>{};
     final allPaths = <String>{};
@@ -36,7 +38,10 @@ class ImageManifestImporter {
       }
 
       final images = item['images'] as List<dynamic>? ?? const [];
-      if (images.length != 5) {
+      if (images.isEmpty) {
+        throw FormatException('Species $speciesId must define at least one image');
+      }
+      if (!flexibleGallery && images.length != 5) {
         throw FormatException(
           'Species $speciesId must define exactly five gallery images',
         );
@@ -59,7 +64,8 @@ class ImageManifestImporter {
 
         final order = image['order'];
         if (order is! int ||
-            !_requiredOrders.contains(order) ||
+            order < 0 ||
+            (!flexibleGallery && !_requiredOrders.contains(order)) ||
             !orders.add(order)) {
           throw FormatException(
             'Invalid or duplicate gallery order for species $speciesId: $order',
@@ -68,18 +74,29 @@ class ImageManifestImporter {
 
         final angle = image['angle'];
         if (angle is! String ||
-            !_requiredAngles.contains(angle) ||
+            angle.trim() != angle ||
+            angle.isEmpty ||
+            (!flexibleGallery && !_requiredAngles.contains(angle)) ||
             !angles.add(angle)) {
           throw FormatException(
             'Invalid or duplicate gallery angle for species $speciesId: $angle',
           );
         }
 
-        final placeholder = image['placeholder'];
-        if (placeholder is! bool) {
+        final placeholderValue = image['placeholder'];
+        final placeholder = placeholderValue == true;
+        if (!flexibleGallery && placeholderValue is! bool) {
           throw FormatException(
             'Gallery placeholder status is required for species $speciesId: '
-            '$placeholder',
+            '$placeholderValue',
+          );
+        }
+        if (flexibleGallery &&
+            placeholderValue != null &&
+            placeholderValue is! bool) {
+          throw FormatException(
+            'Invalid gallery placeholder status for species $speciesId: '
+            '$placeholderValue',
           );
         }
 
@@ -93,20 +110,33 @@ class ImageManifestImporter {
           );
         }
 
-        for (final field in const ['photographer', 'license']) {
-          final value = image[field];
-          if (placeholder) {
+        if (placeholder) {
+          for (final field in const ['photographer', 'license']) {
+            final value = image[field];
             if (value != null) {
               throw FormatException(
                 'Placeholder gallery $field must be omitted for species '
                 '$speciesId: $value',
               );
             }
-          } else if (value is! String ||
-              value.trim() != value ||
-              value.isEmpty) {
+          }
+        } else {
+          final license = image['license'];
+          if (license is! String ||
+              license.trim() != license ||
+              license.isEmpty) {
             throw FormatException(
-              'Real gallery $field is required for species $speciesId: $value',
+              'Real gallery license is required for species $speciesId: $license',
+            );
+          }
+          final photographer = image['photographer'];
+          if (photographer != null &&
+              (photographer is! String ||
+                  photographer.trim() != photographer ||
+                  photographer.isEmpty)) {
+            throw FormatException(
+              'Invalid gallery photographer for species $speciesId: '
+              '$photographer',
             );
           }
         }
@@ -114,14 +144,24 @@ class ImageManifestImporter {
         if (image['primary'] == true) primaryCount++;
       }
 
-      if (orders.length != _requiredOrders.length ||
-          !orders.containsAll(_requiredOrders)) {
+      if (!flexibleGallery &&
+          (orders.length != _requiredOrders.length ||
+              !orders.containsAll(_requiredOrders))) {
         throw FormatException(
           'Species $speciesId must use gallery orders 0 through 4',
         );
       }
-      if (angles.length != _requiredAngles.length ||
-          !angles.containsAll(_requiredAngles)) {
+      if (flexibleGallery) {
+        final expectedOrders = List<int>.generate(images.length, (index) => index);
+        if (!expectedOrders.every(orders.contains)) {
+          throw FormatException(
+            'Species $speciesId must use contiguous gallery orders starting at 0',
+          );
+        }
+      }
+      if (!flexibleGallery &&
+          (angles.length != _requiredAngles.length ||
+              !angles.containsAll(_requiredAngles))) {
         throw FormatException(
           'Species $speciesId must cover all five gallery angles',
         );
