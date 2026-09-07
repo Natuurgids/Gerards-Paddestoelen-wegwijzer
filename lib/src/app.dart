@@ -5,6 +5,7 @@ import 'data/learning_materials_service.dart';
 import 'features/home/home_screen.dart';
 import 'features/home/splash_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/local_reference_image_overlay.dart';
 
 class MycologyApp extends StatefulWidget {
   const MycologyApp({super.key, this.learningMaterialsService});
@@ -29,6 +30,9 @@ class _MycologyAppState extends State<MycologyApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: AppTheme.light,
+      builder: (context, child) => LocalReferenceImageOverlay(
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: SplashGate(
         child: HomeScreen(
           locale: _locale,
