@@ -9,24 +9,42 @@ import re
 from pathlib import Path
 
 ANDROID_MIN_SDK = 24
+ANDROID_TARGET_SDK = 36
 ANDROID_INTERNET_PERMISSION = "android.permission.INTERNET"
 IOS_MIN_VERSION = "13.0"
 
 
-def configure_android(build_file: Path) -> None:
-    text = build_file.read_text(encoding="utf-8")
-    patterns = (
-        (r"minSdk\s*=\s*flutter\.minSdkVersion", f"minSdk = {ANDROID_MIN_SDK}"),
-        (r"minSdk\s*=\s*\d+", f"minSdk = {ANDROID_MIN_SDK}"),
-        (r"minSdkVersion\s+flutter\.minSdkVersion", f"minSdkVersion {ANDROID_MIN_SDK}"),
-        (r"minSdkVersion\s+\d+", f"minSdkVersion {ANDROID_MIN_SDK}"),
-    )
+def _replace_first(text: str, patterns: tuple[tuple[str, str], ...], label: str) -> str:
     for pattern, replacement in patterns:
         updated, count = re.subn(pattern, replacement, text, count=1)
         if count:
-            build_file.write_text(updated, encoding="utf-8")
-            return
-    raise RuntimeError(f"Could not locate Android minSdk declaration in {build_file}")
+            return updated
+    raise RuntimeError(f"Could not locate Android {label} declaration")
+
+
+def configure_android(build_file: Path) -> None:
+    text = build_file.read_text(encoding="utf-8")
+    text = _replace_first(
+        text,
+        (
+            (r"minSdk\s*=\s*flutter\.minSdkVersion", f"minSdk = {ANDROID_MIN_SDK}"),
+            (r"minSdk\s*=\s*\d+", f"minSdk = {ANDROID_MIN_SDK}"),
+            (r"minSdkVersion\s+flutter\.minSdkVersion", f"minSdkVersion {ANDROID_MIN_SDK}"),
+            (r"minSdkVersion\s+\d+", f"minSdkVersion {ANDROID_MIN_SDK}"),
+        ),
+        "minSdk",
+    )
+    text = _replace_first(
+        text,
+        (
+            (r"targetSdk\s*=\s*flutter\.targetSdkVersion", f"targetSdk = {ANDROID_TARGET_SDK}"),
+            (r"targetSdk\s*=\s*\d+", f"targetSdk = {ANDROID_TARGET_SDK}"),
+            (r"targetSdkVersion\s+flutter\.targetSdkVersion", f"targetSdkVersion {ANDROID_TARGET_SDK}"),
+            (r"targetSdkVersion\s+\d+", f"targetSdkVersion {ANDROID_TARGET_SDK}"),
+        ),
+        "targetSdk",
+    )
+    build_file.write_text(text, encoding="utf-8")
 
 
 def configure_android_manifest(manifest_file: Path) -> None:
@@ -91,8 +109,8 @@ def main() -> None:
     args = parser.parse_args()
     configure(args.root)
     print(
-        f"Configured generated platforms: Android SDK {ANDROID_MIN_SDK}+ with "
-        f"Internet access, iOS {IOS_MIN_VERSION}+"
+        f"Configured generated platforms: Android minSdk {ANDROID_MIN_SDK}, "
+        f"targetSdk {ANDROID_TARGET_SDK}, Internet access; iOS {IOS_MIN_VERSION}+"
     )
 
 
