@@ -66,7 +66,7 @@ void main() {
       'season_region': 1,
       'season_region_text': 3,
       'species_season': 14,
-      'species_image': 80,
+      'species_image': 7483,
       'lesson': 12,
       'lesson_text': 36,
       'question': 60,
@@ -87,7 +87,7 @@ void main() {
     final placeholders = await db.rawQuery(
       'SELECT COUNT(*) AS count FROM species_image WHERE is_placeholder = 1',
     );
-    expect(placeholders.single['count'], 80);
+    expect(placeholders.single['count'], 0);
 
     final progress = await db.query('training_progress');
     expect(progress, hasLength(1));
