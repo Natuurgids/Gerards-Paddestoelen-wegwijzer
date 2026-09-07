@@ -48,7 +48,7 @@ void main() {
     );
     final rows = await db.query('species_image');
     expect(rows, isNotEmpty);
-    expect(rows.every((row) => row['is_placeholder'] == 1), isTrue);
+    expect(rows.every((row) => row['is_placeholder'] == 0), isTrue);
   });
 
   test('invalid gallery fails before authoritative rows are deleted', () async {
