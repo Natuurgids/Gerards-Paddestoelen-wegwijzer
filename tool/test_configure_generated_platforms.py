@@ -6,6 +6,7 @@ from pathlib import Path
 from tool.configure_generated_platforms import (
     ANDROID_INTERNET_PERMISSION,
     ANDROID_MIN_SDK,
+    ANDROID_TARGET_SDK,
     IOS_MIN_VERSION,
     configure,
     configure_android,
@@ -27,7 +28,7 @@ class ConfigureGeneratedPlatformsTest(unittest.TestCase):
             ios_info.parent.mkdir(parents=True)
 
             android.write_text(
-                "android {\n    defaultConfig {\n        minSdk = flutter.minSdkVersion\n    }\n}\n",
+                "android {\n    defaultConfig {\n        minSdk = flutter.minSdkVersion\n        targetSdk = flutter.targetSdkVersion\n    }\n}\n",
                 encoding="utf-8",
             )
             android_manifest.write_text(
@@ -48,8 +49,11 @@ class ConfigureGeneratedPlatformsTest(unittest.TestCase):
             configure(root)
             configure(root)
 
-            self.assertIn(f"minSdk = {ANDROID_MIN_SDK}", android.read_text(encoding="utf-8"))
-            self.assertNotIn("flutter.minSdkVersion", android.read_text(encoding="utf-8"))
+            android_text = android.read_text(encoding="utf-8")
+            self.assertIn(f"minSdk = {ANDROID_MIN_SDK}", android_text)
+            self.assertIn(f"targetSdk = {ANDROID_TARGET_SDK}", android_text)
+            self.assertNotIn("flutter.minSdkVersion", android_text)
+            self.assertNotIn("flutter.targetSdkVersion", android_text)
             manifest_text = android_manifest.read_text(encoding="utf-8")
             self.assertEqual(manifest_text.count(ANDROID_INTERNET_PERMISSION), 1)
             self.assertIn(
