@@ -8,6 +8,7 @@ on:
     paths:
       - .github/workflows/verspreidingsatlas-reference-images.yml
       - tool/collect_verspreidingsatlas_reference_images.py
+      - tool/test_collect_verspreidingsatlas_reference_images.py
       - tool/merge_reference_image_batches.py
       - tool/build_nsr_fungi_catalog.py
 
@@ -30,6 +31,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
+      - name: Install parser test tooling
+        run: python3 -m pip install Pillow beautifulsoup4
+      - name: Verify strict per-photo license association
+        run: python3 tool/test_collect_verspreidingsatlas_reference_images.py
       - name: Generate current field-guide catalogue
         run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
       - name: Download official Verspreidingsatlas paddenstoelen taxa XML
