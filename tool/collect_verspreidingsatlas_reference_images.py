@@ -30,7 +30,7 @@ from bs4 import BeautifulSoup, Tag
 from PIL import Image, UnidentifiedImageError
 
 USER_AGENT = "Gerards-Paddestoelen-Wegwijzer/1.0 Verspreidingsatlas-image-curation"
-SEARCH_STRATEGY_VERSION = 3
+SEARCH_STRATEGY_VERSION = 2
 ALLOWED_LICENSES = {"CC0", "CC BY"}
 MAX_IMAGE_PIXELS = 600
 JPEG_QUALITY = 80
@@ -173,6 +173,11 @@ def _license_from_text(text: str) -> str | None:
     return None
 
 
+def _contains_rights_marker(text: str) -> bool:
+    """Return whether text visibly carries copyright or Creative Commons rights."""
+    return "©" in text or bool(re.search(r"\bCC(?:\s*0|\s+BY|\b)", text, re.I))
+
+
 def _photo_imgs(context: Tag, page_url: str) -> list[Tag]:
     photos: list[Tag] = []
     for candidate in context.find_all("img"):
@@ -219,7 +224,7 @@ def _individual_photo_context(img: Tag, page_url: str) -> Tag | None:
             break
         if len(photos) == 1 and photos[0] is img and _is_image_specific_context(parent):
             text = parent.get_text(" ", strip=True)
-            if "©" in text or re.search(r"\bCC\b", text, re.I):
+            if _contains_rights_marker(text):
                 return parent
         node = parent
     return None
@@ -271,7 +276,7 @@ def _photo_candidate(page_url: str, html: bytes) -> tuple[str, dict[str, str] | 
                 incompatible,
             )
 
-        if incompatible is None and ("©" in evidence_text or re.search(r"\bCC\b", evidence_text, re.I)):
+        if incompatible is None and _contains_rights_marker(evidence_text):
             incompatible = {
                 "source_photo_url": img_url,
                 "observed_rights": evidence_text[:500] or "unknown",
@@ -335,7 +340,7 @@ def _write_report(
         status = str(item.get("status") or "unknown")
         statuses[status] = statuses.get(status, 0) + 1
     payload = {
-        "version": 3,
+        "version": 2,
         "source": "NDFF Verspreidingsatlas",
         "batch": {"index": batch_index, "count": batch_count},
         "catalog_species_considered": len(rows),
@@ -348,7 +353,6 @@ def _write_report(
             "taxon_queue_source": "https://www.verspreidingsatlas.nl/taxa/paddenstoelen",
             "individual_photo_license_required": True,
             "license_must_be_bound_to_single_photo_context": True,
-            "image_specific_context_required": True,
             "allowed_photo_licenses": ["CC0", "CC BY"],
             "copyright_or_generic_cc_photos_bundled": False,
             "maps_and_page_artwork_bundled": False,
