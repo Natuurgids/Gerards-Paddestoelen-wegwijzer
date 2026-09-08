@@ -101,6 +101,46 @@ jobs:
           path: build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 14
+      - name: Build Android release APK
+        if: github.event_name == 'push'
+        run: flutter build apk --release
+      - name: Verify species images in Android release APK
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          EXPECTED_COUNT=$(find assets/images/species -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | wc -l)
+          export EXPECTED_COUNT
+          python3 - <<'PY'
+          import os
+          import zipfile
+
+          apk = 'build/app/outputs/flutter-apk/app-release.apk'
+          expected = int(os.environ['EXPECTED_COUNT'])
+          with zipfile.ZipFile(apk) as archive:
+              names = archive.namelist()
+          prefixes = (
+              'assets/flutter_assets/assets/images/species/',
+              'flutter_assets/assets/images/species/',
+          )
+          actual = sum(
+              1
+              for name in names
+              if name.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))
+              and name.startswith(prefixes)
+          )
+          print(f'Committed species image assets: {expected}')
+          print(f'Species image assets packaged in APK: {actual}')
+          if actual != expected:
+              raise SystemExit(f'APK species asset count mismatch: expected {expected}, found {actual}')
+          PY
+      - name: Upload Android release APK
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gerards-paddestoelen-wegwijzer-android-apk-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
 
   windows-release:
     if: github.event_name == 'push'
