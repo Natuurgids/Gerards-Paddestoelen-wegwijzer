@@ -2,76 +2,116 @@
 
 ## Current product scope
 
-Gerards Paddestoelen Wegwijzer is currently a mushroom determination and mycology education tool.
+Gerards Paddestoelen Wegwijzer is a paid standalone mushroom field guide, determination aid and mycology education product. The core product is intended to remain useful offline and independent of optional learning commerce or future AI services.
 
 Current priorities are:
 
 - determination quality and curated determination coverage;
-- high-quality determination illustrations and species media;
+- high-quality reference media with source/licence attribution;
+- broad, reliable offline catalogue coverage;
 - expandable lessons, quizzes and training pathways;
 - catalogue, taxonomy and source quality;
-- offline reliability;
 - Dutch-first localization with English and German support;
-- permanent mushroom-consumption safety guidance.
+- permanent mushroom-consumption safety guidance;
+- reproducible Android/Windows release packaging and artifact-level verification.
 
 The app is not currently an observation-registration or occurrence-mapping product.
 
-## Deferred Aperture integration
+## Shared engineering, separate compiled products
 
-Observation/location infrastructure may remain in the codebase as a future integration boundary for Aperture. This is intentionally deferred and must not drive the current user experience or roadmap.
+The codebase should evolve toward reusable field-guide infrastructure, but biological domains are selected at build/product time.
 
-If Aperture integration is developed later, the existing privacy boundary remains mandatory: never expose or reconstruct more precise sensitive-species location data than the upstream source makes public.
+Future mushrooms, trees, birds or other guides are separate compiled applications with their own application identity, branding, catalogue, domain-specific traits, media and education catalogue. They are not downloadable domain plugins inside one universal app.
 
-## Learning model: free core and premium expansion
+Reusable infrastructure can include navigation, localisation, SQLite/data access, image/provenance handling, education, package installation, entitlement/commerce boundaries and release tooling. Domain-specific biological behaviour should remain in the relevant compiled product rather than being generalized without a concrete reuse need.
 
-The learning architecture should support a free core plus optional paid education without making the current offline lessons dependent on a payment backend.
+See `docs/architectural-description.md`.
 
-### Free core
+## Education model
+
+Education is modular relative to the core field guide.
+
+### Bundled/free learning
 
 - packaged offline introductory lessons and quizzes;
 - safe determination fundamentals;
-- basic morphology and field-character training;
+- morphology and field-character training;
 - local progress, attempts and best scores;
-- no account required for the basic learning path.
+- free additional activities/packages where useful, including printable/colouring material;
+- no commerce dependency for free learning.
 
-### Premium learning
+### Optional paid learning packages
 
-Future premium content can include, for example:
+Additional specialist content can include:
 
 - advanced determination modules;
 - family- and genus-level courses;
 - lookalike comparison modules;
-- advanced microscopy and spore-character training;
+- microscopy and spore-character training;
 - structured exam/training tracks;
-- professional or institutional learning packs;
 - additional premium quizzes and learning pathways.
 
-Premium status should be represented as an entitlement, separate from lesson content and separate from the payment provider. Lesson records can later carry a stable access tier or entitlement key such as `free`, `premium`, or a named course entitlement.
+Paid learning remains an expansion of the current compiled product. It does not turn the app into a marketplace for other biological domains.
 
-The application should ask an entitlement service whether the current user may access a premium module. The lesson renderer itself should not contain payment-provider logic.
+Logical entitlements remain separate from lesson/package content and from the payment provider. The package installer asks whether the required entitlement is granted; it does not parse provider receipts or implement payment rules.
 
-## Payment architecture
+## Commerce architecture
 
-Do not hard-code one payment gateway into lesson manifests. Use three separate layers:
+Keep three concerns separate:
 
-1. **Content** — lessons, questions, explanations and course metadata.
-2. **Entitlements** — which account/device may access which premium course or tier.
-3. **Commerce** — App Store / Google Play billing and, where platform rules permit, a future web payment portal.
+1. **Content** — lessons, questions, explanations, activities and package metadata.
+2. **Entitlements** — verified logical access to a paid package.
+3. **Commerce** — a replaceable purchase/provider adapter plus trusted verification.
 
-This keeps the educational content portable and allows payment rules to change without rewriting the lesson system.
+The repository currently includes a concrete mobile-store adapter path behind provider-neutral interfaces. Production commerce remains fail-closed until real provider product mappings, trusted verification, authenticated runtime state and protected package hosting are configured.
 
-For store-distributed mobile apps, purchases that unlock digital lessons or premium app content must follow the applicable Apple App Store and Google Play billing rules. A web portal can still be used for account management, institutional sales, and other permitted purchase flows, while the entitlement backend remains the single source of truth for access.
+The architecture must not embed reusable merchant/backend credentials in the compiled app. A future compliant commerce route can replace the concrete adapter without rewriting education or package semantics, provided it produces the same trusted logical entitlement contract.
 
-## Not in the current implementation phase
+See `docs/learning-commerce-contract.md` and `docs/architectural-description.md`.
 
-The following are documented improvements, not current implementation work:
+## AI: separate experiment, not a core dependency
 
-- Aperture observation/location integration;
-- account system and cloud sync;
-- payment portal;
-- App Store / Google Play purchase integration;
-- premium entitlement backend;
-- institutional licensing and classroom administration;
-- Fieldora/Aperture ecosystem alignment beyond clearly reusable future interfaces.
+AI is not a current core feature and should not be required for catalogue browsing, deterministic determination or installed education.
 
-The current development focus remains determination and education quality.
+If tested later:
+
+1. introduce a small provider-neutral AI service interface;
+2. test with an external provider under explicit limits;
+3. measure usefulness, reliability, privacy implications and operating cost;
+4. only then decide whether to continue, price it separately or host inference on owned hardware;
+5. preserve the ability to disable/remove AI without changing the field guide or education architecture.
+
+AI credentials and privileged infrastructure must remain outside the APK/AAB.
+
+## Deferred Aperture integration
+
+Observation/location infrastructure may remain as a future integration boundary for Aperture. This is intentionally deferred and must not drive the current user experience.
+
+Any future integration must preserve the privacy boundary: never expose or reconstruct more precise sensitive-species location data than the upstream source makes public.
+
+## Release readiness
+
+The Android Google Play compliance path now builds an AAB and verifies the produced artifact. The current branch checks application identity, platform floor, expected permissions, AAB structure, packaged species images and selected release-security conditions after Flutter analysis/tests.
+
+A green repository workflow establishes build/repository readiness only. Store-side signing, declarations, listing configuration and review remain external release steps.
+
+## Near-term sequence
+
+1. Keep the mushroom core stable, offline and well-sourced.
+2. Continue improving curated determination coverage and reference media.
+3. Preserve reproducible release verification for Android and Windows.
+4. Complete real protected hosting/verifier deployment before enabling paid learning commerce.
+5. Add learning packages independently of the core application release where the package contract supports it.
+6. Use the shared/product-configuration boundary when a second compiled nature-guide product is actually started.
+7. Test AI only after the core and learning-package model are proven.
+
+## Documentation map
+
+- `docs/functional-description.md` — user-visible behaviour and product scope.
+- `docs/technical-description.md` — implementation technologies, data, build and security mechanics.
+- `docs/architectural-description.md` — module boundaries, dependencies, trust boundaries and multi-product direction.
+- `docs/learning-commerce-contract.md` — commerce/verification/entitlement contract.
+- `docs/learning-package-installer-contract.md` — learning-package installation boundary.
+- `docs/learning-package-publishing.md` — package publishing process.
+- `docs/learning-hosting-verifier-requirements.md` — external hosting/verifier requirements.
+- `docs/reference-data-plan.md` — reference-data direction.
