@@ -30,7 +30,7 @@ from bs4 import BeautifulSoup, Tag
 from PIL import Image, UnidentifiedImageError
 
 USER_AGENT = "Gerards-Paddestoelen-Wegwijzer/1.0 Verspreidingsatlas-image-curation"
-SEARCH_STRATEGY_VERSION = 2
+SEARCH_STRATEGY_VERSION = 3
 ALLOWED_LICENSES = {"CC0", "CC BY"}
 MAX_IMAGE_PIXELS = 600
 JPEG_QUALITY = 80
@@ -184,12 +184,30 @@ def _photo_imgs(context: Tag, page_url: str) -> list[Tag]:
     return photos
 
 
-def _individual_photo_context(img: Tag, page_url: str) -> Tag | None:
-    """Return the smallest context that can safely bind rights to this one photo.
+def _is_image_specific_context(context: Tag) -> bool:
+    """Return whether markup explicitly identifies this block as image-specific."""
+    if context.name == "figure":
+        return True
+    markers: list[str] = []
+    element_id = context.get("id")
+    if element_id:
+        markers.append(str(element_id))
+    classes = context.get("class") or []
+    if isinstance(classes, str):
+        markers.append(classes)
+    else:
+        markers.extend(str(value) for value in classes)
+    marker_text = " ".join(markers)
+    return bool(re.search(r"(?:^|[-_\s])(photo|foto|image|afbeelding|media)(?:[-_\s]|$)", marker_text, re.I))
 
-    We may walk upward through wrappers, but a context is eligible only while it
-    contains exactly one photo-like image. This prevents a CC BY caption for a
-    neighbouring photo in a gallery/section from being borrowed by this image.
+
+def _individual_photo_context(img: Tag, page_url: str) -> Tag | None:
+    """Return the smallest demonstrably image-specific rights context.
+
+    A candidate must contain exactly this one photo-like image, contain explicit
+    rights text, and be structurally marked as an image/photo block. Broad page,
+    section, gallery, or content wrappers are therefore never used to borrow a
+    licence from neighbouring or generic page text.
     """
     node: Tag | None = img
     for _ in range(5):
@@ -199,7 +217,7 @@ def _individual_photo_context(img: Tag, page_url: str) -> Tag | None:
         photos = _photo_imgs(parent, page_url)
         if len(photos) > 1:
             break
-        if len(photos) == 1 and photos[0] is img:
+        if len(photos) == 1 and photos[0] is img and _is_image_specific_context(parent):
             text = parent.get_text(" ", strip=True)
             if "©" in text or re.search(r"\bCC\b", text, re.I):
                 return parent
@@ -235,7 +253,7 @@ def _photo_candidate(page_url: str, html: bytes) -> tuple[str, dict[str, str] | 
         if licence:
             source_url = img_url
             link = img.find_parent("a")
-            if isinstance(link, Tag) and link in context.parents or link is context:
+            if isinstance(link, Tag) and (link is context or link in context.descendants):
                 href = str(link.get("href") or "").strip()
                 if href:
                     linked = _absolute_url(page_url, href)
@@ -317,7 +335,7 @@ def _write_report(
         status = str(item.get("status") or "unknown")
         statuses[status] = statuses.get(status, 0) + 1
     payload = {
-        "version": 2,
+        "version": 3,
         "source": "NDFF Verspreidingsatlas",
         "batch": {"index": batch_index, "count": batch_count},
         "catalog_species_considered": len(rows),
@@ -330,6 +348,7 @@ def _write_report(
             "taxon_queue_source": "https://www.verspreidingsatlas.nl/taxa/paddenstoelen",
             "individual_photo_license_required": True,
             "license_must_be_bound_to_single_photo_context": True,
+            "image_specific_context_required": True,
             "allowed_photo_licenses": ["CC0", "CC BY"],
             "copyright_or_generic_cc_photos_bundled": False,
             "maps_and_page_artwork_bundled": False,
