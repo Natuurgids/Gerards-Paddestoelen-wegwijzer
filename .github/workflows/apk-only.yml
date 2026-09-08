@@ -1,0 +1,51 @@
+name: Android APK
+
+on:
+  push:
+    branches:
+      - feature/android-apk-artifact
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+      - name: Generate Android scaffolding
+        run: flutter create . --platforms=android --project-name gerards_paddestoelen_wegwijzer --org nl.natuurgids
+      - name: Configure Android release floor
+        run: python3 tool/configure_generated_platforms.py
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build catalogue
+        run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
+      - name: Enrich habitat and reviewed lookalikes
+        run: python3 tool/enrich_ecology.py --min-habitat 100
+      - name: Enrich IUCN conservation status
+        run: python3 tool/enrich_conservation_status.py --min-matches 1
+      - name: Generate packaged reference database
+        run: REFERENCE_DATABASE_OUTPUT=assets/data/reference.sqlite flutter test tool/reference_database_builder_test.dart
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
+      - name: Prepare all nested species image assets
+        run: |
+          python3 tool/prepare_nested_species_assets.py
+          flutter pub get
+      - name: Build release APK
+        run: flutter build apk --release
+      - name: Verify all manifest species images are packaged
+        run: python3 tool/verify_android_species_assets.py
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: gerards-paddestoelen-wegwijzer-android-apk-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
