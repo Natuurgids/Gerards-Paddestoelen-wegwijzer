@@ -1,0 +1,65 @@
+name: Integrate historical reference images
+
+on:
+  push:
+    branches:
+      - feature/android-apk-artifact
+    paths:
+      - '.github/workflows/integrate-historical-reference-images.yml'
+      - 'tool/integrate_historical_reference_images.py'
+      - 'assets/data/species_images.json'
+      - 'assets/images/species/**'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  compare-integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Download historical 4,172-image pack
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/historical
+          gh run download 34245843577 \
+            --repo "${{ github.repository }}" \
+            --name full-catalogue-offline-reference-images \
+            --dir /tmp/historical
+
+      - name: Compare and integrate genuinely new licensed species images
+        run: |
+          python3 tool/integrate_historical_reference_images.py \
+            --artifact-root /tmp/historical \
+            --report build/historical-image-integration-report.json
+          cat build/historical-image-integration-report.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate manifest image files
+        run: |
+          python3 tool/prepare_nested_species_assets.py
+          git restore pubspec.yaml
+
+      - name: Upload comparison report
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-image-overlap-report
+          path: build/historical-image-integration-report.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit newly integrated images
+        run: |
+          if git diff --quiet -- assets/data/species_images.json assets/images/species; then
+            echo "No genuinely new eligible images to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/data/species_images.json assets/images/species
+          git commit -m "Integrate new licensed historical reference images"
+          git push
