@@ -1,6 +1,6 @@
 import unittest
 
-from build_nsr_fungi_catalog import _field_guide_group
+from tool.build_nsr_fungi_catalog import _field_guide_group
 
 
 class FieldGuideScopeTest(unittest.TestCase):
