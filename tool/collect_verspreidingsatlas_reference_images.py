@@ -30,7 +30,7 @@ from bs4 import BeautifulSoup, Tag
 from PIL import Image, UnidentifiedImageError
 
 USER_AGENT = "Gerards-Paddestoelen-Wegwijzer/1.0 Verspreidingsatlas-image-curation"
-SEARCH_STRATEGY_VERSION = 1
+SEARCH_STRATEGY_VERSION = 2
 ALLOWED_LICENSES = {"CC0", "CC BY"}
 MAX_IMAGE_PIXELS = 600
 JPEG_QUALITY = 80
@@ -173,6 +173,40 @@ def _license_from_text(text: str) -> str | None:
     return None
 
 
+def _photo_imgs(context: Tag, page_url: str) -> list[Tag]:
+    photos: list[Tag] = []
+    for candidate in context.find_all("img"):
+        if not isinstance(candidate, Tag):
+            continue
+        src = str(candidate.get("src") or "").strip()
+        if src and _looks_like_photo_url(_absolute_url(page_url, src)):
+            photos.append(candidate)
+    return photos
+
+
+def _individual_photo_context(img: Tag, page_url: str) -> Tag | None:
+    """Return the smallest context that can safely bind rights to this one photo.
+
+    We may walk upward through wrappers, but a context is eligible only while it
+    contains exactly one photo-like image. This prevents a CC BY caption for a
+    neighbouring photo in a gallery/section from being borrowed by this image.
+    """
+    node: Tag | None = img
+    for _ in range(5):
+        parent = node.parent if isinstance(node, Tag) else None
+        if not isinstance(parent, Tag) or parent.name in {"body", "html"}:
+            break
+        photos = _photo_imgs(parent, page_url)
+        if len(photos) > 1:
+            break
+        if len(photos) == 1 and photos[0] is img:
+            text = parent.get_text(" ", strip=True)
+            if "©" in text or re.search(r"\bCC\b", text, re.I):
+                return parent
+        node = parent
+    return None
+
+
 def _photo_candidate(page_url: str, html: bytes) -> tuple[str, dict[str, str] | None, dict[str, str] | None]:
     soup = BeautifulSoup(html, "html.parser")
     page_text = soup.get_text(" ", strip=True)
@@ -180,6 +214,7 @@ def _photo_candidate(page_url: str, html: bytes) -> tuple[str, dict[str, str] | 
         return "no_photo_available", None, None
 
     incompatible: dict[str, str] | None = None
+    saw_photo = False
     for img in soup.find_all("img"):
         if not isinstance(img, Tag):
             continue
@@ -189,30 +224,18 @@ def _photo_candidate(page_url: str, html: bytes) -> tuple[str, dict[str, str] | 
         img_url = _absolute_url(page_url, src)
         if not _looks_like_photo_url(img_url):
             continue
+        saw_photo = True
 
-        contexts: list[Tag] = []
-        node: Tag | None = img
-        for _ in range(5):
-            parent = node.parent if isinstance(node, Tag) else None
-            if not isinstance(parent, Tag):
-                break
-            contexts.append(parent)
-            node = parent
-
-        selected_text = ""
-        licence: str | None = None
-        for context in contexts:
-            text = context.get_text(" ", strip=True)
-            current = _license_from_text(text)
-            if current:
-                selected_text = text
-                licence = current
-                break
+        context = _individual_photo_context(img, page_url)
+        if context is None:
+            continue
+        evidence_text = context.get_text(" ", strip=True)
+        licence = _license_from_text(evidence_text)
 
         if licence:
             source_url = img_url
             link = img.find_parent("a")
-            if isinstance(link, Tag):
+            if isinstance(link, Tag) and link in context.parents or link is context:
                 href = str(link.get("href") or "").strip()
                 if href:
                     linked = _absolute_url(page_url, href)
@@ -223,22 +246,24 @@ def _photo_candidate(page_url: str, html: bytes) -> tuple[str, dict[str, str] | 
                 {
                     "source_photo_url": source_url,
                     "license": licence,
-                    "creator_attribution": selected_text[:500],
+                    "creator_attribution": evidence_text[:500],
+                    "license_evidence_text": evidence_text[:1000],
+                    "license_evidence_html": str(context)[:4000],
                 },
                 incompatible,
             )
 
-        surrounding = contexts[0].get_text(" ", strip=True) if contexts else ""
-        if incompatible is None and ("©" in surrounding or re.search(r"\bCC\b", surrounding, re.I)):
+        if incompatible is None and ("©" in evidence_text or re.search(r"\bCC\b", evidence_text, re.I)):
             incompatible = {
                 "source_photo_url": img_url,
-                "observed_rights": surrounding[:500] or "unknown",
+                "observed_rights": evidence_text[:500] or "unknown",
+                "license_evidence_html": str(context)[:4000],
             }
 
     if incompatible:
         return "photo_available_but_incompatible_or_unknown_license", None, incompatible
-    if re.search(r"\bCC\s*(?:0|BY)\b", page_text, re.I):
-        return "eligible_license_visible_but_photo_url_unresolved", None, None
+    if saw_photo and re.search(r"\bCC\s*(?:0|BY)\b", page_text, re.I):
+        return "eligible_license_visible_but_not_bound_to_individual_photo", None, None
     return "no_usable_photo_detected", None, None
 
 
@@ -292,7 +317,7 @@ def _write_report(
         status = str(item.get("status") or "unknown")
         statuses[status] = statuses.get(status, 0) + 1
     payload = {
-        "version": 1,
+        "version": 2,
         "source": "NDFF Verspreidingsatlas",
         "batch": {"index": batch_index, "count": batch_count},
         "catalog_species_considered": len(rows),
@@ -304,6 +329,7 @@ def _write_report(
         "policy": {
             "taxon_queue_source": "https://www.verspreidingsatlas.nl/taxa/paddenstoelen",
             "individual_photo_license_required": True,
+            "license_must_be_bound_to_single_photo_context": True,
             "allowed_photo_licenses": ["CC0", "CC BY"],
             "copyright_or_generic_cc_photos_bundled": False,
             "maps_and_page_artwork_bundled": False,
@@ -372,7 +398,7 @@ def main() -> None:
                     "source_taxon_code": taxon.get("code"),
                     "source_species_url": page_url,
                     "status": status,
-                    "retryable": status == "eligible_license_visible_but_photo_url_unresolved",
+                    "retryable": status == "eligible_license_visible_but_not_bound_to_individual_photo",
                     "strategy_version": SEARCH_STRATEGY_VERSION,
                 }
                 if incompatible:
@@ -395,6 +421,8 @@ def main() -> None:
                     "source_photo_url": candidate["source_photo_url"],
                     "creator_attribution": candidate["creator_attribution"],
                     "license": candidate["license"],
+                    "license_evidence_text": candidate["license_evidence_text"],
+                    "license_evidence_html": candidate["license_evidence_html"],
                     "retrieved_at": datetime.now(timezone.utc).date().isoformat(),
                     "strategy_version": SEARCH_STRATEGY_VERSION,
                     "asset_path": f"images/species_{species_id}/1.jpg",
