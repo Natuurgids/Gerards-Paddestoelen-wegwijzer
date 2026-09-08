@@ -11,10 +11,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 from pathlib import Path
 
 ALLOWED = {"CC0", "CC BY"}
+SPECIES_IMAGE_RE = re.compile(r"species_(\d+)[/\\]1\.jpg$", re.I)
 
 
 def sha256(path: Path) -> str:
@@ -25,13 +27,17 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def find_image(root: Path, species_id: int) -> Path:
-    matches = list(root.rglob(f"species_{species_id}/1.jpg"))
-    if len(matches) != 1:
-        raise SystemExit(
-            f"Expected exactly one historical image for species {species_id}; found {len(matches)}"
-        )
-    return matches[0]
+def historical_image_index(root: Path) -> dict[int, Path]:
+    index: dict[int, Path] = {}
+    for path in root.rglob("1.jpg"):
+        match = SPECIES_IMAGE_RE.search(path.as_posix())
+        if not match:
+            continue
+        species_id = int(match.group(1))
+        if species_id in index:
+            raise SystemExit(f"Duplicate historical image for species {species_id}")
+        index[species_id] = path
+    return index
 
 
 def manifest_image_path(entry: dict) -> Path | None:
@@ -48,10 +54,17 @@ def integrate(artifact_root: Path, manifest_path: Path, report_path: Path) -> di
         raise SystemExit(f"Expected one merged historical report; found {len(reports)}")
     historical = json.loads(reports[0].read_text(encoding="utf-8"))
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    historical_images = historical_image_index(artifact_root)
 
     manifest_species = manifest.setdefault("species", [])
     current = {int(item["speciesId"]): item for item in manifest_species}
     candidates = {int(item["species_id"]): item for item in historical.get("images", [])}
+    missing_files = sorted(set(candidates) - set(historical_images))
+    if missing_files:
+        raise SystemExit(
+            f"Historical artifact lacks image files for {len(missing_files)} report entries; "
+            f"first IDs: {missing_files[:10]}"
+        )
 
     overlap = sorted(set(current) & set(candidates))
     new_ids = sorted(set(candidates) - set(current))
@@ -60,12 +73,11 @@ def integrate(artifact_root: Path, manifest_path: Path, report_path: Path) -> di
     overlap_unverifiable: list[int] = []
 
     for species_id in overlap:
-        old_image = find_image(artifact_root, species_id)
         current_image = manifest_image_path(current[species_id])
         if current_image is None or not current_image.is_file():
             overlap_unverifiable.append(species_id)
             continue
-        if sha256(old_image) == sha256(current_image):
+        if sha256(historical_images[species_id]) == sha256(current_image):
             identical.append(species_id)
         else:
             alternates.append(species_id)
@@ -79,7 +91,7 @@ def integrate(artifact_root: Path, manifest_path: Path, report_path: Path) -> di
             rejected_license.append(species_id)
             continue
 
-        source_image = find_image(artifact_root, species_id)
+        source_image = historical_images[species_id]
         destination = Path("assets/images/species") / f"species_{species_id}" / "1.jpg"
         if destination.exists():
             raise SystemExit(
