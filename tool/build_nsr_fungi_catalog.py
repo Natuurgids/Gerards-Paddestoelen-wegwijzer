@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Merge accepted Dutch Species Register Fungi species into species_catalog.json.
+"""Merge accepted Dutch Species Register field-guide species into species_catalog.json.
 
 The source is the Naturalis Dutch Species Register Darwin Core Archive. Curated app
 records always win by scientific name; generated records contain catalogue facts
 only and deliberately leave biology/safety fields unknown.
+
+The app is a Dutch mushroom field guide, so its catalogue includes true fungi plus
+selected slime moulds (Myxomycetes/Myxogastrea) that are conventionally covered by
+Dutch paddenstoelen resources. Slime moulds are explicitly labelled as non-fungi in
+the generated species text rather than being represented as taxonomic fungi.
 """
 
 from __future__ import annotations
@@ -29,6 +34,49 @@ SOURCE_CITATION = (
     "Nederlands Soortenregister. Naturalis Biodiversity Center. "
     "https://doi.org/10.15468/rjdpzy"
 )
+
+# Explicitly narrow the non-fungal scope. Do not include Amoebozoa/Protozoa as a
+# whole: only the slime-mould classes/groups that Dutch mushroom field guides
+# conventionally cover belong in this product.
+SLIME_MOULD_CLASS_NAMES = {
+    "myxomycetes",
+    "myxogastrea",
+    "myxogastria",
+}
+SLIME_MOULD_PHYLUM_NAMES = {
+    "myxomycota",
+}
+SLIME_MOULD_GROUP_NAMES = SLIME_MOULD_CLASS_NAMES | SLIME_MOULD_PHYLUM_NAMES
+
+SLIME_MOULD_TEXT = {
+    "nl": {
+        "summary": "Slijmzwam; opgenomen in deze paddenstoelenwegwijzer, maar taxonomisch geen echte schimmel.",
+        "description": (
+            "Dit organisme is een slijmzwam (Myxomycetes/Myxogastrea) en behoort "
+            "taxonomisch niet tot het rijk Fungi. Het is opgenomen omdat "
+            "slijmzwammen traditioneel in Nederlandse paddenstoelengidsen en "
+            "verspreidingsoverzichten worden behandeld."
+        ),
+    },
+    "en": {
+        "summary": "Slime mould; included in this mushroom field guide, but taxonomically not a true fungus.",
+        "description": (
+            "This organism is a slime mould (Myxomycetes/Myxogastrea) and is "
+            "taxonomically not part of the kingdom Fungi. It is included because "
+            "slime moulds are traditionally covered by mushroom field guides and "
+            "distribution resources."
+        ),
+    },
+    "de": {
+        "summary": "Schleimpilz; in diesem Pilzführer enthalten, taxonomisch aber kein echter Pilz.",
+        "description": (
+            "Dieser Organismus ist ein Schleimpilz (Myxomycetes/Myxogastrea) und "
+            "gehört taxonomisch nicht zum Reich Fungi. Er ist enthalten, weil "
+            "Schleimpilze traditionell in Pilzführern und Verbreitungsübersichten "
+            "behandelt werden."
+        ),
+    },
+}
 
 
 def _local(term: str) -> str:
@@ -91,12 +139,47 @@ def _download(url: str) -> Path:
     return Path(temp.name)
 
 
+def _classification_value(row: dict[str, str], *fields: str) -> str:
+    for field in fields:
+        value = row.get(field, "").strip().casefold()
+        if value:
+            return value
+    return ""
+
+
+def _field_guide_group(row: dict[str, str]) -> str | None:
+    kingdom = _classification_value(row, "kingdom")
+    if kingdom == "fungi":
+        return "fungus"
+
+    taxon_class = _classification_value(row, "class")
+    phylum = _classification_value(row, "phylum")
+    if taxon_class in SLIME_MOULD_CLASS_NAMES or phylum in SLIME_MOULD_PHYLUM_NAMES:
+        return "slime_mould"
+
+    # Some Darwin Core exports expose the useful group only in higherClassification.
+    higher = row.get("higherClassification", "").casefold()
+    if higher:
+        normalized_parts = {
+            part.strip()
+            for part in higher.replace("|", ";").replace(",", ";").split(";")
+            if part.strip()
+        }
+        if normalized_parts & SLIME_MOULD_GROUP_NAMES:
+            return "slime_mould"
+
+    return None
+
+
 def _diagnostic(core_rows: list[dict[str, str]]) -> str:
     keys = sorted({key for row in core_rows[:100] for key in row})
+
     def values(field: str) -> list[tuple[str, int]]:
         return Counter(row.get(field, "") for row in core_rows if row.get(field, "")).most_common(12)
+
     return (
-        f"fields={keys}; kingdom={values('kingdom')}; taxonRank={values('taxonRank')}; "
+        f"fields={keys}; kingdom={values('kingdom')}; class={values('class')}; "
+        f"phylum={values('phylum')}; taxonRank={values('taxonRank')}; "
         f"taxonomicStatus={values('taxonomicStatus')}; occurrenceStatus={values('occurrenceStatus')}"
     )
 
@@ -139,11 +222,12 @@ def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int
 
     generated = []
     seen_names = set(existing_names)
+    group_counts: Counter[str] = Counter()
     for row in core_rows:
-        kingdom = row.get("kingdom", "").strip().casefold()
         rank = row.get("taxonRank", "").strip().casefold()
         status = row.get("taxonomicStatus", "").strip().casefold()
-        if kingdom != "fungi" or rank != "species":
+        group = _field_guide_group(row)
+        if group is None or rank != "species":
             continue
         if status and status not in {"accepted", "accepted name", "valid"}:
             continue
@@ -153,12 +237,13 @@ def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int
         if not scientific or not taxon_id or normalized in seen_names:
             continue
         seen_names.add(normalized)
-        generated.append((scientific, taxon_id, row))
+        generated.append((scientific, taxon_id, row, group))
+        group_counts[group] += 1
 
     generated.sort(key=lambda item: (item[0].casefold(), item[1]))
     if len(generated) + len(existing_names) < min_species:
         raise ValueError(
-            f"NSR Fungi species count is unexpectedly low: {len(generated) + len(existing_names)} < {min_species}; "
+            f"NSR field-guide species count is unexpectedly low: {len(generated) + len(existing_names)} < {min_species}; "
             f"{_diagnostic(core_rows)}"
         )
 
@@ -175,11 +260,20 @@ def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int
     catalog["sources"] = sources
 
     added = 0
-    for scientific, taxon_id, row in generated:
+    for scientific, taxon_id, row, group in generated:
         taxon_numeric_id = _stable_id(f"nsr-taxon:{taxon_id}", used_ids)
         species_numeric_id = _stable_id(f"nsr-species:{taxon_id}", used_ids)
         authorship = row.get("scientificNameAuthorship", "").strip() or None
         nl_name = dutch_names.get(taxon_id, (False, scientific))[1]
+        texts = {
+            "nl": {"common_name": nl_name},
+            "en": {"common_name": scientific},
+            "de": {"common_name": scientific},
+        }
+        if group == "slime_mould":
+            for language, note in SLIME_MOULD_TEXT.items():
+                texts[language].update(note)
+
         catalog["taxa"].append({
             "id": taxon_numeric_id,
             "parent_id": None,
@@ -191,22 +285,22 @@ def build(archive: Path, catalog_path: Path, retrieved_at: str, min_species: int
             "id": species_numeric_id,
             "taxon_id": taxon_numeric_id,
             "catalog_only": True,
+            "field_guide_group": group,
             "edible_status": "unknown",
             "toxicity_level": "unknown",
             "source_id": SOURCE_ID,
             "source_record_id": taxon_id,
-            "texts": {
-                "nl": {"common_name": nl_name},
-                "en": {"common_name": scientific},
-                "de": {"common_name": scientific},
-            },
+            "texts": texts,
         })
         added += 1
 
     catalog["version"] = max(int(catalog.get("version", 1)), 3)
     catalog_path.write_text(json.dumps(catalog, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     total = len(catalog["species"])
-    print(f"NSR merge complete: added {added}; catalogue total {total}; Dutch names {len(dutch_names)}")
+    print(
+        f"NSR merge complete: added {added}; catalogue total {total}; "
+        f"Dutch names {len(dutch_names)}; generated groups {dict(group_counts)}"
+    )
     if total < min_species:
         raise ValueError(f"Generated catalogue has only {total} species")
     return total

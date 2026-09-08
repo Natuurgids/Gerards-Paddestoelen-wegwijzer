@@ -1,12 +1,47 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 
-class SafetyNotice extends StatelessWidget {
-  const SafetyNotice({super.key});
+class SafetyNotice extends StatefulWidget {
+  const SafetyNotice({
+    super.key,
+    this.displayDuration = const Duration(seconds: 3),
+  });
+
+  final Duration displayDuration;
+
+  @override
+  State<SafetyNotice> createState() => _SafetyNoticeState();
+}
+
+class _SafetyNoticeState extends State<SafetyNotice> {
+  Timer? _timer;
+  var _visible = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(widget.displayDuration, () {
+      if (mounted) {
+        setState(() => _visible = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (!_visible) {
+      return const SizedBox.shrink();
+    }
+
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 

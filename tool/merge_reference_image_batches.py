@@ -4,6 +4,10 @@
 Each shard contains sanitized small JPEGs plus a provenance report with the original
 source photo URL, creator attribution and licence. The merged output preserves only
 one local image per species and keeps missing/retryable status for follow-up runs.
+
+The distributable app policy is deliberately narrower than the collectors may be:
+only CC0 and CC BY images are copied into the offline pack. Other or unknown rights
+are reported as missing/incompatible and are never bundled.
 """
 from __future__ import annotations
 
@@ -11,6 +15,8 @@ import argparse
 import json
 import shutil
 from pathlib import Path
+
+ALLOWED_OFFLINE_LICENSES = {"CC0", "CC BY"}
 
 
 def merge(input_dir: Path, output_dir: Path, report_path: Path) -> dict:
@@ -37,6 +43,21 @@ def merge(input_dir: Path, output_dir: Path, report_path: Path) -> dict:
             if species_id in images:
                 raise ValueError(f"Duplicate collected image for species {species_id}")
             record = dict(item)
+            licence = str(record.get("license") or "").strip()
+            if licence not in ALLOWED_OFFLINE_LICENSES:
+                missing[species_id] = {
+                    "species_id": species_id,
+                    "scientific_name": record.get("scientific_name"),
+                    "search_name": record.get("search_name"),
+                    "status": "image_available_but_incompatible_or_unknown_license",
+                    "observed_license": licence or "unknown",
+                    "source": record.get("source") or payload.get("source"),
+                    "source_observation_url": record.get("source_observation_url"),
+                    "source_occurrence_url": record.get("source_occurrence_url"),
+                    "retryable": False,
+                }
+                continue
+
             local = input_dir / str(record["asset_path"])
             if not local.is_file():
                 candidates = list(input_dir.glob(f"**/species_{species_id}/1.jpg"))
@@ -52,16 +73,23 @@ def merge(input_dir: Path, output_dir: Path, report_path: Path) -> dict:
 
         for item in payload.get("missing", []):
             species_id = int(item["species_id"])
-            if species_id not in images:
+            if species_id not in images and species_id not in missing:
                 missing[species_id] = dict(item)
 
+    incompatible_count = sum(
+        1
+        for item in missing.values()
+        if item.get("status") == "image_available_but_incompatible_or_unknown_license"
+    )
     merged = {
-        "version": 1,
-        "source": "iNaturalist",
+        "version": 2,
+        "source": "reference image collection",
         "mode": "collect",
+        "allowed_image_licenses": sorted(ALLOWED_OFFLINE_LICENSES),
         "catalog_species_considered": considered,
         "species_with_offline_image": len(images),
         "species_missing_usable_image": len(missing),
+        "species_with_incompatible_or_unknown_image_license": incompatible_count,
         "retryable_errors": sum(1 for item in missing.values() if item.get("retryable")),
         "policy": {
             "offline_first": True,
@@ -69,6 +97,7 @@ def merge(input_dir: Path, output_dir: Path, report_path: Path) -> dict:
             "original_source_link_retained": True,
             "creator_and_license_retained": True,
             "location_metadata_stored": False,
+            "redistributable_licenses": ["CC0", "CC BY"],
         },
         "images": [images[key] for key in sorted(images)],
         "missing": [missing[key] for key in sorted(missing)],
@@ -89,6 +118,7 @@ def main() -> None:
         "catalog_species_considered": report["catalog_species_considered"],
         "species_with_offline_image": report["species_with_offline_image"],
         "species_missing_usable_image": report["species_missing_usable_image"],
+        "species_with_incompatible_or_unknown_image_license": report["species_with_incompatible_or_unknown_image_license"],
         "retryable_errors": report["retryable_errors"],
     }), flush=True)
 

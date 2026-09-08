@@ -1,0 +1,220 @@
+name: Verspreidingsatlas offline reference images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/slime-mould-scope-and-transient-safety
+    paths:
+      - .github/workflows/verspreidingsatlas-reference-images.yml
+      - tool/collect_verspreidingsatlas_reference_images.py
+      - tool/test_collect_verspreidingsatlas_reference_images.py
+      - tool/merge_reference_image_batches.py
+      - tool/build_nsr_fungi_catalog.py
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: verspreidingsatlas-reference-images-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TOTAL_BATCHES: 80
+  COLLECTOR_COUNT: 10
+  PROGRESS_SCHEMA: strict-v3
+
+jobs:
+  prepare:
+    name: prepare-verspreidingsatlas-queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install parser test tooling
+        run: python3 -m pip install Pillow beautifulsoup4
+      - name: Verify strict per-photo license association
+        run: python3 tool/test_collect_verspreidingsatlas_reference_images.py
+      - name: Generate current field-guide catalogue
+        run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
+      - name: Download official Verspreidingsatlas paddenstoelen taxa XML
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/verspreidingsatlas
+          python3 - <<'PY'
+          import urllib.request
+          from pathlib import Path
+          url = 'https://www.verspreidingsatlas.nl/taxa/paddenstoelen'
+          req = urllib.request.Request(url, headers={
+              'User-Agent': 'Gerards-Paddestoelen-Wegwijzer/1.0 Verspreidingsatlas-image-curation',
+              'Accept': 'application/xml,text/xml,*/*;q=0.8',
+          })
+          with urllib.request.urlopen(req, timeout=60) as response:
+              data = response.read()
+          if len(data) < 1000:
+              raise SystemExit(f'Unexpectedly small taxa response: {len(data)} bytes')
+          Path('build/verspreidingsatlas/taxa-paddenstoelen.xml').write_bytes(data)
+          print(f'Downloaded {len(data)} bytes from official taxa web service')
+          PY
+      - name: Upload collection queue
+        uses: actions/upload-artifact@v4
+        with:
+          name: verspreidingsatlas-reference-image-queue
+          path: |
+            assets/data/species_catalog.json
+            build/verspreidingsatlas/taxa-paddenstoelen.xml
+          if-no-files-found: error
+          retention-days: 14
+
+  collect:
+    name: verspreidingsatlas-collector-${{ matrix.collector }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        collector: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install collection tooling
+        run: python3 -m pip install Pillow beautifulsoup4
+
+      - name: Restore previous progress for this collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/verspreidingsatlas-shards
+          artifact_name="verspreidingsatlas-reference-image-progress-${PROGRESS_SCHEMA}-${{ matrix.collector }}"
+          artifact_id="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${artifact_name}&per_page=100" \
+            --jq '[.artifacts[] | select(.expired == false)] | sort_by(.created_at) | reverse | .[0].id // empty')"
+          if [ -z "$artifact_id" ]; then
+            echo "No prior ${PROGRESS_SCHEMA} progress for Verspreidingsatlas collector ${{ matrix.collector }}."
+            exit 0
+          fi
+          echo "Restoring collector ${{ matrix.collector }} from ${PROGRESS_SCHEMA} artifact ${artifact_id}."
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > /tmp/verspreidingsatlas-progress.zip
+          unzip -q -o /tmp/verspreidingsatlas-progress.zip -d build/verspreidingsatlas-shards
+
+      - name: Download collection queue
+        uses: actions/download-artifact@v4
+        with:
+          name: verspreidingsatlas-reference-image-queue
+          path: build/queue
+
+      - name: Collect assigned 80-way shards
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/verspreidingsatlas-shards/images build/verspreidingsatlas-shards/reports
+          catalog="build/queue/assets/data/species_catalog.json"
+          taxa="build/queue/build/verspreidingsatlas/taxa-paddenstoelen.xml"
+
+          # Ten workers share 80 stable modulo shards. Each page request is delayed
+          # to avoid hammering Verspreidingsatlas; HTTP 429/5xx failures remain
+          # retryable and are resumed only from this parser-policy schema.
+          for pass in 1 2 3 4; do
+            echo "=== Verspreidingsatlas collector ${{ matrix.collector }} retry pass ${pass}/4 ==="
+            retryable=0
+            for offset in $(seq 0 7); do
+              batch=$(( ${{ matrix.collector }} + offset * 10 ))
+              report="build/verspreidingsatlas-shards/reports/batch-${batch}.json"
+              python3 tool/collect_verspreidingsatlas_reference_images.py \
+                --catalog "$catalog" \
+                --taxa "$taxa" \
+                --output-dir build/verspreidingsatlas-shards/images \
+                --report "$report" \
+                --batch-index "$batch" \
+                --batch-count "$TOTAL_BATCHES" \
+                --delay 2.0 \
+                --resume
+              batch_retryable="$(python3 - "$report" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8') as fh:
+              print(int(json.load(fh).get('retryable_errors', 0)))
+          PY
+              )"
+              retryable=$((retryable + batch_retryable))
+            done
+            echo "collector ${{ matrix.collector }} retryable failures after pass ${pass}: ${retryable}"
+            if [ "$retryable" -eq 0 ]; then
+              break
+            fi
+            if [ "$pass" -lt 4 ]; then
+              sleep $((pass * 90))
+            fi
+          done
+
+      - name: Preserve collector progress
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verspreidingsatlas-reference-image-progress-${{ env.PROGRESS_SCHEMA }}-${{ matrix.collector }}
+          path: |
+            build/verspreidingsatlas-shards/images/
+            build/verspreidingsatlas-shards/reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+  merge:
+    name: merge-verspreidingsatlas-80-batches
+    needs: collect
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download all collector shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: verspreidingsatlas-reference-image-progress-${{ env.PROGRESS_SCHEMA }}-*
+          path: build/verspreidingsatlas-shards
+          merge-multiple: true
+
+      - name: Merge current collection state
+        run: |
+          python3 tool/merge_reference_image_batches.py \
+            --input-dir build/verspreidingsatlas-shards \
+            --output-dir build/verspreidingsatlas-offline-reference-images \
+            --report build/verspreidingsatlas-reference-images.json
+
+      - name: Show collection totals and verify safe completion
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('build/verspreidingsatlas-reference-images.json').read_text(encoding='utf-8'))
+          for key in (
+              'catalog_species_considered',
+              'species_with_offline_image',
+              'species_missing_usable_image',
+              'species_with_incompatible_or_unknown_image_license',
+              'retryable_errors',
+          ):
+              print(f'{key}: {data.get(key)}')
+          retryable = int(data.get('retryable_errors', 0))
+          if retryable:
+              raise SystemExit(f'Verspreidingsatlas collection still has {retryable} retryable errors.')
+          images = int(data.get('species_with_offline_image', 0))
+          if images == 0:
+              print('No Verspreidingsatlas photos were bundled. This is an acceptable fail-closed result when no individual photo proves CC0 or CC BY; the source upload terms only offer a non-commercial Creative Commons option, which is outside the offline allowlist.')
+          PY
+
+      - name: Upload Verspreidingsatlas offline media pack and audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: verspreidingsatlas-offline-reference-images
+          path: |
+            build/verspreidingsatlas-offline-reference-images/
+            build/verspreidingsatlas-reference-images.json
+          if-no-files-found: error
+          retention-days: 14
