@@ -5,8 +5,10 @@ on:
   push:
     branches:
       - feature/full-catalogue-offline-images
+      - feature/slime-mould-scope-and-transient-safety
     paths:
       - .github/workflows/full-catalogue-reference-images.yml
+      - tool/build_nsr_fungi_catalog.py
       - tool/collect_inaturalist_reference_images.py
       - tool/merge_reference_image_batches.py
 
@@ -15,14 +17,40 @@ permissions:
   actions: read
 
 concurrency:
-  group: full-catalogue-reference-images
+  group: full-catalogue-reference-images-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  TOTAL_BATCHES: 80
+  COLLECTOR_COUNT: 10
+
 jobs:
+  prepare:
+    name: prepare-catalogue
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Generate current field-guide catalogue
+        run: python3 tool/build_nsr_fungi_catalog.py --min-species 10000
+      - name: Upload catalogue snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-image-catalogue
+          path: assets/data/species_catalog.json
+          if-no-files-found: error
+          retention-days: 14
+
   collect:
-    name: collect-full-catalogue
+    name: collector-${{ matrix.collector }}
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        collector: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -30,59 +58,53 @@ jobs:
       - name: Install image tooling
         run: python3 -m pip install Pillow
 
-      - name: Restore latest collection progress
-        id: restore
+      - name: Restore previous progress for this collector
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build/reference-image-shards
+          artifact_name="full-catalogue-reference-image-progress-${{ matrix.collector }}"
           artifact_id="$(gh api \
             -H 'Accept: application/vnd.github+json' \
-            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=full-catalogue-reference-image-progress&per_page=100" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${artifact_name}&per_page=100" \
             --jq '[.artifacts[] | select(.expired == false)] | sort_by(.created_at) | reverse | .[0].id // empty')"
           if [ -z "$artifact_id" ]; then
-            echo "No previous progress artifact found; starting a fresh catalogue pass."
-            echo "restored=false" >> "$GITHUB_OUTPUT"
+            echo "No prior progress for collector ${{ matrix.collector }}."
             exit 0
           fi
-          echo "Restoring progress artifact ${artifact_id}"
+          echo "Restoring collector ${{ matrix.collector }} from artifact ${artifact_id}."
           gh api \
             -H 'Accept: application/vnd.github+json' \
             "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > /tmp/reference-progress.zip
           unzip -q -o /tmp/reference-progress.zip -d build/reference-image-shards
-          echo "restored=true" >> "$GITHUB_OUTPUT"
 
-      - name: Generate catalogue once when needed
-        run: |
-          if [ ! -s build/reference-image-shards/catalog/species_catalog.json ]; then
-            python3 tool/build_nsr_fungi_catalog.py --min-species 10000
-            mkdir -p build/reference-image-shards/catalog
-            cp assets/data/species_catalog.json build/reference-image-shards/catalog/species_catalog.json
-          else
-            echo "Reusing catalogue from previous collection progress."
-          fi
+      - name: Download current catalogue snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: reference-image-catalogue
+          path: build/reference-image-shards/catalog
 
-      - name: Collect and retry only unfinished species
+      - name: Collect assigned 80-way shards
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build/reference-image-shards/images build/reference-image-shards/reports
 
-          # Pass 1 resumes all prior completed/unavailable records and queries only
-          # species that have never completed or previously failed transiently.
-          # Later passes retry only transient failures. Successfully downloaded
-          # JPEGs and confirmed unavailable species are never recollected.
-          for pass in 1 2 3 4 5 6; do
-            echo "=== retry pass ${pass}/6 ==="
+          # Ten workers share 80 stable modulo shards. Collector N handles
+          # N, N+10, ... N+70. The same shard numbers are reused on retries,
+          # so completed and permanently unavailable species resume safely.
+          for pass in 1 2 3 4; do
+            echo "=== collector ${{ matrix.collector }} retry pass ${pass}/4 ==="
             retryable=0
-            for batch in $(seq 0 15); do
+            for offset in $(seq 0 7); do
+              batch=$(( ${{ matrix.collector }} + offset * 10 ))
               report="build/reference-image-shards/reports/batch-${batch}.json"
               python3 tool/collect_inaturalist_reference_images.py \
                 --catalog build/reference-image-shards/catalog/species_catalog.json \
                 --output-dir build/reference-image-shards/images \
                 --report "$report" \
                 --batch-index "$batch" \
-                --batch-count 16 \
+                --batch-count "$TOTAL_BATCHES" \
                 --delay 1.25 \
                 --resume
               batch_retryable="$(python3 - "$report" <<'PY'
@@ -93,30 +115,42 @@ jobs:
               )"
               retryable=$((retryable + batch_retryable))
             done
-            echo "retryable failures remaining after pass ${pass}: ${retryable}"
+            echo "collector ${{ matrix.collector }} retryable failures after pass ${pass}: ${retryable}"
             if [ "$retryable" -eq 0 ]; then
               break
             fi
-            if [ "$pass" -lt 6 ]; then
-              echo "Backing off before retrying transient failures."
+            if [ "$pass" -lt 4 ]; then
               sleep $((pass * 60))
             fi
           done
 
-      - name: Preserve collection progress
+      - name: Preserve collector progress
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: full-catalogue-reference-image-progress
+          name: full-catalogue-reference-image-progress-${{ matrix.collector }}
           path: |
-            build/reference-image-shards/catalog/species_catalog.json
             build/reference-image-shards/images/
             build/reference-image-shards/reports/
           if-no-files-found: warn
           retention-days: 14
 
+  merge:
+    name: merge-80-batches
+    needs: collect
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download all collector shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: full-catalogue-reference-image-progress-*
+          path: build/reference-image-shards
+          merge-multiple: true
+
       - name: Merge current collection state
-        if: always()
         run: |
           python3 tool/merge_reference_image_batches.py \
             --input-dir build/reference-image-shards \
@@ -124,7 +158,6 @@ jobs:
             --report build/full-catalogue-reference-images.json
 
       - name: Show collection totals
-        if: always()
         run: |
           python3 - <<'PY'
           import json
@@ -142,13 +175,12 @@ jobs:
               print(f'{key}: {data.get(key)}')
           PY
 
-      - name: Upload current offline media pack
-        if: always()
+      - name: Upload merged offline media pack
         uses: actions/upload-artifact@v4
         with:
           name: full-catalogue-offline-reference-images
           path: |
             build/offline-reference-images/
             build/full-catalogue-reference-images.json
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
