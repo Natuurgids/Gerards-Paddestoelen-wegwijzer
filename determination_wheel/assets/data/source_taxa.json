@@ -1,0 +1,27 @@
+{
+  "source": "Een inleiding tot de paddenstoelengeslachten_Likonadag_2015_v3",
+  "scope_note": "Source-grounded group profiles only. These are candidate-group descriptors, not a complete species key.",
+  "spore_colour_classes": ["witsporige", "roodsporige", "bruinsporige", "donkersporige"],
+  "groups": [
+    {"key":"lepiota_group","label":"Parasolzwammen en aanverwanten","genera":["Lepiota","Cystolepiota","Macrolepiota","Leucoagaricus","Leucocoprinus"],"spore_print":"wit, crème tot bleekroze","traits":["klein tot groot","vaak fragiel met velum","hoed glad of schubbig","lamellen vrij","steel vaak met ring","saprotroof op bodem"]},
+    {"key":"laccaria","label":"Fopzwammen","genera":["Laccaria"],"spore_print":"wit","traits":["klein","zonder velum","vaak paarse tot baksteenrode tinten","lamellen dik en wijd uiteenstaand","hoed sterk hygrofaan","ectomycorrhiza"]},
+    {"key":"hygro_group","label":"Wasplaten / Slijmkoppen","genera":["Hygrocybe","Hygrophorus"],"spore_print":"wit","traits":["klein tot middelgroot","vettige, wijd uiteenstaande lamellen","plaatjes meestal in kleur van hoed","hoed droog of slijmerig, glad of schubbig"]},
+    {"key":"omphalina_group","label":"Trechtertjes","genera":["Omphalina","Rickenella"],"spore_print":"wit tot roomkleurig","traits":["klein","wijd uiteenstaande aflopende lamellen","zonder velum","trechtervormig hoedje","saprotroof"]},
+    {"key":"marasmius_group","label":"Taailingen en verwanten","genera":["Marasmius","Crinipellis","Gymnopus","Rhodocollybia","Marasmiellus"],"spore_print":"wit tot roomkleurig","traits":["klein tot middelgroot","zonder velum","vaak relatief taai en uitdrogingsbestendig","saprotroof"]},
+    {"key":"pluteus","label":"Hertenzwammen","genera":["Pluteus"],"spore_print":"roze","traits":["klein tot groot","breekbaar","zonder velum of beurs","lamellen buikig en vrij","rijpe lamellen rozig","saprotroof, vaak op hout"]},
+    {"key":"pholiota_group","label":"Bundelzwammen en aanverwanten","genera":["Pholiota","Kuehneromyces"],"spore_print":"bruin","traits":["klein tot groot en vlezig","vaak velum","hoed droog of slijmerig, glad of schubbig","lamellen aangehecht","steel vaak met ringvormige velumresten","vaak op hout"]},
+    {"key":"stropharia_group","label":"Kaalkopjes / Stropharia en verwanten","genera":["Stropharia","Hypholoma","Psilocybe","Deconica"],"spore_print":"met purpertint","traits":["klein tot groot","purpertint in sporee en vaak rijpe lamellen","velum al dan niet aanwezig","saprotroof"]},
+    {"key":"shell_group","label":"Schelpzwammen","genera":["Plicaturopsis","Arrhenia","Calyptella","Schizophyllum","Lentinellus","Tapinella","Crepidotus","Deconica","Simocybe","Rhodotus","Clitopilus","Pleurotus","Hohenbuehelia","Panellus"],"spore_print":"variabel; bron toont wit als voorbeeld","traits":["steel vrijwel afwezig of zijdelings","hoed met lamellen, rimpels of vrijwel glad"]},
+    {"key":"galerina","label":"Mosklokjes","genera":["Galerina"],"spore_print":"oker tot rosbruin","traits":["klein en teer","lijkt op Mycena maar bruine lamellen","soms velum","saprotroof","vaak tussen mossen, soms dood hout"]},
+    {"key":"hebeloma","label":"Vaalhoeden","genera":["Hebeloma"],"spore_print":"vaalbruin","traits":["klein tot groot","bron vermeldt zonder velum","hoed vaak bruintinten","lamellen bleekbruin, soms tranend","ectomycorrhiza"]},
+    {"key":"agrocybe","label":"Leemhoeden","genera":["Agrocybe"],"spore_print":"vaalbruin / koffie met melk","traits":["klein tot groot en vlezig","meeste soorten met velum","hoed glad, vaak vettig, zonder radiale structuur","saprotroof, meestal bodem"]}
+  ],
+  "russulaceae": {
+    "spore_print":"wit tot okergeel",
+    "shared_traits":["duidelijke hoed en steel","hard, vlezig of broos door sferocysten","lamellen moeilijk van hoedweefsel los te maken"],
+    "split":[
+      {"genus":"Russula","criterion":"bij beschadiging geen melksap"},
+      {"genus":"Lactarius","criterion":"bij beschadiging melksap"}
+    ]
+  }
+}
