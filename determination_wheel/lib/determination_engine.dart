@@ -80,7 +80,8 @@ const candidates=<Candidate>[
   Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'}),
   // Paxillus/Tapinella source profile explicitly gives (medium-)large stature, strongly decurrent gills, dark-brown bruising flesh and a brown spore print.
   Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'},size:{'Middelgroot','Groot'},trama:{'Verkleurt bij druk/wrijven'}),
-  Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'}),
+  // Cantharellus source profile explicitly gives a centrally stalked cap with lamella-like/vein-like ridges and a cream-yellowish spore print.
+  Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'},spore:{'Wit / crème'}),
   Candidate('Parasolzwammen (+)',spore:{'Wit / crème','Roze'},gill:{'Vrij'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
   // Source profile explicitly states: small, no velum, white spores, strongly hygrophanous.
   Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
