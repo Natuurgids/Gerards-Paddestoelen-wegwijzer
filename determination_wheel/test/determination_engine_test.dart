@@ -36,6 +36,22 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('source-backed size observations participate in filtering',(){
+      final result=determine({9:'Wit / crème',19:'Groot'});
+      expect(result.remaining.map((c)=>c.name),isNot(contains('Fopzwammen · Laccaria')));
+      expect(result.remaining.map((c)=>c.name),isNot(contains('Trechtertjes · Omphalina/Rickenella')));
+      expect(result.remaining.map((c)=>c.name),isNot(contains('Taailingen (+)')));
+    });
+    test('source-backed trama observation supports Russulaceae',(){
+      final result=determine({9:'Wit / crème',17:'Bodem / strooisel',23:'Broos / breekt krijtachtig'});
+      final candidate=result.remaining.firstWhere((c)=>c.name.startsWith('Russulaceae'));
+      expect(candidate.supporting({9:'Wit / crème',17:'Bodem / strooisel',23:'Broos / breekt krijtachtig'}),contains('trama / vlees: Broos / breekt krijtachtig'));
+    });
+    test('supporting evidence only reports matching observed criteria',(){
+      final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
+      expect(pluteus.supporting({6:'Vrij',9:'Roze',17:'Dood hout'}),containsAll(['lamellen: Vrij','sporenkleur: Roze']));
+      expect(pluteus.supporting({6:'Onzeker',9:'Roze'}),isNot(contains('lamellen: Onzeker')));
+    });
     test('milk supports Lactarius only when Russulaceae remains',(){
       final result=determine({9:'Wit / crème',17:'Bodem / strooisel',22:'Melksap aanwezig'});
       expect(result.genusHint,'Lactarius');
