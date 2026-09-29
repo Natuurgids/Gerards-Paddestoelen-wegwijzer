@@ -86,7 +86,7 @@ const candidates=<Candidate>[
   // The supplied Lepiota-group profile gives free gills, a smooth-or-scaly cap, white/cream-to-pale-pink spores and saprotrophic growth on soil; velum/ring are only typical.
   Candidate('Parasolzwammen (+)',spore:{'Wit / crème','Roze'},gill:{'Vrij'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
   // Source profile explicitly states: small, no velum, white spores, strongly hygrophanous.
-  Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
+  Candidate('Fopzwammen · Laccaria',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
   // The 2015 combined Hygrocybe/Hygrophorus profile explicitly gives small-to-medium fruitbodies and a white spore print; gill/cap colour and velum are variable.
   Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'},size:{'Klein','Middelgroot'}),
   // Omphalina/Rickenella are explicitly small, without velum, with decurrent gills and a white-to-cream spore print; colour and substrate are only typical.
