@@ -53,7 +53,10 @@ class MatchScore {
   const MatchScore({required this.percent,required this.matched,required this.observed,required this.unknown,required this.unanswered});
   final int? percent;
   final int matched,observed,unknown,unanswered;
-  String get label=>percent==null?'Nog geen beoordeelde bronkenmerken':'Match $percent% · $matched/$observed passende kenmerken${unknown>0?' · $unknown onzeker':''}${unanswered>0?' · $unanswered nog niet gevraagd':''}';
+  int get assessed=>observed+unknown;
+  int get relevant=>assessed+unanswered;
+  double get coverage=>relevant==0?0:assessed/relevant;
+  String get label=>percent==null?'Nog geen beoordeelde bronkenmerken':'Match $percent% · $matched/$observed passende kenmerken${unknown>0?' · $unknown onzeker':''}${unanswered>0?' · $unanswered nog niet gevraagd':''} · ${(coverage*100).round()}% dekking';
 }
 
 bool isUnknown(String value){
@@ -110,6 +113,8 @@ DeterminationResult determine(Map<int,String> answers){
     final sa=a.score(answers),sb=b.score(answers);
     final byPercent=(sb.percent??-1).compareTo(sa.percent??-1);
     if(byPercent!=0)return byPercent;
+    final byCoverage=sb.coverage.compareTo(sa.coverage);
+    if(byCoverage!=0)return byCoverage;
     final byEvidence=sb.matched.compareTo(sa.matched);
     if(byEvidence!=0)return byEvidence;
     return a.name.compareTo(b.name);
