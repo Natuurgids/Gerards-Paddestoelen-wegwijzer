@@ -11,6 +11,8 @@ void main(){
     expect(detailKeyFor(candidateNames:['Taailingen (+)'])?.id,'toughshanks');
     expect(detailKeyFor(candidateNames:['Bundelzwammen (+) · Pholiota/Kuehneromyces'])?.id,'pholiota');
     expect(detailKeyFor(candidateNames:['Kaalkopjes / Stropharia (+)'])?.id,'stropharia');
+    expect(detailKeyFor(candidateNames:['Krulzomen · Paxillus/Tapinella'])?.id,'paxillus');
+    expect(detailKeyFor(candidateNames:['Cantharellen · Cantharellus'])?.id,'cantharellus');
   });
   test('ambiguous candidate sets do not pretend to have a detail key',(){
     expect(detailKeyFor(candidateNames:['Hertenzwammen · Pluteus','Mosklokjes · Galerina']),isNull);
