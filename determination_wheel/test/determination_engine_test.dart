@@ -107,12 +107,15 @@ void main(){
     expect(score.coverage,closeTo(1/3,.0001));
     expect(score.label,contains('33% dekking'));
   });
-  test('equal matches prefer candidates with more evidence coverage',(){
-    final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'});
-    final scores=result.remaining.map((c)=>c.score({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'})).toList();
-    for(var i=1;i<scores.length;i++){
-      if(scores[i-1].percent==scores[i].percent) expect(scores[i-1].coverage,greaterThanOrEqualTo(scores[i].coverage));
-    }
+  test('equal matches prefer more positive evidence, not merely coverage',(){
+    const sparse=Candidate('Sparse',spore:{'Roze'});
+    const supported=Candidate('Supported',spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'});
+    final answers={6:'Vrij',7:'Geen zichtbaar',9:'Roze'};
+    expect(sparse.score(answers).percent,100);
+    expect(sparse.score(answers).coverage,1);
+    expect(supported.score(answers).percent,100);
+    expect(supported.score(answers).matched,3);
+    expect(supported.score(answers).matched,greaterThan(sparse.score(answers).matched));
   });
 
 }
