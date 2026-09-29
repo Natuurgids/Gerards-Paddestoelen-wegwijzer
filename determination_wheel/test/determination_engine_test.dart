@@ -40,6 +40,12 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Galerina keeps categorical size and spore criteria but not variable ecology',(){
+      final possible=determine({7:'Ring',9:'Bruin / roest',17:'Dood hout',19:'Klein'});
+      expect(possible.remaining.map((c)=>c.name),contains('Mosklokjes · Galerina'));
+      final conflict=determine({9:'Bruin / roest',19:'Groot'});
+      expect(conflict.remaining.map((c)=>c.name),isNot(contains('Mosklokjes · Galerina')));
+    });
     test('Agrocybe is filtered by spore colour, not its usual velum or substrate',(){
       final possible=determine({7:'Beurs / volva',9:'Bruin / roest',17:'Dood hout'});
       expect(possible.remaining.map((c)=>c.name),contains('Leemhoeden · Agrocybe'));
