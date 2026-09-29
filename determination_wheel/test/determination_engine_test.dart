@@ -40,6 +40,12 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Laccaria hard criteria are all explicit in the supplied source profile',(){
+      final matching=determine({7:'Geen zichtbaar',8:'Ja',9:'Wit / crème',19:'Klein'});
+      expect(matching.remaining.map((c)=>c.name),contains('Fopzwammen · Laccaria'));
+      final conflicting=determine({8:'Nee'});
+      expect(conflicting.remaining.map((c)=>c.name),isNot(contains('Fopzwammen · Laccaria')));
+    });
     test('source-backed size observations participate in filtering',(){
       final result=determine({9:'Wit / crème',19:'Groot'});
       expect(result.remaining.map((c)=>c.name),isNot(contains('Fopzwammen · Laccaria')));
