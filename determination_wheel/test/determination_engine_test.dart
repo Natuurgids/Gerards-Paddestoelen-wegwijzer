@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Pluteus keeps categorical free-gill, no-velum and pink-spore criteria',(){
+      final possible=determine({6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
+      expect(possible.remaining.map((c)=>c.name),contains('Hertenzwammen · Pluteus'));
+      final ringed=determine({6:'Vrij',7:'Ring',9:'Roze'});
+      expect(ringed.remaining.map((c)=>c.name),isNot(contains('Hertenzwammen · Pluteus')));
+      final attached=determine({6:'Aangehecht',7:'Geen zichtbaar',9:'Roze'});
+      expect(attached.remaining.map((c)=>c.name),isNot(contains('Hertenzwammen · Pluteus')));
+    });
     test('Omphalina/Rickenella keeps categorical funnel-group criteria',(){
       final possible=determine({6:'Aflopend',7:'Geen zichtbaar',9:'Wit / crème',17:'Dood hout',19:'Klein'});
       expect(possible.remaining.map((c)=>c.name),contains('Trechtertjes · Omphalina/Rickenella'));
