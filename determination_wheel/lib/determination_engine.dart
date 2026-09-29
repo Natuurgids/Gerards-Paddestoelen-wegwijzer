@@ -34,25 +34,26 @@ class Candidate {
   bool matches(Map<int,String> answers)=>conflict(answers)==null;
 
   MatchScore score(Map<int,String> answers){
-    var matched=0,observed=0,unknown=0;
+    var matched=0,observed=0,unknown=0,unanswered=0;
     void check(int step,Set<String>? allowed){
       if(allowed==null)return;
       final value=answers[step];
-      if(value==null||isUnknown(value)){unknown++;return;}
+      if(value==null){unanswered++;return;}
+      if(isUnknown(value)){unknown++;return;}
       observed++;
       if(allowed.contains(value))matched++;
     }
     check(1,form);check(4,underside);check(5,surface);check(6,gill);check(7,velum);check(8,hygro);check(9,spore);check(17,substrate);check(19,size);check(23,trama);
     final percent=observed==0?null:(100*matched/observed).round();
-    return MatchScore(percent:percent,matched:matched,observed:observed,unknown:unknown);
+    return MatchScore(percent:percent,matched:matched,observed:observed,unknown:unknown,unanswered:unanswered);
   }
 }
 
 class MatchScore {
-  const MatchScore({required this.percent,required this.matched,required this.observed,required this.unknown});
+  const MatchScore({required this.percent,required this.matched,required this.observed,required this.unknown,required this.unanswered});
   final int? percent;
-  final int matched,observed,unknown;
-  String get label=>percent==null?'Nog geen score':'Match $percent% · $matched/$observed passende kenmerken${unknown>0?' · $unknown onbekend':''}';
+  final int matched,observed,unknown,unanswered;
+  String get label=>percent==null?'Nog geen beoordeelde bronkenmerken':'Match $percent% · $matched/$observed passende kenmerken${unknown>0?' · $unknown onzeker':''}${unanswered>0?' · $unanswered nog niet gevraagd':''}';
 }
 
 bool isUnknown(String value){
