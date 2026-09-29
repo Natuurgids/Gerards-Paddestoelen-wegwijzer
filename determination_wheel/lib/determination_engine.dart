@@ -89,7 +89,8 @@ const candidates=<Candidate>[
   Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',spore:{'Bruin / roest'},gill:{'Aangehecht'}),
   Candidate('Kaalkopjes / Stropharia (+)',spore:{'Purperbruin / donker'}),
   Candidate('Mosklokjes · Galerina',spore:{'Bruin / roest'},size:{'Klein'}),
-  // Source profile is categorical here: without velum, with a pale-brown spore print.\n  Candidate('Vaalhoeden · Hebeloma',spore:{'Bruin / roest'},velum:{'Geen zichtbaar'}),
+  // Source profile is categorical here: without velum, with a pale-brown spore print.
+  Candidate('Vaalhoeden · Hebeloma',spore:{'Bruin / roest'},velum:{'Geen zichtbaar'}),
   Candidate('Leemhoeden · Agrocybe',spore:{'Bruin / roest'}),
   Candidate('Russulaceae · Russula/Lactarius',trama:{'Broos / breekt krijtachtig'}),
 ];
