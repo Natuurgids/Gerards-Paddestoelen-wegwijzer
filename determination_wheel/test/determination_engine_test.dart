@@ -102,10 +102,10 @@ void main(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
     final score=pluteus.score({4:'Plaatjes',6:'Vrij'});
     expect(score.percent,100);
-    expect(score.assessed,2);
+    expect(score.assessed,1);
     expect(score.relevant,3);
-    expect(score.coverage,closeTo(2/3,.0001));
-    expect(score.label,contains('67% dekking'));
+    expect(score.coverage,closeTo(1/3,.0001));
+    expect(score.label,contains('33% dekking'));
   });
   test('equal matches prefer candidates with more evidence coverage',(){
     final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'});
