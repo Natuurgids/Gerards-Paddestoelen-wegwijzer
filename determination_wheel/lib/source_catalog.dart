@@ -1,9 +1,12 @@
 class SourceTaxonCatalog {
-  const SourceTaxonCatalog({required this.group,required this.profile,required this.taxa,required this.note});
+  const SourceTaxonCatalog({required this.group,required this.profile,required this.taxa,required this.note,this.nextEvidence=const []});
   final String group;
   final List<String> profile;
   final List<String> taxa;
   final String note;
+  final List<String> nextEvidence;
+
+  bool get hasNamedPossibilities=>taxa.isNotEmpty;
 }
 
 // Transcribed only from the supplied Likonadag presentation. These names are
@@ -14,19 +17,22 @@ const sourceCatalogs=<String,SourceTaxonCatalog>{
     group:'Oesterzwammen (Pleurotus)',
     profile:['Klein tot groot zonder velum','Vaak relatief taai en uitdrogingsbestendig','Lamellen witachtig en aflopend','Steel meestal kort en zijdelings aangehecht','Sporee wit tot roomkleurig','Parasieten en saprofyten; veroorzaken witrot'],
     taxa:[],
-    note:'De 2016-bron ondersteunt Pleurotus als eigen geslachtsgroep met vijf soorten in Vlaanderen, maar geeft hier geen volledige soortensleutel.',
+    note:'De 2016-bron ondersteunt Pleurotus als eigen geslachtsgroep met vijf soorten in Vlaanderen, maar noemt in de geraadpleegde passage geen soortnamen om als afzonderlijke mogelijkheden te tonen.',
+    nextEvidence:['Gebruik een volledige Pleurotus-detailsleutel','Microscopie of DNA kan nodig zijn wanneer soorten macroscopisch niet betrouwbaar te scheiden zijn'],
   ),
   'pluteus':SourceTaxonCatalog(
     group:'Hertenzwammen (Pluteus)',
     profile:['Klein tot groot en breekbaar','Zonder velum / zonder beurs','Lamellen buikig en vrij; bij rijpheid rozig','Sporee roze','Saprotroof; vaak op hout'],
     taxa:['Knolvoethertenzwam','Pluishoedhertenzwam','Roetkleurige hertenzwam','Gewone hertenzwam','Bruinsnedehertenzwam','Geaderde hertenzwam','Geelsteelhertenzwam','Grauwgroene hertenzwam'],
     note:'De bron noemt deze hertenzwammen, maar geeft op deze dia’s geen volledige kenmerkenmatrix om ze onderling betrouwbaar uit te sleutelen.',
+    nextEvidence:['Vergelijk de volledige detailsleutel per soort','Microscopie kan nodig zijn wanneer macroscopische kenmerken overlappen'],
   ),
   'agrocybe':SourceTaxonCatalog(
     group:'Leemhoeden (Agrocybe)',
     profile:['Klein tot groot en vlezig','Bij de meeste soorten velum','Hoed glad, vaak vettig, zonder radiale structuur','Sporee vaalbruin','Saprotroof; meestal op de bodem'],
     taxa:['Knolletjesleemhoed','Grasleemhoed','Populierleemhoed','Vroege leemhoed','Leverkleurige leemhoed','Fluweelleemhoed','Moerasleemhoed','Gaderde leemhoed (Agrocybe rivulosa)'],
     note:'De bron toont deze soortnamen en noemt Agrocybe rivulosa bij een koffie-met-melk-kleurige sporee, maar levert hier geen volledige soortensleutel.',
+    nextEvidence:['Vergelijk de volledige detailsleutel per soort','Controleer zo nodig microscopische kenmerken'],
   ),
   'galerina':SourceTaxonCatalog(
     group:'Mosklokjes (Galerina)',
