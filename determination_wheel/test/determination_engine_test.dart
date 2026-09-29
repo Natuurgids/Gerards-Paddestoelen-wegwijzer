@@ -40,6 +40,12 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Agrocybe is filtered by spore colour, not its usual velum or substrate',(){
+      final possible=determine({7:'Beurs / volva',9:'Bruin / roest',17:'Dood hout'});
+      expect(possible.remaining.map((c)=>c.name),contains('Leemhoeden · Agrocybe'));
+      final conflict=determine({9:'Wit / crème'});
+      expect(conflict.remaining.map((c)=>c.name),isNot(contains('Leemhoeden · Agrocybe')));
+    });
     test('Hebeloma keeps its categorical no-velum and brown-spore source criteria',(){
       final matching=determine({7:'Geen zichtbaar',9:'Bruin / roest'});
       expect(matching.remaining.map((c)=>c.name),contains('Vaalhoeden · Hebeloma'));
