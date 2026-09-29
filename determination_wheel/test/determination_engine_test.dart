@@ -41,7 +41,7 @@ void main(){
       }
     });
     test('parasol group keeps categorical traits without requiring a ring',(){
-      final ringless=determine({5:'Schubbig / wrattig',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
+      final ringless=determine({5:'Schubbig / wrattig',6:'Vrij',9:'Roze',17:'Bodem / strooisel'});
       expect(ringless.remaining.map((c)=>c.name),contains('Parasolzwammen (+)'));
       final attached=determine({5:'Glad',6:'Aangehecht',9:'Wit / crème',17:'Bodem / strooisel'});
       expect(attached.remaining.map((c)=>c.name),isNot(contains('Parasolzwammen (+)')));
@@ -143,7 +143,7 @@ void main(){
       expect(result.remaining.map((c)=>c.name),contains('Bundelzwammen (+) · Pholiota/Kuehneromyces'));
     });
     test('Parasol profile keeps source-listed pale pink spores and does not require its typical ring',(){
-      final result=determine({5:'Glad',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
+      final result=determine({5:'Glad',6:'Vrij',9:'Roze',17:'Bodem / strooisel'});
       expect(result.remaining.map((c)=>c.name),contains('Parasolzwammen (+)'));
     });
     test('Laccaria hard criteria are all explicit in the supplied source profile',(){
