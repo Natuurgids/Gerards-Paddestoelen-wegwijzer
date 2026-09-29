@@ -90,7 +90,7 @@ const candidates=<Candidate>[
   Candidate('Mosklokjes · Galerina',spore:{'Bruin / roest'},size:{'Klein'}),
   Candidate('Vaalhoeden · Hebeloma',spore:{'Bruin / roest'},velum:{'Geen zichtbaar'}),
   Candidate('Leemhoeden · Agrocybe',spore:{'Bruin / roest'}),
-  Candidate('Russulaceae · Russula/Lactarius',spore:{'Wit / crème','Bruin / roest'},substrate:{'Bodem / strooisel'},trama:{'Broos / breekt krijtachtig'}),
+  Candidate('Russulaceae · Russula/Lactarius',trama:{'Broos / breekt krijtachtig'}),
 ];
 
 class DeterminationResult {
