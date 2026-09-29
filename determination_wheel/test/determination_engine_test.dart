@@ -139,8 +139,10 @@ void main(){
       expect(conflict.remaining.map((c)=>c.name),isNot(contains('Leemhoeden · Agrocybe')));
     });
     test('Hebeloma keeps its categorical no-velum and brown-spore source criteria',(){
-      final matching=determine({7:'Geen zichtbaar',9:'Bruin / roest'});
+      final matching=determine({4:'Plaatjes',7:'Geen zichtbaar',9:'Bruin / roest'});
       expect(matching.remaining.map((c)=>c.name),contains('Vaalhoeden · Hebeloma'));
+      final pores=determine({4:'Buisjes / poriën',7:'Geen zichtbaar',9:'Bruin / roest'});
+      expect(pores.remaining.map((c)=>c.name),isNot(contains('Vaalhoeden · Hebeloma')));
       final conflicting=determine({7:'Ring',9:'Bruin / roest'});
       expect(conflicting.remaining.map((c)=>c.name),isNot(contains('Vaalhoeden · Hebeloma')));
     });
