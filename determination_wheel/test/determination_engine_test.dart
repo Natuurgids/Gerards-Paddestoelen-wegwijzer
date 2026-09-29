@@ -72,7 +72,7 @@ void main(){
     expect(score.matched,2);
     expect(score.observed,2);
     expect(score.unknown,1);
-    expect(score.unanswered,1);
+    expect(score.unanswered,0);
   });
   test('match score is descriptive rather than a probability',(){
     final bolete=candidates.firstWhere((c)=>c.name=='Boleten');
@@ -103,9 +103,9 @@ void main(){
     final score=pluteus.score({4:'Plaatjes',6:'Vrij'});
     expect(score.percent,100);
     expect(score.assessed,2);
-    expect(score.relevant,4);
-    expect(score.coverage,.5);
-    expect(score.label,contains('50% dekking'));
+    expect(score.relevant,3);
+    expect(score.coverage,closeTo(2/3,.0001));
+    expect(score.label,contains('67% dekking'));
   });
   test('equal matches prefer candidates with more evidence coverage',(){
     final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'});
