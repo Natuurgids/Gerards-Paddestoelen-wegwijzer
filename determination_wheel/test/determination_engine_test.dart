@@ -200,8 +200,8 @@ void main(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
     final score=pluteus.score({4:'Plaatjes',6:'Vrij',7:'Onzeker',9:'Roze'});
     expect(score.percent,100);
-    expect(score.matched,2);
-    expect(score.observed,2);
+    expect(score.matched,3);
+    expect(score.observed,3);
     expect(score.unknown,1);
     expect(score.unanswered,0);
   });
@@ -233,10 +233,10 @@ void main(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
     final score=pluteus.score({4:'Plaatjes',6:'Vrij'});
     expect(score.percent,100);
-    expect(score.assessed,1);
-    expect(score.relevant,3);
-    expect(score.coverage,closeTo(1/3,.0001));
-    expect(score.label,contains('33% dekking'));
+    expect(score.assessed,2);
+    expect(score.relevant,4);
+    expect(score.coverage,closeTo(1/2,.0001));
+    expect(score.label,contains('50% dekking'));
   });
   test('equal matches rank by positive evidence, not merely coverage',(){
     const sparse=Candidate('Sparse',spore:{'Roze'});
@@ -252,9 +252,9 @@ void main(){
 
   test('complete only means every coded criterion was assessed',(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
-    expect(pluteus.score({6:'Vrij',7:'Geen zichtbaar',9:'Roze'}).complete,isTrue);
-    expect(pluteus.score({6:'Vrij',7:'Onzeker',9:'Roze'}).complete,isTrue);
-    expect(pluteus.score({6:'Vrij',9:'Roze'}).complete,isFalse);
+    expect(pluteus.score({4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'}).complete,isTrue);
+    expect(pluteus.score({4:'Plaatjes',6:'Vrij',7:'Onzeker',9:'Roze'}).complete,isTrue);
+    expect(pluteus.score({4:'Plaatjes',6:'Vrij',9:'Roze'}).complete,isFalse);
   });
 
 }
