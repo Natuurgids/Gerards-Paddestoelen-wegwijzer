@@ -84,6 +84,7 @@ const candidates=<Candidate>[
   Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
   Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'},size:{'Klein','Middelgroot'}),
   Candidate('Trechtertjes · Omphalina/Rickenella',spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein'}),
+  // Taailingen are explicitly small-to-medium, without velum, with a white-to-cream spore print; toughness is only typical.
   Candidate('Taailingen (+)',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'}),
   Candidate('Hertenzwammen · Pluteus',spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'}),
   Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',spore:{'Bruin / roest'},gill:{'Aangehecht'}),
