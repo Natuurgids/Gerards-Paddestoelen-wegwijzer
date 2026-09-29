@@ -10,8 +10,8 @@ void main(){
       final plates=determine({1:'Hoed + steel',4:'Plaatjes'});
       expect(plates.remaining.map((c)=>c.name),isNot(contains('Boleten')));
     });
-    test('Amanita profile accepts its currently encoded velum observations',(){
-      final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Beide',9:'Wit / crème'});
+    test('unsupported Amanita details do not hard-exclude the possibility',(){
+      final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Aangehecht',7:'Geen zichtbaar',9:'Roze'});
       expect(result.remaining.map((c)=>c.name),contains('Amanieten · Amanita'));
     });
     test('pink spores + free gills + no visible velum retains Pluteus',(){
