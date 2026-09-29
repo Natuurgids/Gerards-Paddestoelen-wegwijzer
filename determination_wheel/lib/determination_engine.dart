@@ -78,7 +78,8 @@ const candidates=<Candidate>[
   Candidate('Oesterzwammen · Pleurotus',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'}),
   Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'}),
   Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'}),
-  Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'},trama:{'Verkleurt bij druk/wrijven'}),
+  // Paxillus/Tapinella source profile explicitly gives (medium-)large stature, strongly decurrent gills, dark-brown bruising flesh and a brown spore print.
+  Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'},size:{'Middelgroot','Groot'},trama:{'Verkleurt bij druk/wrijven'}),
   Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'}),
   Candidate('Parasolzwammen (+)',spore:{'Wit / crème','Roze'},gill:{'Vrij'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
   // Source profile explicitly states: small, no velum, white spores, strongly hygrophanous.
