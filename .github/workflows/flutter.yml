@@ -75,7 +75,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Analyze
-        run: flutter analyze --exclude determination_wheel
+        run: flutter analyze
       - name: Test
         run: flutter test
       - name: Install determination wheel dependencies
