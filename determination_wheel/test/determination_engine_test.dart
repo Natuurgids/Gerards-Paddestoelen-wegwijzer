@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Taailingen hard criteria match the categorical source profile',(){
+      final possible=determine({7:'Geen zichtbaar',9:'Wit / crème',19:'Middelgroot'});
+      expect(possible.remaining.map((c)=>c.name),contains('Taailingen (+)'));
+      final withVelum=determine({7:'Ring',9:'Wit / crème',19:'Middelgroot'});
+      expect(withVelum.remaining.map((c)=>c.name),isNot(contains('Taailingen (+)')));
+      final tooLarge=determine({7:'Geen zichtbaar',9:'Wit / crème',19:'Groot'});
+      expect(tooLarge.remaining.map((c)=>c.name),isNot(contains('Taailingen (+)')));
+    });
     test('Galerina keeps categorical size and spore criteria but not variable ecology',(){
       final possible=determine({7:'Ring',9:'Bruin / roest',17:'Dood hout',19:'Klein'});
       expect(possible.remaining.map((c)=>c.name),contains('Mosklokjes · Galerina'));
