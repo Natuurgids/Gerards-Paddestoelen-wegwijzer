@@ -29,6 +29,9 @@ const toughshankDetailKey=DetailKey(id:'toughshanks',title:'Taailingen — bronc
 const pholiotaDetailKey=DetailKey(id:'pholiota',title:'Bundelzwammen — broncontrole',start:'confirm',sourceNote:'De bron ondersteunt Pholiota/Kuehneromyces als groep; soortniveau vraagt een echte detailsleutel.',steps:{'confirm':DetailStep(id:'confirm',title:'Controleer het groepsprofiel',help:'Bruine sporee, aangehechte lamellen, vaak velum/ringresten en vaak groei op hout.',options:[DetailOption('Profiel bevestigd',result:'Pholiota/Kuehneromyces — kandidaatgroep'),DetailOption('Niet zeker',result:'Bundelzwam-kandidaat; opnieuw beoordelen')])});
 const strophariaDetailKey=DetailKey(id:'stropharia',title:'Kaalkopjes / Stropharia — broncontrole',start:'confirm',sourceNote:'De bron ondersteunt deze groep via de purpertint van sporee/rijpe lamellen en saprotrofe leefwijze.',steps:{'confirm':DetailStep(id:'confirm',title:'Controleer het groepsprofiel',help:'Controleer vooral de purpertint in de sporee; velum kan aanwezig of afwezig zijn.',options:[DetailOption('Profiel bevestigd',result:'Stropharia/Hypholoma/Psilocybe/Deconica — kandidaatgroep'),DetailOption('Niet zeker',result:'Kaalkopje/Stropharia-kandidaat; opnieuw beoordelen')])});
 
+const paxillusDetailKey=DetailKey(id:'paxillus',title:'Krulzomen — broncontrole',start:'confirm',sourceNote:'De aangeleverde bron ondersteunt Paxillus/Tapinella als groep, niet een volledige soortensleutel.',steps:{'confirm':DetailStep(id:'confirm',title:'Controleer het groepsprofiel',help:'Bruine sporee, sterk aflopende vaak aderig vertakte plaatjes en vlees dat bij kwetsen donkerbruin verkleurt.',options:[DetailOption('Profiel bevestigd',result:'Paxillus/Tapinella — kandidaatgroep'),DetailOption('Niet zeker',result:'Krulzoom-kandidaat; opnieuw beoordelen')])});
+const cantharellusDetailKey=DetailKey(id:'cantharellus',title:'Cantharellen — broncontrole',start:'confirm',sourceNote:'De aangeleverde bron ondersteunt Cantharellus als geslacht; soortniveau is hiermee niet betrouwbaar vastgelegd.',steps:{'confirm':DetailStep(id:'confirm',title:'Controleer het groepsprofiel',help:'Hoed met centrale steel en lamelachtige of aderachtige lijsten; sporee crème-geelachtig.',options:[DetailOption('Profiel bevestigd',result:'Cantharellus (Cantharellen)'),DetailOption('Niet zeker',result:'Cantharellus-kandidaat; opnieuw beoordelen')])});
+
 DetailKey? detailKeyFor({String? genusHint,Iterable<String> candidateNames=const []}){
   if(genusHint=='Lactarius'||genusHint=='Russula') return russulaceaeDetailKey;
   if(candidateNames.length!=1) return null;
@@ -44,5 +47,7 @@ DetailKey? detailKeyFor({String? genusHint,Iterable<String> candidateNames=const
   if(name.contains('Taailingen')) return toughshankDetailKey;
   if(name.contains('Pholiota')) return pholiotaDetailKey;
   if(name.contains('Stropharia')) return strophariaDetailKey;
+  if(name.contains('Paxillus')) return paxillusDetailKey;
+  if(name.contains('Cantharellus')) return cantharellusDetailKey;
   return null;
 }
