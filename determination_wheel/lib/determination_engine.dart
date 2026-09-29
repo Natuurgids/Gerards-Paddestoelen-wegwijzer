@@ -126,6 +126,7 @@ DeterminationResult determine(Map<int,String> answers){
   String? genusHint;
   final russulaceae=remaining.any((x)=>x.name.startsWith('Russulaceae'));
   if(russulaceae){
+    // The supplied dictionary explicitly separates the two genera by milk on damage.
     if(answers[22]=='Melksap aanwezig') genusHint='Lactarius';
     if(answers[22]=='Geen melksap') genusHint='Russula';
   }
