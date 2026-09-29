@@ -40,6 +40,12 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Hebeloma keeps its categorical no-velum and brown-spore source criteria',(){
+      final matching=determine({7:'Geen zichtbaar',9:'Bruin / roest'});
+      expect(matching.remaining.map((c)=>c.name),contains('Vaalhoeden · Hebeloma'));
+      final conflicting=determine({7:'Ring',9:'Bruin / roest'});
+      expect(conflicting.remaining.map((c)=>c.name),isNot(contains('Vaalhoeden · Hebeloma')));
+    });
     test('Pholiota is not excluded by a velum observation because the source says often',(){
       final result=determine({6:'Aangehecht',7:'Beurs / volva',9:'Bruin / roest'});
       expect(result.remaining.map((c)=>c.name),contains('Bundelzwammen (+) · Pholiota/Kuehneromyces'));
