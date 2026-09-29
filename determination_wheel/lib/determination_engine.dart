@@ -72,6 +72,7 @@ bool isUnknown(String value){
 // described as "vaak", "meestal" or otherwise typical belong in the detail
 // text, not here: absence of a typical trait must not exclude a candidate.
 const candidates=<Candidate>[
+  // The supplied dictionary describes Boletales as fleshy fungi with a distinct cap/stem and, ordinarily, a tubular hymenophore; no source-backed spore-colour exclusion is added.
   Candidate('Boleten',form:{'Hoed + steel'},underside:{'Buisjes / poriën'}),
   Candidate('Schelpzwammen',underside:{'Plaatjes'}),
   // Pleurotus source profile explicitly gives no velum, decurrent whitish gills, and a white-to-cream spore print; short lateral stems and toughness are only typical.
