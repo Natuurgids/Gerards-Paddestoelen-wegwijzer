@@ -105,5 +105,13 @@ DeterminationResult determine(Map<int,String> answers){
     if(answers[22]=='Melksap aanwezig') genusHint='Lactarius';
     if(answers[22]=='Geen melksap') genusHint='Russula';
   }
+  remaining.sort((a,b){
+    final sa=a.score(answers),sb=b.score(answers);
+    final byPercent=(sb.percent??-1).compareTo(sa.percent??-1);
+    if(byPercent!=0)return byPercent;
+    final byEvidence=sb.matched.compareTo(sa.matched);
+    if(byEvidence!=0)return byEvidence;
+    return a.name.compareTo(b.name);
+  });
   return DeterminationResult(remaining:remaining,excluded:excluded,genusHint:genusHint);
 }
