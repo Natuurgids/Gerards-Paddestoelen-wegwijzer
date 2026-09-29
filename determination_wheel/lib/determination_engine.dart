@@ -86,7 +86,7 @@ const candidates=<Candidate>[
   Candidate('Trechtertjes · Omphalina/Rickenella',spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein'}),
   Candidate('Taailingen (+)',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'}),
   Candidate('Hertenzwammen · Pluteus',spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'}),
-  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',spore:{'Bruin / roest'},gill:{'Aangehecht'},velum:{'Ring','Geen zichtbaar'}),
+  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',spore:{'Bruin / roest'},gill:{'Aangehecht'}),
   Candidate('Kaalkopjes / Stropharia (+)',spore:{'Purperbruin / donker'}),
   Candidate('Mosklokjes · Galerina',spore:{'Bruin / roest'},size:{'Klein'}),
   Candidate('Vaalhoeden · Hebeloma',spore:{'Bruin / roest'},velum:{'Geen zichtbaar'}),
