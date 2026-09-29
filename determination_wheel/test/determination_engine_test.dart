@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Cantharellus uses the source-backed pale spore criterion',(){
+      final possible=determine({1:'Hoed + steel',4:'Plooien / ribben',9:'Wit / crème'});
+      expect(possible.remaining.map((c)=>c.name),contains('Cantharellen · Cantharellus'));
+      final darkSpores=determine({1:'Hoed + steel',4:'Plooien / ribben',9:'Bruin / roest'});
+      expect(darkSpores.remaining.map((c)=>c.name),isNot(contains('Cantharellen · Cantharellus')));
+      final unknown=determine({1:'Hoed + steel',4:'Plooien / ribben',9:'Onzeker'});
+      expect(unknown.remaining.map((c)=>c.name),contains('Cantharellen · Cantharellus'));
+    });
     test('Krulzomen use the source-backed medium-to-large size criterion',(){
       final medium=determine({6:'Aflopend',9:'Bruin / roest',19:'Middelgroot',23:'Verkleurt bij druk/wrijven'});
       expect(medium.remaining.map((c)=>c.name),contains('Krulzomen · Paxillus/Tapinella'));
