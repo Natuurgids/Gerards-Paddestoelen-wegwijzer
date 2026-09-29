@@ -107,15 +107,16 @@ void main(){
     expect(score.coverage,closeTo(1/3,.0001));
     expect(score.label,contains('33% dekking'));
   });
-  test('equal matches prefer more positive evidence, not merely coverage',(){
+  test('equal matches rank by positive evidence, not merely coverage',(){
     const sparse=Candidate('Sparse',spore:{'Roze'});
     const supported=Candidate('Supported',spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'});
     final answers={6:'Vrij',7:'Geen zichtbaar',9:'Roze'};
+    final ranked=<Candidate>[sparse,supported];
+    rankCandidates(ranked,answers);
     expect(sparse.score(answers).percent,100);
     expect(sparse.score(answers).coverage,1);
     expect(supported.score(answers).percent,100);
-    expect(supported.score(answers).matched,3);
-    expect(supported.score(answers).matched,greaterThan(sparse.score(answers).matched));
+    expect(ranked.first.name,'Supported');
   });
 
   test('complete only means every coded criterion was assessed',(){
