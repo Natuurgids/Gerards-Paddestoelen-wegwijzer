@@ -40,6 +40,10 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Pholiota is not excluded by a velum observation because the source says often',(){
+      final result=determine({6:'Aangehecht',7:'Beurs / volva',9:'Bruin / roest'});
+      expect(result.remaining.map((c)=>c.name),contains('Bundelzwammen (+) · Pholiota/Kuehneromyces'));
+    });
     test('Parasol profile keeps source-listed pale pink spores and does not require its typical ring',(){
       final result=determine({5:'Glad',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
       expect(result.remaining.map((c)=>c.name),contains('Parasolzwammen (+)'));
