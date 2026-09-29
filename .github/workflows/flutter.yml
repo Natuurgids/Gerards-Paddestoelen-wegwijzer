@@ -64,6 +64,8 @@ jobs:
       - name: Collect iNaturalist reference-image pilot
         run: python3 tool/collect_inaturalist_reference_images.py --limit 16 --delay 0.5
       - name: Upload iNaturalist reference-image pilot
+        # Diagnostic evidence must not prevent analyze/test when artifact storage is full.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: inaturalist-reference-image-pilot
@@ -71,7 +73,7 @@ jobs:
             build/inaturalist-reference-images/
             build/inaturalist-reference-report.json
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
       - name: Verify reviewed source snapshot
         run: python3 tool/verify_source_snapshot_lock.py
       - name: Generate packaged reference database
