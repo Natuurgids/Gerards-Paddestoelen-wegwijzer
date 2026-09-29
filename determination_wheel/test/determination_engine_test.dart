@@ -14,6 +14,10 @@ void main(){
       final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Aangehecht',7:'Geen zichtbaar',9:'Roze'});
       expect(result.remaining.map((c)=>c.name),contains('Amanieten · Amanita'));
     });
+    test('unsupported Armillaria spore colour does not hard-exclude the possibility',(){
+      final result=determine({1:'Hoed + steel',4:'Plaatjes',9:'Roze'});
+      expect(result.remaining.map((c)=>c.name),contains('Honingzwammen · Armillaria'));
+    });
     test('pink spores + free gills + no visible velum retains Pluteus',(){
       final result=determine({5:'Glad',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Dood hout'});
       expect(result.remaining.map((c)=>c.name),contains('Hertenzwammen · Pluteus'));
