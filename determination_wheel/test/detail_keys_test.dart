@@ -3,6 +3,8 @@ import 'package:mushroom_determination_wheel/detail_keys.dart';
 
 void main(){
   test('single supported candidates receive a source-backed detail key',(){
+    expect(detailKeyFor(candidateNames:['Parasolzwammen (+)'])?.id,'parasol');
+    expect(detailKeyFor(candidateNames:['Fopzwammen · Laccaria'])?.id,'laccaria');
     expect(detailKeyFor(candidateNames:['Hertenzwammen · Pluteus'])?.id,'pluteus');
     expect(detailKeyFor(candidateNames:['Wasplaten / Slijmkoppen'])?.id,'waxcaps');
     expect(detailKeyFor(candidateNames:['Trechtertjes · Omphalina/Rickenella'])?.id,'funnel');
