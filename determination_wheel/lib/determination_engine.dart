@@ -75,7 +75,7 @@ const candidates=<Candidate>[
   Candidate('Boleten',form:{'Hoed + steel'},underside:{'Buisjes / poriën'}),
   Candidate('Schelpzwammen',underside:{'Plaatjes'}),
   Candidate('Oesterzwammen · Pleurotus',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'}),
-  Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beurs / volva','Beide'}),
+  Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'}),
   Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'}),
   Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'},trama:{'Verkleurt bij druk/wrijven'}),
   Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'}),
