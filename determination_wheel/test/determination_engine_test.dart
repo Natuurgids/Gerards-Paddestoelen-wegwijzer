@@ -98,4 +98,21 @@ void main(){
     expect(score.label,contains('2 nog niet gevraagd'));
   });
 
+  test('coverage exposes how much relevant evidence has been assessed',(){
+    final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
+    final score=pluteus.score({4:'Plaatjes',6:'Vrij'});
+    expect(score.percent,100);
+    expect(score.assessed,2);
+    expect(score.relevant,4);
+    expect(score.coverage,.5);
+    expect(score.label,contains('50% dekking'));
+  });
+  test('equal matches prefer candidates with more evidence coverage',(){
+    final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'});
+    final scores=result.remaining.map((c)=>c.score({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'})).toList();
+    for(var i=1;i<scores.length;i++){
+      if(scores[i-1].percent==scores[i].percent) expect(scores[i-1].coverage,greaterThanOrEqualTo(scores[i].coverage));
+    }
+  });
+
 }
