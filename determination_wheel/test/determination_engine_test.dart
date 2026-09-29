@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Krulzomen use the source-backed medium-to-large size criterion',(){
+      final medium=determine({6:'Aflopend',9:'Bruin / roest',19:'Middelgroot',23:'Verkleurt bij druk/wrijven'});
+      expect(medium.remaining.map((c)=>c.name),contains('Krulzomen · Paxillus/Tapinella'));
+      final large=determine({6:'Aflopend',9:'Bruin / roest',19:'Groot',23:'Verkleurt bij druk/wrijven'});
+      expect(large.remaining.map((c)=>c.name),contains('Krulzomen · Paxillus/Tapinella'));
+      final small=determine({6:'Aflopend',9:'Bruin / roest',19:'Klein',23:'Verkleurt bij druk/wrijven'});
+      expect(small.remaining.map((c)=>c.name),isNot(contains('Krulzomen · Paxillus/Tapinella')));
+    });
     test('Pluteus keeps categorical free-gill, no-velum and pink-spore criteria',(){
       final possible=determine({6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
       expect(possible.remaining.map((c)=>c.name),contains('Hertenzwammen · Pluteus'));
