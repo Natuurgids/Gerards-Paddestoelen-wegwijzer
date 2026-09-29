@@ -3,6 +3,17 @@ import 'package:mushroom_determination_wheel/determination_engine.dart';
 
 void main(){
   group('source-grounded candidate filtering',(){
+    test('underside routes keep bolete and plate groups separated',(){
+      final pores=determine({1:'Hoed + steel',4:'Buisjes / poriën'});
+      expect(pores.remaining.map((c)=>c.name),contains('Boleten'));
+      expect(pores.remaining.where((c)=>c.underside?.contains('Plaatjes')??false),isEmpty);
+      final plates=determine({1:'Hoed + steel',4:'Plaatjes'});
+      expect(plates.remaining.map((c)=>c.name),isNot(contains('Boleten')));
+    });
+    test('Amanita accepts source-relevant velum observations',(){
+      final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Beide',9:'Wit / crème'});
+      expect(result.remaining.map((c)=>c.name),contains('Amanieten · Amanita'));
+    });
     test('pink spores + free gills + no visible velum retains Pluteus',(){
       final result=determine({5:'Glad',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Dood hout'});
       expect(result.remaining.map((c)=>c.name),contains('Hertenzwammen · Pluteus'));
