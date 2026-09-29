@@ -1,10 +1,11 @@
 class SourceTaxonCatalog {
-  const SourceTaxonCatalog({required this.group,required this.profile,required this.taxa,required this.note,this.nextEvidence=const []});
+  const SourceTaxonCatalog({required this.group,required this.profile,required this.taxa,required this.note,this.nextEvidence=const [],this.possibilityCaveat});
   final String group;
   final List<String> profile;
   final List<String> taxa;
   final String note;
   final List<String> nextEvidence;
+  final String? possibilityCaveat;
 
   bool get hasNamedPossibilities=>taxa.isNotEmpty;
 }
@@ -25,14 +26,15 @@ const sourceCatalogs=<String,SourceTaxonCatalog>{
     profile:['Klein tot groot en breekbaar','Zonder velum / zonder beurs','Lamellen buikig en vrij; bij rijpheid rozig','Sporee roze','Saprotroof; vaak op hout'],
     taxa:['Knolvoethertenzwam','Pluishoedhertenzwam','Roetkleurige hertenzwam','Gewone hertenzwam','Bruinsnedehertenzwam','Geaderde hertenzwam','Geelsteelhertenzwam','Grauwgroene hertenzwam'],
     note:'De bron noemt deze hertenzwammen, maar geeft op deze dia’s geen volledige kenmerkenmatrix om ze onderling betrouwbaar uit te sleutelen.',
-    nextEvidence:['Vergelijk de volledige detailsleutel per soort','Microscopie kan nodig zijn wanneer macroscopische kenmerken overlappen'],
+    nextEvidence:['Vergelijk de volledige detailsleutel per soort','Controleer sporen en cystiden microscopisch wanneer macroscopische kenmerken overlappen'],
+    possibilityCaveat:'De presentatie noemt ook Kleinsporige franjehoed als gelijkende soort bij deze reeks; de getoonde namen zijn dus geen gesloten soortenlijst.',
   ),
   'agrocybe':SourceTaxonCatalog(
     group:'Leemhoeden (Agrocybe)',
     profile:['Klein tot groot en vlezig','Bij de meeste soorten velum','Hoed glad, vaak vettig, zonder radiale structuur','Sporee vaalbruin','Saprotroof; meestal op de bodem'],
     taxa:['Knolletjesleemhoed','Grasleemhoed','Populierleemhoed','Vroege leemhoed','Leverkleurige leemhoed','Fluweelleemhoed','Moerasleemhoed','Gaderde leemhoed (Agrocybe rivulosa)'],
     note:'De bron toont deze soortnamen en noemt Agrocybe rivulosa bij een koffie-met-melk-kleurige sporee, maar levert hier geen volledige soortensleutel.',
-    nextEvidence:['Vergelijk de volledige detailsleutel per soort','Controleer zo nodig microscopische kenmerken'],
+    nextEvidence:['Vergelijk de volledige detailsleutel per soort','Controleer zo nodig sporen, cystiden en andere microscopische kenmerken'],
   ),
   'galerina':SourceTaxonCatalog(
     group:'Mosklokjes (Galerina)',
