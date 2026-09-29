@@ -14,6 +14,11 @@ void main(){
     expect(detailKeyFor(candidateNames:['Krulzomen · Paxillus/Tapinella'])?.id,'paxillus');
     expect(detailKeyFor(candidateNames:['Cantharellen · Cantharellus'])?.id,'cantharellus');
   });
+  test('Galerina detail key does not exclude another substrate',(){
+    final step=galerinaDetailKey.steps['substrate']!;
+    final option=step.options.firstWhere((o)=>o.label=='Andere groeiplaats');
+    expect(option.result,'Galerina-kandidaat; ecologie niet doorslaggevend');
+  });
   test('ambiguous candidate sets do not pretend to have a detail key',(){
     expect(detailKeyFor(candidateNames:['Hertenzwammen · Pluteus','Mosklokjes · Galerina']),isNull);
   });
