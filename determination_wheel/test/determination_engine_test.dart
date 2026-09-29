@@ -65,4 +65,20 @@ void main(){
       expect(result.genusHint,isNull);
     });
   });
+  test('match score uses assessed evidence and ignores unknown answers',(){
+    final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
+    final score=pluteus.score({4:'Plaatjes',6:'Vrij',7:'Onzeker',9:'Roze'});
+    expect(score.percent,100);
+    expect(score.matched,3);
+    expect(score.observed,3);
+    expect(score.unknown,1);
+  });
+  test('match score is descriptive rather than a probability',(){
+    final bolete=candidates.firstWhere((c)=>c.name=='Boleten');
+    final score=bolete.score({1:'Hoed + steel'});
+    expect(score.percent,100);
+    expect(score.unknown,1);
+    expect(score.label,contains('1 onbekend'));
+  });
+
 }
