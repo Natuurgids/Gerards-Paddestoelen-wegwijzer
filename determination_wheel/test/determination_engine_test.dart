@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('waxcap/slimy-cap group uses only categorical size and white-spore criteria',(){
+      final possible=determine({7:'Ring',9:'Wit / crème',19:'Middelgroot'});
+      expect(possible.remaining.map((c)=>c.name),contains('Wasplaten / Slijmkoppen'));
+      final darkSpores=determine({9:'Purperbruin / donker',19:'Middelgroot'});
+      expect(darkSpores.remaining.map((c)=>c.name),isNot(contains('Wasplaten / Slijmkoppen')));
+      final tooLarge=determine({9:'Wit / crème',19:'Groot'});
+      expect(tooLarge.remaining.map((c)=>c.name),isNot(contains('Wasplaten / Slijmkoppen')));
+    });
     test('Pleurotus keeps its categorical no-velum, decurrent-gill and pale-spore criteria',(){
       final possible=determine({4:'Plaatjes',6:'Aflopend',7:'Geen zichtbaar',9:'Wit / crème'});
       expect(possible.remaining.map((c)=>c.name),contains('Oesterzwammen · Pleurotus'));
