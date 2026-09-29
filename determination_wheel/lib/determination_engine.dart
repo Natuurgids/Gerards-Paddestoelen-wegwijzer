@@ -1,7 +1,7 @@
 class Candidate {
-  const Candidate(this.name,{this.spore,this.gill,this.velum,this.hygro,this.surface,this.substrate});
+  const Candidate(this.name,{this.form,this.underside,this.spore,this.gill,this.velum,this.hygro,this.surface,this.substrate});
   final String name;
-  final Set<String>? spore,gill,velum,hygro,surface,substrate;
+  final Set<String>? form,underside,spore,gill,velum,hygro,surface,substrate;
 
   String? conflict(Map<int,String> answers){
     String? check(int step,String label,Set<String>? allowed){
@@ -9,7 +9,9 @@ class Candidate {
       if(allowed==null||value==null||isUnknown(value)||allowed.contains(value)) return null;
       return '$label: waargenomen “$value”, bronprofiel verwacht ${allowed.join(' / ')}';
     }
-    return check(5,'hoedoppervlak',surface)??
+    return check(1,'vruchtlichaam',form)??
+      check(4,'sporenvormende onderzijde',underside)??
+      check(5,'hoedoppervlak',surface)??
       check(6,'lamelaanhechting',gill)??
       check(7,'velum',velum)??
       check(8,'hygrofaan',hygro)??
@@ -26,6 +28,10 @@ bool isUnknown(String value){
 }
 
 const candidates=<Candidate>[
+  Candidate('Boleten',form:{'Hoed + steel'},underside:{'Buisjes / poriën'}),
+  Candidate('Schelpzwammen',underside:{'Plaatjes'}),
+  Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beurs / volva','Beide'}),
+  Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'},substrate:{'Dood hout','Levend hout'}),
   Candidate('Parasolzwammen (+)',spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beide'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
   Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},substrate:{'Bodem / strooisel','Gras / mos'}),
   Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'}),
