@@ -10,7 +10,7 @@ void main(){
       final plates=determine({1:'Hoed + steel',4:'Plaatjes'});
       expect(plates.remaining.map((c)=>c.name),isNot(contains('Boleten')));
     });
-    test('Amanita accepts source-relevant velum observations',(){
+    test('Amanita profile accepts its currently encoded velum observations',(){
       final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Beide',9:'Wit / crème'});
       expect(result.remaining.map((c)=>c.name),contains('Amanieten · Amanita'));
     });
