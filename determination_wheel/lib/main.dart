@@ -8,7 +8,46 @@ void main()=>runApp(const App());
 class App extends StatelessWidget{const App({super.key});@override Widget build(BuildContext context)=>MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xff315d35)),useMaterial3:true),home:const Wheel());}
 class Wheel extends StatefulWidget{const Wheel({super.key});@override State<Wheel> createState()=>_WheelState();}
 class _WheelState extends State<Wheel>{int step=1;bool ended=false,showExcluded=false;final answers=<int,String>{};final route=<String>[];final history=<int>[];DeterminationResult get result=>determine(answers);void choose(WheelOption o)=>setState((){history.add(step);answers[step]=o.label;route.add('${wheelSteps[step]!.title}: ${o.label}');ended=o.end;if(o.next!=null)step=o.next!;});void back()=>setState((){if(history.isEmpty)return;final previous=history.removeLast();answers.remove(previous);if(route.isNotEmpty)route.removeLast();step=previous;ended=false;showExcluded=false;});void reset()=>setState((){step=1;ended=false;showExcluded=false;answers.clear();route.clear();history.clear();});@override Widget build(BuildContext context){final current=wheelSteps[step]!;return Scaffold(appBar:AppBar(title:const Text('Paddenstoelen Determinatiewiel'),actions:[IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo)),IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt))]),body:SafeArea(child:LayoutBuilder(builder:(context,b)=>Padding(padding:const EdgeInsets.all(16),child:b.maxWidth>850?Row(children:[Expanded(flex:6,child:_wheel(current)),const SizedBox(width:20),Expanded(flex:5,child:_panel(current))]):Column(children:[Expanded(flex:5,child:_wheel(current)),Expanded(flex:6,child:_panel(current))])))));}
-Widget _wheel(WheelStep current)=>Center(child:AspectRatio(aspectRatio:1,child:Stack(alignment:Alignment.center,children:[CustomPaint(size:Size.infinite,painter:_WheelPainter(route.length,ended)),FractionallySizedBox(widthFactor:.52,heightFactor:.52,child:Card(elevation:8,shape:const CircleBorder(),child:Padding(padding:const EdgeInsets.all(12),child:FittedBox(fit:BoxFit.scaleDown,child:SizedBox(width:260,child:Column(mainAxisSize:MainAxisSize.min,mainAxisAlignment:MainAxisAlignment.center,children:[Text(ended?'Controle':'Observatie ${route.length+1}',textAlign:TextAlign.center,style:Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.bold)),Text(current.title,textAlign:TextAlign.center,style:Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:8),Text(current.help,textAlign:TextAlign.center)])))))]))));
+Widget _wheel(WheelStep current){
+  return Center(
+    child:AspectRatio(
+      aspectRatio:1,
+      child:Stack(
+        alignment:Alignment.center,
+        children:[
+          CustomPaint(size:Size.infinite,painter:_WheelPainter(route.length,ended)),
+          FractionallySizedBox(
+            widthFactor:.52,
+            heightFactor:.52,
+            child:Card(
+              elevation:8,
+              shape:const CircleBorder(),
+              child:Padding(
+                padding:const EdgeInsets.all(12),
+                child:FittedBox(
+                  fit:BoxFit.scaleDown,
+                  child:SizedBox(
+                    width:260,
+                    child:Column(
+                      mainAxisSize:MainAxisSize.min,
+                      mainAxisAlignment:MainAxisAlignment.center,
+                      children:[
+                        Text(ended?'Controle':'Observatie ${route.length+1}',textAlign:TextAlign.center,style:Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.bold)),
+                        Text(current.title,textAlign:TextAlign.center,style:Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.bold)),
+                        const SizedBox(height:8),
+                        Text(current.help,textAlign:TextAlign.center),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 Widget _panel(WheelStep current){final r=result;return Card(child:Padding(padding:const EdgeInsets.all(18),child:ListView(children:[Text(ended?'Determinatie-overzicht':'Observatie ${route.length+1} — ${current.title}',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:10),if(answers.containsKey(4))...[_candidatePanel(r),const Divider(height:20)],if(ended)_resultPanel(r)else...current.options.map(_optionCard),if(route.isNotEmpty)...[const Divider(height:28),Row(children:[const Expanded(child:Text('Gevolgde route',style:TextStyle(fontWeight:FontWeight.bold))),if(history.isNotEmpty)TextButton.icon(onPressed:back,icon:const Icon(Icons.undo),label:const Text('Vorige'))]),Text(route.join('  →  '))]])));}
 Widget _candidatePanel(DeterminationResult r)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(children:[Expanded(child:Text('Mogelijke groepen: ${r.remaining.length} · beste overeenkomst eerst',style:const TextStyle(fontWeight:FontWeight.bold))),TextButton.icon(onPressed:()=>setState(()=>showExcluded=!showExcluded),icon:Icon(showExcluded?Icons.expand_less:Icons.expand_more),label:Text('${r.excluded.length} uitgesloten'))]),Wrap(spacing:6,runSpacing:4,children:r.remaining.map((x){final score=x.score(answers);return Tooltip(message:x.supporting(answers).isEmpty?'Nog geen specifiek bevestigend bronkenmerk vastgelegd':x.supporting(answers).join(' • '),child:Chip(avatar:Icon(score.complete?Icons.task_alt:Icons.pending_outlined,size:16),label:Text('${x.name} · ${score.percent==null?'—':'${score.percent}%'} · ${(score.coverage*100).round()}% dekking')));}).toList()),if(showExcluded)...r.excluded.entries.map((e)=>ListTile(dense:true,leading:const Icon(Icons.block,size:18),title:Text(e.key.name),subtitle:Text(e.value)))]);
 Widget _resultPanel(DeterminationResult r){final key=detailKeyFor(genusHint:r.genusHint,candidateNames:r.remaining.map((x)=>x.name));return Column(children:[const Icon(Icons.fact_check_outlined,size:48),if(r.remaining.length>1)const Padding(padding:EdgeInsets.only(bottom:8),child:Text('Gerangschikt op overeenkomst met de ingevoerde bronkenmerken; dit is geen waarschijnlijkheidsrangschikking.',textAlign:TextAlign.center)),if(r.genusHint!=null)ListTile(leading:const Icon(Icons.call_split),title:Text('Bronondersteunde geslachtssplitsing: ${r.genusHint}')),...r.remaining.map((x)=>ListTile(leading:const Icon(Icons.eco_outlined),title:Text(x.name),subtitle:Text('${x.score(answers).label}\n${x.supporting(answers).isEmpty?'Niet uitgesloten door de ingevoerde kenmerken':'Ondersteund door: ${x.supporting(answers).join(' • ')}'}'))),if(key!=null)Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[Text(key.title,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:6),Text(key.sourceNote,textAlign:TextAlign.center),const SizedBox(height:10),FilledButton.icon(onPressed:()=>_openDetailKey(key),icon:const Icon(Icons.account_tree_outlined),label:const Text('Open detailsleutel'))])))else const Text('Voor deze kandidaat bevat de huidige bronset nog geen eenduidige gecodeerde detailsleutel. Vul geen soortnaam in op basis van aannames.',textAlign:TextAlign.center),const SizedBox(height:12),const Text('De matchscore is géén kans dat de determinatie juist is: hij geeft alleen aan welk deel van de voor die kandidaat gecodeerde, beoordeelde kenmerken overeenkomt. Onbekende kenmerken tellen niet als fout. Sommige taxa vragen microscopie, chemische kenmerken of DNA voor verdere bevestiging.',textAlign:TextAlign.center),const SizedBox(height:12),Card(color:Theme.of(context).colorScheme.errorContainer,child:const Padding(padding:EdgeInsets.all(12),child:Text('Niet gebruiken als bewijs van eetbaarheid. Bevestig een determinatie onafhankelijk.'))),FilledButton.icon(onPressed:reset,icon:const Icon(Icons.restart_alt),label:const Text('Nieuwe determinatie'))]);}
