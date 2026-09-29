@@ -69,7 +69,8 @@ void main(){
       expect(result.genusHint,'Russula');
     });
     test('milk does not produce genus hint when Russulaceae was excluded',(){
-      final result=determine({9:'Roze',17:'Dood hout',22:'Melksap aanwezig'});
+      final result=determine({23:'Vlezig / vezelig',22:'Melksap aanwezig'});
+      expect(result.remaining.map((c)=>c.name),isNot(contains('Russulaceae · Russula/Lactarius')));
       expect(result.genusHint,isNull);
     });
   });
