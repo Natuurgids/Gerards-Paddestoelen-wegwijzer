@@ -51,6 +51,10 @@ void main(){
       final candidate=result.remaining.firstWhere((c)=>c.name.startsWith('Russulaceae'));
       expect(candidate.supporting({9:'Wit / crème',17:'Bodem / strooisel',23:'Broos / breekt krijtachtig'}),contains('trama / vlees: Broos / breekt krijtachtig'));
     });
+    test('unsupported Russulaceae spore and substrate details do not hard-exclude it',(){
+      final result=determine({9:'Roze',17:'Dood hout',23:'Broos / breekt krijtachtig'});
+      expect(result.remaining.map((c)=>c.name),contains('Russulaceae · Russula/Lactarius'));
+    });
     test('supporting evidence only reports matching observed criteria',(){
       final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
       expect(pluteus.supporting({6:'Vrij',9:'Roze',17:'Dood hout'}),containsAll(['lamellen: Vrij','sporenkleur: Roze']));
