@@ -81,4 +81,10 @@ void main(){
     expect(score.label,contains('1 onbekend'));
   });
 
+  test('remaining possibilities are ranked by matching evidence',(){
+    final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'});
+    expect(result.remaining.first.name,'Hertenzwammen · Pluteus');
+    expect(result.remaining.first.score({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'}).percent,100);
+  });
+
 }
