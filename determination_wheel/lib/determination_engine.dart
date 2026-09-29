@@ -1,7 +1,7 @@
 class Candidate {
-  const Candidate(this.name,{this.form,this.underside,this.spore,this.gill,this.velum,this.hygro,this.surface,this.substrate});
+  const Candidate(this.name,{this.form,this.underside,this.spore,this.gill,this.velum,this.hygro,this.surface,this.substrate,this.size,this.trama});
   final String name;
-  final Set<String>? form,underside,spore,gill,velum,hygro,surface,substrate;
+  final Set<String>? form,underside,spore,gill,velum,hygro,surface,substrate,size,trama;
 
   String? conflict(Map<int,String> answers){
     String? check(int step,String label,Set<String>? allowed){
@@ -16,7 +16,19 @@ class Candidate {
       check(7,'velum',velum)??
       check(8,'hygrofaan',hygro)??
       check(9,'sporenkleur',spore)??
-      check(17,'substraat',substrate);
+      check(17,'substraat',substrate)??
+      check(19,'afmetingen',size)??
+      check(23,'trama / vlees',trama);
+  }
+
+  List<String> supporting(Map<int,String> answers){
+    final out=<String>[];
+    void check(int step,String label,Set<String>? allowed){
+      final value=answers[step];
+      if(allowed!=null&&value!=null&&!isUnknown(value)&&allowed.contains(value)) out.add('$label: $value');
+    }
+    check(1,'vruchtlichaam',form);check(4,'onderzijde',underside);check(5,'hoedoppervlak',surface);check(6,'lamellen',gill);check(7,'velum',velum);check(8,'hygrofaan',hygro);check(9,'sporenkleur',spore);check(17,'substraat',substrate);check(19,'afmetingen',size);check(23,'trama / vlees',trama);
+    return out;
   }
 
   bool matches(Map<int,String> answers)=>conflict(answers)==null;
@@ -36,20 +48,20 @@ const candidates=<Candidate>[
   Candidate('Oesterzwammen · Pleurotus',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'}),
   Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beurs / volva','Beide'}),
   Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'}),
-  Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'}),
+  Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'},trama:{'Verkleurt bij druk/wrijven'}),
   Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'}),
   Candidate('Parasolzwammen (+)',spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beide'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
-  Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'}),
-  Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'}),
-  Candidate('Trechtertjes · Omphalina/Rickenella',spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'}),
-  Candidate('Taailingen (+)',spore:{'Wit / crème'},velum:{'Geen zichtbaar'}),
+  Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
+  Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'},size:{'Klein','Middelgroot'}),
+  Candidate('Trechtertjes · Omphalina/Rickenella',spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein'}),
+  Candidate('Taailingen (+)',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'}),
   Candidate('Hertenzwammen · Pluteus',spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'}),
   Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',spore:{'Bruin / roest'},gill:{'Aangehecht'},velum:{'Ring','Geen zichtbaar'}),
   Candidate('Kaalkopjes / Stropharia (+)',spore:{'Purperbruin / donker'}),
-  Candidate('Mosklokjes · Galerina',spore:{'Bruin / roest'}),
+  Candidate('Mosklokjes · Galerina',spore:{'Bruin / roest'},size:{'Klein'}),
   Candidate('Vaalhoeden · Hebeloma',spore:{'Bruin / roest'},velum:{'Geen zichtbaar'}),
   Candidate('Leemhoeden · Agrocybe',spore:{'Bruin / roest'}),
-  Candidate('Russulaceae · Russula/Lactarius',spore:{'Wit / crème','Bruin / roest'},substrate:{'Bodem / strooisel'}),
+  Candidate('Russulaceae · Russula/Lactarius',spore:{'Wit / crème','Bruin / roest'},substrate:{'Bodem / strooisel'},trama:{'Broos / breekt krijtachtig'}),
 ];
 
 class DeterminationResult {
