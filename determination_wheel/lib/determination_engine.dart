@@ -91,6 +91,7 @@ const candidates=<Candidate>[
   Candidate('Mosklokjes · Galerina',spore:{'Bruin / roest'},size:{'Klein'}),
   // Source profile is categorical here: without velum, with a pale-brown spore print.
   Candidate('Vaalhoeden · Hebeloma',spore:{'Bruin / roest'},velum:{'Geen zichtbaar'}),
+  // Agrocybe source profile makes the pale-brown spore print categorical; velum and soil are only most/usually traits.
   Candidate('Leemhoeden · Agrocybe',spore:{'Bruin / roest'}),
   Candidate('Russulaceae · Russula/Lactarius',trama:{'Broos / breekt krijtachtig'}),
 ];
