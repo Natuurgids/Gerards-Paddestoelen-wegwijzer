@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Pleurotus keeps its categorical no-velum, decurrent-gill and pale-spore criteria',(){
+      final possible=determine({4:'Plaatjes',6:'Aflopend',7:'Geen zichtbaar',9:'Wit / crème'});
+      expect(possible.remaining.map((c)=>c.name),contains('Oesterzwammen · Pleurotus'));
+      final ringed=determine({4:'Plaatjes',6:'Aflopend',7:'Ring',9:'Wit / crème'});
+      expect(ringed.remaining.map((c)=>c.name),isNot(contains('Oesterzwammen · Pleurotus')));
+      final attached=determine({4:'Plaatjes',6:'Aangehecht',7:'Geen zichtbaar',9:'Wit / crème'});
+      expect(attached.remaining.map((c)=>c.name),isNot(contains('Oesterzwammen · Pleurotus')));
+    });
     test('Stropharia keeps variable velum while filtering on purple spore print',(){
       final withVelum=determine({7:'Ring',9:'Purperbruin / donker'});
       expect(withVelum.remaining.map((c)=>c.name),contains('Kaalkopjes / Stropharia (+)'));
