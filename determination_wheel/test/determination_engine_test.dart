@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('parasol group keeps categorical traits without requiring a ring',(){
+      final ringless=determine({5:'Schubbig / wrattig',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
+      expect(ringless.remaining.map((c)=>c.name),contains('Parasolzwammen (+)'));
+      final attached=determine({5:'Glad',6:'Aangehecht',9:'Wit / crème',17:'Bodem / strooisel'});
+      expect(attached.remaining.map((c)=>c.name),isNot(contains('Parasolzwammen (+)')));
+      final wood=determine({5:'Glad',6:'Vrij',9:'Wit / crème',17:'Dood hout'});
+      expect(wood.remaining.map((c)=>c.name),isNot(contains('Parasolzwammen (+)')));
+    });
     test('bolete profile stays source-bounded to cap/stem and pores',(){
       final possible=determine({1:'Hoed + steel',4:'Buisjes / poriën',9:'Purperbruin / donker'});
       expect(possible.remaining.map((c)=>c.name),contains('Boleten'));
