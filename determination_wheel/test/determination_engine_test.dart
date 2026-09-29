@@ -40,6 +40,10 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Parasol profile keeps source-listed pale pink spores and does not require its typical ring',(){
+      final result=determine({5:'Glad',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
+      expect(result.remaining.map((c)=>c.name),contains('Parasolzwammen (+)'));
+    });
     test('Laccaria hard criteria are all explicit in the supplied source profile',(){
       final matching=determine({7:'Geen zichtbaar',8:'Ja',9:'Wit / crème',19:'Klein'});
       expect(matching.remaining.map((c)=>c.name),contains('Fopzwammen · Laccaria'));
