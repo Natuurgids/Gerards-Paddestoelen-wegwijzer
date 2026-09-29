@@ -6,6 +6,7 @@ void main(){
     expect(detailKeyFor(candidateNames:['Parasolzwammen (+)'])?.id,'parasol');
     expect(detailKeyFor(candidateNames:['Fopzwammen · Laccaria'])?.id,'laccaria');
     expect(detailKeyFor(candidateNames:['Hertenzwammen · Pluteus'])?.id,'pluteus');
+    expect(detailKeyFor(candidateNames:['Oesterzwammen · Pleurotus'])?.id,'pleurotus');
     expect(detailKeyFor(candidateNames:['Wasplaten / Slijmkoppen'])?.id,'waxcaps');
     expect(detailKeyFor(candidateNames:['Trechtertjes · Omphalina/Rickenella'])?.id,'funnel');
     expect(detailKeyFor(candidateNames:['Taailingen (+)'])?.id,'toughshanks');
