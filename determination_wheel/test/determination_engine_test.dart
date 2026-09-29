@@ -118,4 +118,11 @@ void main(){
     expect(supported.score(answers).matched,greaterThan(sparse.score(answers).matched));
   });
 
+  test('complete only means every coded criterion was assessed',(){
+    final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
+    expect(pluteus.score({6:'Vrij',7:'Geen zichtbaar',9:'Roze'}).complete,isTrue);
+    expect(pluteus.score({6:'Vrij',7:'Onzeker',9:'Roze'}).complete,isTrue);
+    expect(pluteus.score({6:'Vrij',9:'Roze'}).complete,isFalse);
+  });
+
 }
