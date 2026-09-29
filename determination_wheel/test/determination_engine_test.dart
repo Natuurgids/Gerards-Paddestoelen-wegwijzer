@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Omphalina/Rickenella keeps categorical funnel-group criteria',(){
+      final possible=determine({6:'Aflopend',7:'Geen zichtbaar',9:'Wit / crème',17:'Dood hout',19:'Klein'});
+      expect(possible.remaining.map((c)=>c.name),contains('Trechtertjes · Omphalina/Rickenella'));
+      final ringed=determine({6:'Aflopend',7:'Ring',9:'Wit / crème',19:'Klein'});
+      expect(ringed.remaining.map((c)=>c.name),isNot(contains('Trechtertjes · Omphalina/Rickenella')));
+      final attached=determine({6:'Aangehecht',7:'Geen zichtbaar',9:'Wit / crème',19:'Klein'});
+      expect(attached.remaining.map((c)=>c.name),isNot(contains('Trechtertjes · Omphalina/Rickenella')));
+    });
     test('waxcap/slimy-cap group uses only categorical size and white-spore criteria',(){
       final possible=determine({7:'Ring',9:'Wit / crème',19:'Middelgroot'});
       expect(possible.remaining.map((c)=>c.name),contains('Wasplaten / Slijmkoppen'));
