@@ -75,8 +75,17 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --exclude determination_wheel
       - name: Test
+        run: flutter test
+      - name: Install determination wheel dependencies
+        working-directory: determination_wheel
+        run: flutter pub get
+      - name: Analyze determination wheel
+        working-directory: determination_wheel
+        run: flutter analyze
+      - name: Test determination wheel
+        working-directory: determination_wheel
         run: flutter test
       - name: Verify reviewed source snapshot
         run: python3 tool/verify_source_snapshot_lock.py
