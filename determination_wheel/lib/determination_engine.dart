@@ -83,7 +83,8 @@ const candidates=<Candidate>[
   Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'},size:{'Middelgroot','Groot'},trama:{'Verkleurt bij druk/wrijven'}),
   // Cantharellus source profile explicitly gives a centrally stalked cap with lamella-like/vein-like ridges and a cream-yellowish spore print.
   Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'},spore:{'Wit / crème'}),
-  // The supplied Lepiota-group profile gives free gills, a smooth-or-scaly cap, white/cream-to-pale-pink spores and saprotrophic growth on soil; velum/ring are only typical.\n  Candidate('Parasolzwammen (+)',spore:{'Wit / crème','Roze'},gill:{'Vrij'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
+  // The supplied Lepiota-group profile gives free gills, a smooth-or-scaly cap, white/cream-to-pale-pink spores and saprotrophic growth on soil; velum/ring are only typical.
+  Candidate('Parasolzwammen (+)',spore:{'Wit / crème','Roze'},gill:{'Vrij'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
   // Source profile explicitly states: small, no velum, white spores, strongly hygrophanous.
   Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
   // The 2015 combined Hygrocybe/Hygrophorus profile explicitly gives small-to-medium fruitbodies and a white spore print; gill/cap colour and velum are variable.
