@@ -24,4 +24,16 @@ void main(){
     await tester.pumpAndSettle();
     expect(find.text('Vorm vruchtlichaam'),findsWidgets);
   });
+
+  testWidgets('live possibilities expose match and evidence coverage',(tester)async{
+    await tester.pumpWidget(const App());
+    await tester.tap(find.text('Hoed + steel'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Plaatjes'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('% dekking'),findsWidgets);
+    expect(find.textContaining('Mogelijke groepen:'),findsOneWidget);
+  });
+
 }
