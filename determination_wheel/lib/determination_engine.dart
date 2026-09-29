@@ -56,6 +56,7 @@ class MatchScore {
   int get assessed=>observed+unknown;
   int get relevant=>assessed+unanswered;
   double get coverage=>relevant==0?0:assessed/relevant;
+  bool get complete=>relevant>0&&unanswered==0;
   String get label{
     final details='${unknown>0?' · $unknown onzeker':''}${unanswered>0?' · $unanswered nog niet gevraagd':''} · ${(coverage*100).round()}% dekking';
     return percent==null?'Nog geen passende beoordeelde bronkenmerken$details':'Match $percent% · $matched/$observed passende kenmerken$details';
@@ -116,8 +117,6 @@ DeterminationResult determine(Map<int,String> answers){
     final sa=a.score(answers),sb=b.score(answers);
     final byPercent=(sb.percent??-1).compareTo(sa.percent??-1);
     if(byPercent!=0)return byPercent;
-    final byCoverage=sb.coverage.compareTo(sa.coverage);
-    if(byCoverage!=0)return byCoverage;
     final byEvidence=sb.matched.compareTo(sa.matched);
     if(byEvidence!=0)return byEvidence;
     return a.name.compareTo(b.name);
