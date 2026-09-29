@@ -72,19 +72,30 @@ void main(){
     expect(score.matched,2);
     expect(score.observed,2);
     expect(score.unknown,1);
+    expect(score.unanswered,1);
   });
   test('match score is descriptive rather than a probability',(){
     final bolete=candidates.firstWhere((c)=>c.name=='Boleten');
     final score=bolete.score({1:'Hoed + steel'});
     expect(score.percent,100);
-    expect(score.unknown,1);
-    expect(score.label,contains('1 onbekend'));
+    expect(score.unknown,0);
+    expect(score.unanswered,1);
+    expect(score.label,contains('1 nog niet gevraagd'));
   });
 
   test('remaining possibilities are ranked by matching evidence',(){
     final result=determine({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'});
     expect(result.remaining.first.name,'Hertenzwammen · Pluteus');
     expect(result.remaining.first.score({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'}).percent,100);
+  });
+
+  test('explicit uncertainty is distinct from an unanswered criterion',(){
+    final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
+    final score=pluteus.score({4:'Plaatjes',6:'Onzeker'});
+    expect(score.unknown,1);
+    expect(score.unanswered,2);
+    expect(score.label,contains('1 onzeker'));
+    expect(score.label,contains('2 nog niet gevraagd'));
   });
 
 }
