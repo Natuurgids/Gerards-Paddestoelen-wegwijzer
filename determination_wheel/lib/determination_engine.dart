@@ -80,6 +80,7 @@ const candidates=<Candidate>[
   Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'},trama:{'Verkleurt bij druk/wrijven'}),
   Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'}),
   Candidate('Parasolzwammen (+)',spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beide'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
+  // Source profile explicitly states: small, no velum, white spores, strongly hygrophanous.
   Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
   Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'},size:{'Klein','Middelgroot'}),
   Candidate('Trechtertjes · Omphalina/Rickenella',spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein'}),
