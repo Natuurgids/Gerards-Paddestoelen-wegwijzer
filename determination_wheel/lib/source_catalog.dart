@@ -10,6 +10,12 @@ class SourceTaxonCatalog {
 // reference targets, not automatic determinations: the presentation lists them
 // but does not provide the complete branch criteria needed to distinguish each.
 const sourceCatalogs=<String,SourceTaxonCatalog>{
+  'pleurotus':SourceTaxonCatalog(
+    group:'Oesterzwammen (Pleurotus)',
+    profile:['Klein tot groot zonder velum','Vaak relatief taai en uitdrogingsbestendig','Lamellen witachtig en aflopend','Steel meestal kort en zijdelings aangehecht','Sporee wit tot roomkleurig','Parasieten en saprofyten; veroorzaken witrot'],
+    taxa:[],
+    note:'De 2016-bron ondersteunt Pleurotus als eigen geslachtsgroep met vijf soorten in Vlaanderen, maar geeft hier geen volledige soortensleutel.',
+  ),
   'pluteus':SourceTaxonCatalog(
     group:'Hertenzwammen (Pluteus)',
     profile:['Klein tot groot en breekbaar','Zonder velum / zonder beurs','Lamellen buikig en vrij; bij rijpheid rozig','Sporee roze','Saprotroof; vaak op hout'],
