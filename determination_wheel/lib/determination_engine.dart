@@ -32,6 +32,8 @@ const candidates=<Candidate>[
   Candidate('Schelpzwammen',underside:{'Plaatjes'}),
   Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beurs / volva','Beide'}),
   Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'},substrate:{'Dood hout','Levend hout'}),
+  Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'}),
+  Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'}),
   Candidate('Parasolzwammen (+)',spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beide'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
   Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},substrate:{'Bodem / strooisel','Gras / mos'}),
   Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'}),
