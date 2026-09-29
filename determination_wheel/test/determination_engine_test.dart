@@ -147,8 +147,10 @@ void main(){
       expect(result.remaining.map((c)=>c.name),contains('Parasolzwammen (+)'));
     });
     test('Laccaria hard criteria are all explicit in the supplied source profile',(){
-      final matching=determine({7:'Geen zichtbaar',8:'Ja',9:'Wit / crème',19:'Klein'});
+      final matching=determine({4:'Plaatjes',7:'Geen zichtbaar',8:'Ja',9:'Wit / crème',19:'Klein'});
       expect(matching.remaining.map((c)=>c.name),contains('Fopzwammen · Laccaria'));
+      final nonGilled=determine({4:'Buisjes / poriën',7:'Geen zichtbaar',8:'Ja',9:'Wit / crème',19:'Klein'});
+      expect(nonGilled.remaining.map((c)=>c.name),isNot(contains('Fopzwammen · Laccaria')));
       final conflicting=determine({8:'Nee'});
       expect(conflicting.remaining.map((c)=>c.name),isNot(contains('Fopzwammen · Laccaria')));
     });
