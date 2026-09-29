@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('Stropharia keeps variable velum while filtering on purple spore print',(){
+      final withVelum=determine({7:'Ring',9:'Purperbruin / donker'});
+      expect(withVelum.remaining.map((c)=>c.name),contains('Kaalkopjes / Stropharia (+)'));
+      final withoutVelum=determine({7:'Geen zichtbaar',9:'Purperbruin / donker'});
+      expect(withoutVelum.remaining.map((c)=>c.name),contains('Kaalkopjes / Stropharia (+)'));
+      final conflict=determine({9:'Wit / crème'});
+      expect(conflict.remaining.map((c)=>c.name),isNot(contains('Kaalkopjes / Stropharia (+)')));
+    });
     test('Taailingen hard criteria match the categorical source profile',(){
       final possible=determine({7:'Geen zichtbaar',9:'Wit / crème',19:'Middelgroot'});
       expect(possible.remaining.map((c)=>c.name),contains('Taailingen (+)'));
