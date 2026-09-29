@@ -40,6 +40,14 @@ void main(){
           reason:'$fragment must not be excluded solely by a non-typical substrate');
       }
     });
+    test('bolete profile stays source-bounded to cap/stem and pores',(){
+      final possible=determine({1:'Hoed + steel',4:'Buisjes / poriën',9:'Purperbruin / donker'});
+      expect(possible.remaining.map((c)=>c.name),contains('Boleten'));
+      final gills=determine({1:'Hoed + steel',4:'Plaatjes'});
+      expect(gills.remaining.map((c)=>c.name),isNot(contains('Boleten')));
+      final otherForm=determine({1:'Andere vorm',4:'Buisjes / poriën'});
+      expect(otherForm.remaining.map((c)=>c.name),isNot(contains('Boleten')));
+    });
     test('Cantharellus uses the source-backed pale spore criterion',(){
       final possible=determine({1:'Hoed + steel',4:'Plooien / ribben',9:'Wit / crème'});
       expect(possible.remaining.map((c)=>c.name),contains('Cantharellen · Cantharellus'));
