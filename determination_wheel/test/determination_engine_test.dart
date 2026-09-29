@@ -29,10 +29,12 @@ void main(){
       expect(result.remaining.length,candidates.length);
       expect(result.excluded,isEmpty);
     });
-    test('dead wood conflicts with Hebeloma source profile',(){
-      final result=determine({17:'Dood hout'});
-      final entry=result.excluded.entries.firstWhere((e)=>e.key.name.contains('Hebeloma'));
-      expect(entry.value,contains('substraat'));
+    test('typical ecology is not treated as a hard exclusion',(){
+      for(final fragment in ['Pluteus','Galerina','Hebeloma','Agrocybe','Laccaria','Pholiota','Armillaria']){
+        final result=determine({17:'Mest / rijk organisch materiaal'});
+        expect(result.remaining.map((c)=>c.name).where((name)=>name.contains(fragment)),isNotEmpty,
+          reason:'$fragment must not be excluded solely by a non-typical substrate');
+      }
     });
     test('milk supports Lactarius only when Russulaceae remains',(){
       final result=determine({9:'Wit / crème',17:'Bodem / strooisel',22:'Melksap aanwezig'});
