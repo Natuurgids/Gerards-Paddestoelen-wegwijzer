@@ -56,7 +56,10 @@ class MatchScore {
   int get assessed=>observed+unknown;
   int get relevant=>assessed+unanswered;
   double get coverage=>relevant==0?0:assessed/relevant;
-  String get label=>percent==null?'Nog geen beoordeelde bronkenmerken':'Match $percent% · $matched/$observed passende kenmerken${unknown>0?' · $unknown onzeker':''}${unanswered>0?' · $unanswered nog niet gevraagd':''} · ${(coverage*100).round()}% dekking';
+  String get label{
+    final details='${unknown>0?' · $unknown onzeker':''}${unanswered>0?' · $unanswered nog niet gevraagd':''} · ${(coverage*100).round()}% dekking';
+    return percent==null?'Nog geen passende beoordeelde bronkenmerken$details':'Match $percent% · $matched/$observed passende kenmerken$details';
+  }
 }
 
 bool isUnknown(String value){
