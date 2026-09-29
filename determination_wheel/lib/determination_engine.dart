@@ -27,24 +27,27 @@ bool isUnknown(String value){
   return v=='onzeker'||v.contains('onzeker')||v.startsWith('niet ')||v=='niet beoordeeld';
 }
 
+// Candidate constraints below are hard exclusion criteria only. Source traits
+// described as "vaak", "meestal" or otherwise typical belong in the detail
+// text, not here: absence of a typical trait must not exclude a candidate.
 const candidates=<Candidate>[
   Candidate('Boleten',form:{'Hoed + steel'},underside:{'Buisjes / poriën'}),
   Candidate('Schelpzwammen',underside:{'Plaatjes'}),
   Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beurs / volva','Beide'}),
-  Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'},substrate:{'Dood hout','Levend hout'}),
+  Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Wit / crème'}),
   Candidate('Krulzomen · Paxillus/Tapinella',form:{'Hoed + steel'},underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aflopend'}),
   Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'}),
   Candidate('Parasolzwammen (+)',spore:{'Wit / crème'},gill:{'Vrij'},velum:{'Ring','Beide'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
-  Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},substrate:{'Bodem / strooisel','Gras / mos'}),
+  Candidate('Fopzwammen · Laccaria',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'}),
   Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'}),
   Candidate('Trechtertjes · Omphalina/Rickenella',spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'}),
   Candidate('Taailingen (+)',spore:{'Wit / crème'},velum:{'Geen zichtbaar'}),
-  Candidate('Hertenzwammen · Pluteus',spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'},substrate:{'Dood hout','Levend hout'}),
-  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',spore:{'Bruin / roest'},gill:{'Aangehecht'},velum:{'Ring','Geen zichtbaar'},substrate:{'Dood hout','Levend hout'}),
+  Candidate('Hertenzwammen · Pluteus',spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'}),
+  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',spore:{'Bruin / roest'},gill:{'Aangehecht'},velum:{'Ring','Geen zichtbaar'}),
   Candidate('Kaalkopjes / Stropharia (+)',spore:{'Purperbruin / donker'}),
-  Candidate('Mosklokjes · Galerina',spore:{'Bruin / roest'},substrate:{'Gras / mos','Dood hout'}),
-  Candidate('Vaalhoeden · Hebeloma',spore:{'Bruin / roest'},velum:{'Geen zichtbaar'},substrate:{'Bodem / strooisel'}),
-  Candidate('Leemhoeden · Agrocybe',spore:{'Bruin / roest'},substrate:{'Bodem / strooisel'}),
+  Candidate('Mosklokjes · Galerina',spore:{'Bruin / roest'}),
+  Candidate('Vaalhoeden · Hebeloma',spore:{'Bruin / roest'},velum:{'Geen zichtbaar'}),
+  Candidate('Leemhoeden · Agrocybe',spore:{'Bruin / roest'}),
   Candidate('Russulaceae · Russula/Lactarius',spore:{'Wit / crème','Bruin / roest'},substrate:{'Bodem / strooisel'}),
 ];
 
