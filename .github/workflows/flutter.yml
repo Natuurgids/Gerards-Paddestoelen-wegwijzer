@@ -74,16 +74,16 @@ jobs:
             build/inaturalist-reference-report.json
           if-no-files-found: error
           retention-days: 7
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        run: flutter test
       - name: Verify reviewed source snapshot
         run: python3 tool/verify_source_snapshot_lock.py
       - name: Generate packaged reference database
         run: REFERENCE_DATABASE_OUTPUT=assets/data/reference.sqlite flutter test tool/reference_database_builder_test.dart
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
-      - name: Analyze
-        run: flutter analyze
-      - name: Test
-        run: flutter test
       - name: Prepare collected species assets for Android release
         if: github.event_name == 'push'
         run: |
