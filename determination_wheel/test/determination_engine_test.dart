@@ -73,8 +73,10 @@ void main(){
       expect(small.remaining.map((c)=>c.name),isNot(contains('Krulzomen · Paxillus/Tapinella')));
     });
     test('Pluteus keeps categorical free-gill, no-velum and pink-spore criteria',(){
-      final possible=determine({6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
+      final possible=determine({4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'});
       expect(possible.remaining.map((c)=>c.name),contains('Hertenzwammen · Pluteus'));
+      final pores=determine({4:'Buisjes / poriën',6:'Vrij',7:'Geen zichtbaar',9:'Roze'});
+      expect(pores.remaining.map((c)=>c.name),isNot(contains('Hertenzwammen · Pluteus')));
       final ringed=determine({6:'Vrij',7:'Ring',9:'Roze'});
       expect(ringed.remaining.map((c)=>c.name),isNot(contains('Hertenzwammen · Pluteus')));
       final attached=determine({6:'Aangehecht',7:'Geen zichtbaar',9:'Roze'});
@@ -123,8 +125,10 @@ void main(){
       expect(tooLarge.remaining.map((c)=>c.name),isNot(contains('Taailingen (+)')));
     });
     test('Galerina keeps categorical size and spore criteria but not variable ecology',(){
-      final possible=determine({7:'Ring',9:'Bruin / roest',17:'Dood hout',19:'Klein'});
+      final possible=determine({4:'Plaatjes',7:'Ring',9:'Bruin / roest',17:'Dood hout',19:'Klein'});
       expect(possible.remaining.map((c)=>c.name),contains('Mosklokjes · Galerina'));
+      final pores=determine({4:'Buisjes / poriën',9:'Bruin / roest',19:'Klein'});
+      expect(pores.remaining.map((c)=>c.name),isNot(contains('Mosklokjes · Galerina')));
       final conflict=determine({9:'Bruin / roest',19:'Groot'});
       expect(conflict.remaining.map((c)=>c.name),isNot(contains('Mosklokjes · Galerina')));
     });
