@@ -10,6 +10,7 @@ void main(){
     expect(c.taxa,contains('Grauwgroene hertenzwam'));
     expect(c.hasNamedPossibilities,isTrue);
     expect(c.nextEvidence,isNotEmpty);
+    expect(c.possibilityCaveat,contains('geen gesloten soortenlijst'));
   });
   test('Agrocybe catalog includes document-listed species without selecting one',(){
     final c=sourceCatalogs['agrocybe']!;
@@ -17,6 +18,7 @@ void main(){
     expect(c.taxa,contains('Gaderde leemhoed (Agrocybe rivulosa)'));
     expect(c.note,contains('geen volledige soortensleutel'));
     expect(c.hasNamedPossibilities,isTrue);
+    expect(c.nextEvidence.any((x)=>x.contains('microscopische')),isTrue);
   });
   test('Pleurotus does not invent species names absent from the retrieved passage',(){
     final c=sourceCatalogs['pleurotus']!;
