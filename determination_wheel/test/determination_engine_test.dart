@@ -319,4 +319,11 @@ void main(){
     }
   });
 
+  test('Galerina variable velum and ecology stay non-exclusive',(){
+    for(final velum in ['Ring','Geen zichtbaar']){
+      final result=determine({4:'Plaatjes',7:velum,9:'Bruin / roest',17:'Bodem / strooisel',19:'Klein'});
+      expect(result.remaining.map((c)=>c.name),contains('Mosklokjes · Galerina'),reason:'source says velum only sometimes and substrate is typical, not exclusive');
+    }
+  });
+
 }
