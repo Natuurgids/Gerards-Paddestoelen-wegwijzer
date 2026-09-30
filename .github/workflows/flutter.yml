@@ -88,7 +88,20 @@ jobs:
         working-directory: determination_wheel
         run: flutter test
       - name: Verify reviewed source snapshot
-        run: python3 tool/verify_source_snapshot_lock.py
+        id: source-snapshot
+        continue-on-error: true
+        run: python3 tool/verify_source_snapshot_lock.py --report build/source-snapshot-drift.json
+      - name: Upload source snapshot drift report
+        if: steps.source-snapshot.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-snapshot-drift
+          path: build/source-snapshot-drift.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Enforce reviewed source snapshot
+        if: steps.source-snapshot.outcome == 'failure'
+        run: exit 1
       - name: Generate packaged reference database
         run: REFERENCE_DATABASE_OUTPUT=assets/data/reference.sqlite flutter test tool/reference_database_builder_test.dart
       - name: Generate launcher icons
