@@ -257,4 +257,13 @@ void main(){
     expect(pluteus.score({4:'Plaatjes',6:'Vrij',9:'Roze'}).complete,isFalse);
   });
 
+  test('Agrocybe keeps categorical smooth cap and gilled underside',(){
+    final possible=determine({4:'Plaatjes',5:'Glad',9:'Bruin / roest'});
+    expect(possible.remaining.map((c)=>c.name),contains('Leemhoeden · Agrocybe'));
+    final scaly=determine({4:'Plaatjes',5:'Schubbig / wrattig',9:'Bruin / roest'});
+    expect(scaly.remaining.map((c)=>c.name),isNot(contains('Leemhoeden · Agrocybe')));
+    final pores=determine({4:'Buisjes / poriën',5:'Glad',9:'Bruin / roest'});
+    expect(pores.remaining.map((c)=>c.name),isNot(contains('Leemhoeden · Agrocybe')));
+  });
+
 }
