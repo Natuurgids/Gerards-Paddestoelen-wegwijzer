@@ -14,6 +14,14 @@ class SourceTaxonCatalog {
 // reference targets, not automatic determinations: the presentation lists them
 // but does not provide the complete branch criteria needed to distinguish each.
 const sourceCatalogs=<String,SourceTaxonCatalog>{
+  'shell':SourceTaxonCatalog(
+    group:'Schelpzwammen (Panellus/Crepidotus/…)',
+    profile:['Steel vrijwel afwezig of zijdelings aan de hoed','Hoed met goed ontwikkelde lamellen, rimpels of vrijwel glad','Schelpvorm komt in meerdere geslachten voor'],
+    taxa:[],
+    note:'De bron definieert deze groep vooral met een vrijwel afwezige of zijdelingse steel en laat de onderzijde variëren van lamellen via rimpels tot vrijwel glad. De huidige wielvragen leggen die steelstand nog niet rechtstreeks vast.',
+    nextEvidence:['Leg vast of de steel vrijwel afwezig of zijdelings aangehecht is','Gebruik daarna een detailsleutel voor het betreffende geslacht'],
+    possibilityCaveat:'De bron noemt meerdere geslachten en zegt expliciet dat schelpzwam-achtige soorten ook in andere geslachten voorkomen; dit is geen gesloten taxonomische groep.',
+  ),
   'pleurotus':SourceTaxonCatalog(
     group:'Oesterzwammen (Pleurotus)',
     profile:['Klein tot groot zonder velum','Vaak relatief taai en uitdrogingsbestendig','Lamellen witachtig en aflopend','Steel meestal kort en zijdelings aangehecht','Sporee wit tot roomkleurig','Parasieten en saprofyten; veroorzaken witrot'],
