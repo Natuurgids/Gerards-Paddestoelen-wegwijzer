@@ -22,6 +22,6 @@ final wheelSteps=<int,WheelStep>{
 20:q('Kleur','Leg kleuren van hoed, lamellen/poriën en steel vast.',['Licht / witachtig','Geel / oker','Bruin','Rood / oranje','Grijs / zwartachtig','Anders / meerkleurig'],21),
 21:q('Geur','Geur kan een relevant macroscopisch kenmerk zijn.',['Opvallende geur','Geen opvallende geur','Niet beoordeeld'],22),
 22:q('Melk / sap bij beschadiging','Binnen Russulaceae ondersteunt melk Lactarius en geen melk Russula.',['Melksap aanwezig','Geen melksap','Niet beoordeeld'],23),
-23:q('Trama / vlees en reactie','Noteer structuur en kleurreacties.',['Broos / breekt krijtachtig','Vlezig / vezelig','Verkleurt bij druk/wrijven','Geen duidelijke reactie','Onzeker'],24),
+23:q('Trama / vlees en reactie','Noteer structuur en kleurreacties.',['Broos / breekt krijtachtig','Vlezig / vezelig','Taai / leerachtig','Verkleurt bij druk/wrijven','Geen duidelijke reactie','Onzeker'],24),
 24:const WheelStep('Controle & detailsleutel','Controleer gelijkende groepen en of microscopie nodig is.',[WheelOption('Toon eindresultaat',end:true)]),
 };
