@@ -298,4 +298,11 @@ void main(){
     expect(pores.remaining.map((c)=>c.name),isNot(contains('Taailingen (+)')));
   });
 
+  test('Pleurotus source allows the full small-to-large size range',(){
+    for(final size in ['Klein','Middelgroot','Groot']){
+      final result=determine({4:'Plaatjes',6:'Aflopend',7:'Geen zichtbaar',9:'Wit / crème',19:size});
+      expect(result.remaining.map((c)=>c.name),contains('Oesterzwammen · Pleurotus'),reason:'source explicitly allows $size');
+    }
+  });
+
 }
