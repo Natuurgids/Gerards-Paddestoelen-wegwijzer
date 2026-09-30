@@ -68,7 +68,7 @@ bool isUnknown(String value){
   return v=='onzeker'||v.contains('onzeker')||v.startsWith('niet ')||v=='niet beoordeeld';
 }
 
-// Candidate constraints below are hard exclusion criteria only. Source traits
+// Galerina's source says velum occurs only sometimes and its moss/dead-wood ecology is likewise typical, so neither is a hard exclusion.\n// Candidate constraints below are hard exclusion criteria only. Source traits
 // described as "vaak", "meestal" or otherwise typical belong in the detail
 // text, not here: absence of a typical trait must not exclude a candidate.
 const candidates=<Candidate>[
