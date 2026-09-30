@@ -1,7 +1,8 @@
 class Candidate {
-  const Candidate(this.name,{this.form,this.underside,this.spore,this.gill,this.velum,this.hygro,this.surface,this.substrate,this.size,this.trama});
+  const Candidate(this.name,{this.form,this.underside,this.spore,this.gill,this.velum,this.hygro,this.surface,this.substrate,this.size,this.trama,this.typical=const {}});
   final String name;
   final Set<String>? form,underside,spore,gill,velum,hygro,surface,substrate,size,trama;
+  final Map<int,Set<String>> typical;
 
   String? conflict(Map<int,String> answers){
     String? check(int step,String label,Set<String>? allowed){
@@ -30,6 +31,20 @@ class Candidate {
     check(1,'vruchtlichaam',form);check(4,'onderzijde',underside);check(5,'hoedoppervlak',surface);check(6,'lamellen',gill);check(7,'velum',velum);check(8,'hygrofaan',hygro);check(9,'sporenkleur',spore);check(17,'substraat',substrate);check(19,'afmetingen',size);check(23,'trama / vlees',trama);
     return out;
   }
+
+  List<String> typicalSupporting(Map<int,String> answers){
+    const labels=<int,String>{7:'velum',15:'vindplaats',17:'substraat',20:'kleur',23:'trama / vlees'};
+    final out=<String>[];
+    for(final entry in typical.entries){
+      final value=answers[entry.key];
+      if(value!=null&&!isUnknown(value)&&entry.value.contains(value)){
+        out.add('${labels[entry.key]??'kenmerk'}: $value');
+      }
+    }
+    return out;
+  }
+
+  int typicalMatchCount(Map<int,String> answers)=>typicalSupporting(answers).length;
 
   bool matches(Map<int,String> answers)=>conflict(answers)==null;
 
@@ -68,7 +83,7 @@ bool isUnknown(String value){
   return v=='onzeker'||v.contains('onzeker')||v.startsWith('niet ')||v=='niet beoordeeld';
 }
 
-// Galerina's source says velum occurs only sometimes and its moss/dead-wood ecology is likewise typical, so neither is a hard exclusion.\n// Candidate constraints below are hard exclusion criteria only. Source traits
+// Candidate constraints below are hard exclusion criteria only. Source traits
 // described as "vaak", "meestal" or otherwise typical belong in the detail
 // text, not here: absence of a typical trait must not exclude a candidate.
 const candidates=<Candidate>[
@@ -88,22 +103,22 @@ const candidates=<Candidate>[
   // Source profile explicitly states: small, no velum, white spores, strongly hygrophanous.
   Candidate('Fopzwammen · Laccaria',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
   // The 2015 combined Hygrocybe/Hygrophorus profile explicitly gives small-to-medium fruitbodies and a white spore print; gill/cap colour and velum are variable.
-  Candidate('Wasplaten / Slijmkoppen',underside:{'Plaatjes'},spore:{'Wit / crème'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'},size:{'Klein','Middelgroot'}),
+  Candidate('Wasplaten / Slijmkoppen',underside:{'Plaatjes'},spore:{'Wit / crème'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'},size:{'Klein','Middelgroot'},typical:{15:{'Grasland / open terrein'}}),
   // Omphalina/Rickenella are explicitly small, without velum, with decurrent gills and a white-to-cream spore print; colour and substrate are only typical.
-  Candidate('Trechtertjes · Omphalina/Rickenella',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein'}),
+  Candidate('Trechtertjes · Omphalina/Rickenella',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein'},typical:{17:{'Bodem / strooisel'}}),
   // Taailingen are explicitly small-to-medium, without velum, with a white-to-cream spore print; toughness is only typical.
   Candidate('Taailingen (+)',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'}),
   // Pluteus source profile explicitly gives no velum, free gills and a pink spore print; wood substrate is only typical.
-  Candidate('Hertenzwammen · Pluteus',underside:{'Plaatjes'},spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'}),
-  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aangehecht'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'}),
+  Candidate('Hertenzwammen · Pluteus',underside:{'Plaatjes'},spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'},typical:{17:{'Dood hout'}}),
+  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aangehecht'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'},typical:{17:{'Dood hout','Levend hout'}}),
   // Stropharia/kaalkopjes source profile makes a purple-tinted spore print categorical; velum is explicitly variable.
   Candidate('Kaalkopjes / Stropharia (+)',underside:{'Plaatjes'},spore:{'Purperbruin / donker'}),
   // Galerina source profile explicitly states small species and an ochre-to-reddish-brown spore print; velum/substrate are variable.
-  Candidate('Mosklokjes · Galerina',underside:{'Plaatjes'},spore:{'Bruin / roest'},size:{'Klein'}),
+  Candidate('Mosklokjes · Galerina',underside:{'Plaatjes'},spore:{'Bruin / roest'},size:{'Klein'},typical:{17:{'Gras / mos','Dood hout'}}),
   // Source profile is categorical here: without velum, with a pale-brown spore print.
-  Candidate('Vaalhoeden · Hebeloma',underside:{'Plaatjes'},spore:{'Bruin / roest'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'}),
+  Candidate('Vaalhoeden · Hebeloma',underside:{'Plaatjes'},spore:{'Bruin / roest'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'},typical:{20:{'Bruin'}}),
   // Agrocybe source profile makes the pale-brown spore print categorical; velum and soil are only most/usually traits.
-  Candidate('Leemhoeden · Agrocybe',underside:{'Plaatjes'},spore:{'Bruin / roest'},surface:{'Glad'}),
+  Candidate('Leemhoeden · Agrocybe',underside:{'Plaatjes'},spore:{'Bruin / roest'},surface:{'Glad'},typical:{17:{'Bodem / strooisel'}}),
   Candidate('Russulaceae · Russula/Lactarius',trama:{'Broos / breekt krijtachtig'}),
 ];
 
@@ -121,6 +136,8 @@ void rankCandidates(List<Candidate> items,Map<int,String> answers){
     if(byPercent!=0)return byPercent;
     final byEvidence=sb.matched.compareTo(sa.matched);
     if(byEvidence!=0)return byEvidence;
+    final byTypical=b.typicalMatchCount(answers).compareTo(a.typicalMatchCount(answers));
+    if(byTypical!=0)return byTypical;
     return a.name.compareTo(b.name);
   });
 }
