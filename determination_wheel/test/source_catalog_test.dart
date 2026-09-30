@@ -29,4 +29,13 @@ void main(){
     expect(sourceCatalogs['galerina']!.taxa,isEmpty);
     expect(sourceCatalogs['hebeloma']!.taxa,isEmpty);
   });
+  test('Schelpzwammen catalog preserves open source morphology',(){
+    final c=sourceCatalogs['shell']!;
+    expect(c.profile.any((x)=>x.contains('zijdelings')),isTrue);
+    expect(c.profile.any((x)=>x.contains('lamellen')&&x.contains('rimpels')&&x.contains('glad')),isTrue);
+    expect(c.taxa,isEmpty);
+    expect(c.nextEvidence.any((x)=>x.contains('steel')),isTrue);
+    expect(c.possibilityCaveat,contains('geen gesloten'));
+  });
+
 }
