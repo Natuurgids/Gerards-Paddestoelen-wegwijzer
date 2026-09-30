@@ -68,7 +68,7 @@ void main(){
     await pick('Toon eindresultaat');
 
     expect(find.textContaining('geen waarschijnlijkheidsrangschikking'),findsOneWidget);
-    expect(find.textContaining('Typisch bronkenmerk (niet uitsluitend): substraat: Dood hout'),findsOneWidget);
+    expect(find.textContaining('Aanvullend bronkenmerk (niet uitsluitend): substraat: Dood hout'),findsOneWidget);
     expect(find.textContaining('géén kans dat de determinatie juist is'),findsOneWidget);
   });
 
