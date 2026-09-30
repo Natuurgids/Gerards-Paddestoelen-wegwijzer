@@ -89,7 +89,8 @@ bool isUnknown(String value){
 const candidates=<Candidate>[
   // The supplied dictionary describes Boletales as fleshy fungi with a distinct cap/stem and, ordinarily, a tubular hymenophore; no source-backed spore-colour exclusion is added.
   Candidate('Boleten',form:{'Hoed + steel'},underside:{'Buisjes / poriën'}),
-  Candidate('Schelpzwammen',underside:{'Plaatjes'}),
+  // The source defines Schelpzwammen by an absent/lateral stem and explicitly allows the underside from well-developed gills through wrinkles to almost smooth. The current wheel has no lateral-stem observation, so no hard filter is safe here.
+  Candidate('Schelpzwammen'),
   // Pleurotus source profile explicitly gives no velum, decurrent whitish gills, and a white-to-cream spore print; short lateral stems and toughness are only typical.
   Candidate('Oesterzwammen · Pleurotus',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'}),
   Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'}),
