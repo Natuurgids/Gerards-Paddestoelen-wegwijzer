@@ -37,14 +37,14 @@ void main(){
   });
 
   testWidgets('result explains ranking is not probability and typical evidence is non-exclusive',(tester)async{
+    tester.view.physicalSize=const Size(1200,1600);
+    tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const App());
     Future<void> pick(String label)async{
       final target=find.text(label);
-      if(target.evaluate().isEmpty){
-        await tester.scrollUntilVisible(target,200,scrollable:find.byType(Scrollable).last);
-      }else{
-        await tester.ensureVisible(target.first);
-      }
+      await tester.ensureVisible(target.first);
       await tester.tap(target.first);
       await tester.pumpAndSettle();
     }
