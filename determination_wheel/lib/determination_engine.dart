@@ -101,7 +101,7 @@ const candidates=<Candidate>[
   // Galerina source profile explicitly states small species and an ochre-to-reddish-brown spore print; velum/substrate are variable.
   Candidate('Mosklokjes · Galerina',underside:{'Plaatjes'},spore:{'Bruin / roest'},size:{'Klein'}),
   // Source profile is categorical here: without velum, with a pale-brown spore print.
-  Candidate('Vaalhoeden · Hebeloma',underside:{'Plaatjes'},spore:{'Bruin / roest'},velum:{'Geen zichtbaar'}),
+  Candidate('Vaalhoeden · Hebeloma',underside:{'Plaatjes'},spore:{'Bruin / roest'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'}),
   // Agrocybe source profile makes the pale-brown spore print categorical; velum and soil are only most/usually traits.
   Candidate('Leemhoeden · Agrocybe',underside:{'Plaatjes'},spore:{'Bruin / roest'},surface:{'Glad'}),
   Candidate('Russulaceae · Russula/Lactarius',trama:{'Broos / breekt krijtachtig'}),
