@@ -95,9 +95,9 @@ const candidates=<Candidate>[
   Candidate('Taailingen (+)',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'}),
   // Pluteus source profile explicitly gives no velum, free gills and a pink spore print; wood substrate is only typical.
   Candidate('Hertenzwammen · Pluteus',underside:{'Plaatjes'},spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'}),
-  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',spore:{'Bruin / roest'},gill:{'Aangehecht'}),
+  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aangehecht'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'}),
   // Stropharia/kaalkopjes source profile makes a purple-tinted spore print categorical; velum is explicitly variable.
-  Candidate('Kaalkopjes / Stropharia (+)',spore:{'Purperbruin / donker'}),
+  Candidate('Kaalkopjes / Stropharia (+)',underside:{'Plaatjes'},spore:{'Purperbruin / donker'}),
   // Galerina source profile explicitly states small species and an ochre-to-reddish-brown spore print; velum/substrate are variable.
   Candidate('Mosklokjes · Galerina',underside:{'Plaatjes'},spore:{'Bruin / roest'},size:{'Klein'}),
   // Source profile is categorical here: without velum, with a pale-brown spore print.
