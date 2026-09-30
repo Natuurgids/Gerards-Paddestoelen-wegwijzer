@@ -92,7 +92,7 @@ const candidates=<Candidate>[
   // The source defines Schelpzwammen by an absent/lateral stem and explicitly allows the underside from well-developed gills through wrinkles to almost smooth. The current wheel has no lateral-stem observation, so no hard filter is safe here.
   Candidate('Schelpzwammen'),
   // Pleurotus source profile explicitly gives no velum, decurrent whitish gills, and a white-to-cream spore print; short lateral stems and toughness are only typical.
-  Candidate('Oesterzwammen · Pleurotus',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'}),
+  Candidate('Oesterzwammen · Pleurotus',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'},typical:{23:{'Taai / leerachtig'}}),
   Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'}),
   Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'}),
   // Paxillus/Tapinella source profile explicitly gives (medium-)large stature, strongly decurrent gills, dark-brown bruising flesh and a brown spore print.
@@ -111,7 +111,7 @@ const candidates=<Candidate>[
   Candidate('Taailingen (+)',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'},typical:{23:{'Taai / leerachtig'}}),
   // Pluteus source profile explicitly gives no velum, free gills and a pink spore print; wood substrate is only typical.
   Candidate('Hertenzwammen · Pluteus',underside:{'Plaatjes'},spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'},typical:{17:{'Dood hout'}}),
-  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aangehecht'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'},typical:{17:{'Dood hout','Levend hout'}}),
+  Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aangehecht'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'},size:{'Klein','Middelgroot','Groot'},typical:{7:{'Ring'},17:{'Dood hout','Levend hout'}}),
   // Stropharia/kaalkopjes source profile makes a purple-tinted spore print categorical; velum is explicitly variable.
   Candidate('Kaalkopjes / Stropharia (+)',underside:{'Plaatjes'},spore:{'Purperbruin / donker'},size:{'Klein','Middelgroot','Groot'}),
   // Galerina source profile explicitly states small species and an ochre-to-reddish-brown spore print; velum/substrate are variable.
