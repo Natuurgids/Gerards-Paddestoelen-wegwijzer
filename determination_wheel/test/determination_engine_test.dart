@@ -326,4 +326,30 @@ void main(){
     }
   });
 
+  test('typical evidence supports but never excludes possibilities',(){
+    final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
+    expect(pluteus.typicalSupporting({17:'Dood hout'}),contains('substraat: Dood hout'));
+    expect(pluteus.typicalSupporting({17:'Bodem / strooisel'}),isEmpty);
+    expect(determine({4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze',17:'Bodem / strooisel'}).remaining.map((c)=>c.name),contains('Hertenzwammen · Pluteus'));
+  });
+
+  test('typical evidence does not change hard match percentage or coverage',(){
+    final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
+    final onWood=pluteus.score({4:'Plaatjes',6:'Vrij',9:'Roze',17:'Dood hout'});
+    final onSoil=pluteus.score({4:'Plaatjes',6:'Vrij',9:'Roze',17:'Bodem / strooisel'});
+    expect(onWood.percent,onSoil.percent);
+    expect(onWood.coverage,onSoil.coverage);
+    expect(pluteus.typicalMatchCount({17:'Dood hout'}),1);
+    expect(pluteus.typicalMatchCount({17:'Bodem / strooisel'}),0);
+  });
+
+  test('typical evidence only breaks ties after hard evidence',(){
+    const typical=Candidate('Typical',spore:{'Roze'},typical:{17:{'Dood hout'}});
+    const neutral=Candidate('Neutral',spore:{'Roze'});
+    final ranked=<Candidate>[neutral,typical];
+    rankCandidates(ranked,{9:'Roze',17:'Dood hout'});
+    expect(ranked.first.name,'Typical');
+    expect(ranked.first.score({9:'Roze',17:'Dood hout'}).percent,100);
+  });
+
 }
