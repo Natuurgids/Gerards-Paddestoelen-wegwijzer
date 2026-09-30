@@ -403,4 +403,57 @@ void main(){
     expect(pholiota.matches({7:'Geen zichtbaar'}),isTrue);
   });
 
+  test('all-unknown observations preserve the full possibility set and neutral scores',(){
+    final answers=<int,String>{
+      1:'Andere vorm',
+      4:'Onzeker',
+      5:'Onzeker',
+      6:'Onzeker',
+      7:'Onzeker',
+      8:'Onzeker',
+      9:'Onzeker',
+      17:'Onzeker',
+      19:'Niet gemeten / onzeker',
+      23:'Onzeker',
+    };
+    // Form has no explicit unknown option in the current wheel, so omit it from
+    // the uncertainty assertion rather than pretending "Andere vorm" is unknown.
+    answers.remove(1);
+    final result=determine(answers);
+    expect(result.excluded,isEmpty);
+    expect(result.remaining.length,candidates.length);
+    for(final candidate in result.remaining){
+      final score=candidate.score(answers);
+      expect(score.percent,isNull,reason:candidate.name);
+      expect(score.matched,0,reason:candidate.name);
+    }
+  });
+
+  test('contradictory hard observations may legitimately leave only open profiles',(){
+    final result=determine({
+      1:'Andere vorm',
+      4:'Tanden / stekels',
+      5:'Vezelig',
+      6:'Aangehecht',
+      7:'Beurs / volva',
+      8:'Nee',
+      9:'Purperbruin / donker',
+      17:'Mest / rijk organisch materiaal',
+      19:'Groot',
+      23:'Vlezig / vezelig',
+    });
+    expect(result.remaining.map((c)=>c.name),contains('Schelpzwammen'));
+    expect(result.remaining.every((c)=>c.conflict({
+      1:'Andere vorm',4:'Tanden / stekels',5:'Vezelig',6:'Aangehecht',7:'Beurs / volva',
+      8:'Nee',9:'Purperbruin / donker',17:'Mest / rijk organisch materiaal',19:'Groot',23:'Vlezig / vezelig'
+    })==null),isTrue);
+  });
+
+  test('resetting evidence by omission cannot create a hard conflict',(){
+    final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
+    expect(pluteus.conflict({4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'}),isNull);
+    expect(pluteus.conflict({4:'Plaatjes',6:'Vrij'}),isNull);
+    expect(pluteus.score({4:'Plaatjes',6:'Vrij'}).unanswered,greaterThan(0));
+  });
+
 }
