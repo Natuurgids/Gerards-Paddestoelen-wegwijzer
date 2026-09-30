@@ -352,4 +352,32 @@ void main(){
     expect(ranked.first.score({9:'Roze',17:'Dood hout'}).percent,100);
   });
 
+  test('full source size ranges stay possible across broad groups',(){
+    const cases=<String,List<String>>{
+      'Parasolzwammen (+)':['Klein','Middelgroot','Groot'],
+      'Kaalkopjes / Stropharia (+)':['Klein','Middelgroot','Groot'],
+      'Leemhoeden · Agrocybe':['Klein','Middelgroot','Groot'],
+    };
+    for(final entry in cases.entries){
+      final candidate=candidates.firstWhere((c)=>c.name==entry.key);
+      for(final size in entry.value){
+        expect(candidate.matches({19:size}),isTrue,reason:'${entry.key} source explicitly allows $size');
+      }
+    }
+  });
+
+  test('parasol source requires gills while its ring remains only typical',(){
+    final parasol=candidates.firstWhere((c)=>c.name=='Parasolzwammen (+)');
+    expect(parasol.matches({4:'Plaatjes',7:'Geen zichtbaar'}),isTrue);
+    expect(parasol.matches({4:'Buisjes / poriën'}),isFalse);
+    expect(parasol.typicalSupporting({7:'Ring'}),contains('velum: Ring'));
+    expect(parasol.typicalSupporting({7:'Geen zichtbaar'}),isEmpty);
+  });
+
+  test('Taailingen toughness supports without excluding softer observations',(){
+    final tough=candidates.firstWhere((c)=>c.name=='Taailingen (+)');
+    expect(tough.typicalSupporting({23:'Taai / leerachtig'}),contains('trama / vlees: Taai / leerachtig'));
+    expect(tough.matches({23:'Vlezig / vezelig'}),isTrue);
+  });
+
 }
