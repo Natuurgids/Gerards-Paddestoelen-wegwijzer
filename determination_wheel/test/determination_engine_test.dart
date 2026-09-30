@@ -312,4 +312,11 @@ void main(){
     }
   });
 
+  test('Hebeloma source allows the full small-to-large size range',(){
+    for(final size in ['Klein','Middelgroot','Groot']){
+      final result=determine({4:'Plaatjes',7:'Geen zichtbaar',9:'Bruin / roest',19:size});
+      expect(result.remaining.map((c)=>c.name),contains('Vaalhoeden · Hebeloma'),reason:'source explicitly allows $size');
+    }
+  });
+
 }
