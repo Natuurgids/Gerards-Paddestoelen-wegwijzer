@@ -111,7 +111,7 @@ def verify(catalog_path: Path, lock_path: Path, report_path: Path | None = None)
                     ensure_ascii=False,
                     indent=2,
                     sort_keys=True,
-                ) + "\\n",
+                ) + "\n",
                 encoding="utf-8",
             )
         details = []
