@@ -282,4 +282,20 @@ void main(){
     expect(pores.remaining.map((c)=>c.name),isNot(contains('Kaalkopjes / Stropharia (+)')));
   });
 
+  test('waxcap/slimy-cap profile requires gills and source-listed cap surfaces',(){
+    final possible=determine({4:'Plaatjes',5:'Kleverig / slijmerig',9:'Wit / crème',19:'Middelgroot'});
+    expect(possible.remaining.map((c)=>c.name),contains('Wasplaten / Slijmkoppen'));
+    final fibrous=determine({4:'Plaatjes',5:'Vezelig',9:'Wit / crème',19:'Middelgroot'});
+    expect(fibrous.remaining.map((c)=>c.name),isNot(contains('Wasplaten / Slijmkoppen')));
+    final pores=determine({4:'Buisjes / poriën',5:'Glad',9:'Wit / crème',19:'Middelgroot'});
+    expect(pores.remaining.map((c)=>c.name),isNot(contains('Wasplaten / Slijmkoppen')));
+  });
+
+  test('toughshank group is gilled without making toughness mandatory',(){
+    final possible=determine({4:'Plaatjes',7:'Geen zichtbaar',9:'Wit / crème',19:'Klein',23:'Vlezig / vezelig'});
+    expect(possible.remaining.map((c)=>c.name),contains('Taailingen (+)'));
+    final pores=determine({4:'Buisjes / poriën',7:'Geen zichtbaar',9:'Wit / crème',19:'Klein'});
+    expect(pores.remaining.map((c)=>c.name),isNot(contains('Taailingen (+)')));
+  });
+
 }
