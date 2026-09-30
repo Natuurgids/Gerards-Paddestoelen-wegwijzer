@@ -104,4 +104,43 @@ void main(){
     expect(find.textContaining('Aanvullend, niet uitsluitend: substraat: Dood hout'),findsOneWidget);
   });
 
+  testWidgets('tough trama observation is reachable and remains supporting only',(tester)async{
+    tester.view.physicalSize=const Size(1200,1600);
+    tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const App());
+    Future<void> pick(String label)async{
+      final target=find.text(label);
+      await tester.ensureVisible(target.first);
+      await tester.tap(target.first);
+      await tester.pumpAndSettle();
+    }
+    await pick('Hoed + steel');
+    await pick('Plaatjes');
+    await pick('Glad');
+    await pick('Aflopend');
+    await pick('Geen zichtbaar');
+    await pick('Nee');
+    await pick('Wit / crème');
+    await pick('Ga verder met veldkenmerken');
+    await pick('Bos');
+    await pick('Geen duidelijke waardplant');
+    await pick('Dood hout');
+    await pick('Afzonderlijk');
+    await pick('Middelgroot');
+    await pick('Bruin');
+    await pick('Geen opvallende geur');
+    await pick('Geen melksap');
+
+    expect(find.text('Taai / leerachtig'),findsOneWidget);
+    await pick('Taai / leerachtig');
+
+    final pleurotus=find.byWidgetPredicate((w)=>w is Chip&&w.label is Text&&(w.label as Text).data?.contains('Oesterzwammen · Pleurotus')==true);
+    expect(pleurotus,findsOneWidget);
+    await tester.longPress(pleurotus);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Aanvullend, niet uitsluitend: trama / vlees: Taai / leerachtig'),findsOneWidget);
+  });
+
 }
