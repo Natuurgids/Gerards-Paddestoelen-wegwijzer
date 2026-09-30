@@ -390,4 +390,17 @@ void main(){
     expect(shell.underside,isNull,reason:'the current wheel cannot encode the source-defining absent/lateral stem safely');
   });
 
+  test('remaining typical source traits support without excluding',(){
+    final pleurotus=candidates.firstWhere((c)=>c.name.contains('Pleurotus'));
+    expect(pleurotus.typicalSupporting({23:'Taai / leerachtig'}),contains('trama / vlees: Taai / leerachtig'));
+    expect(pleurotus.matches({23:'Vlezig / vezelig'}),isTrue);
+
+    final pholiota=candidates.firstWhere((c)=>c.name.contains('Pholiota'));
+    expect(pholiota.matches({19:'Klein'}),isTrue);
+    expect(pholiota.matches({19:'Middelgroot'}),isTrue);
+    expect(pholiota.matches({19:'Groot'}),isTrue);
+    expect(pholiota.typicalSupporting({7:'Ring'}),contains('velum: Ring'));
+    expect(pholiota.matches({7:'Geen zichtbaar'}),isTrue);
+  });
+
 }
