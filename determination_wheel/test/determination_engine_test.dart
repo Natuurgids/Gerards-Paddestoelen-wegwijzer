@@ -380,4 +380,14 @@ void main(){
     expect(tough.matches({23:'Vlezig / vezelig'}),isTrue);
   });
 
+  test('Schelpzwammen remain possible across source-listed underside variation',(){
+    for(final underside in ['Plaatjes','Plooien / ribben']){
+      final result=determine({4:underside});
+      expect(result.remaining.map((c)=>c.name),contains('Schelpzwammen'),
+        reason:'source allows well-developed gills through wrinkles to nearly smooth undersides');
+    }
+    final shell=candidates.firstWhere((c)=>c.name=='Schelpzwammen');
+    expect(shell.underside,isNull,reason:'the current wheel cannot encode the source-defining absent/lateral stem safely');
+  });
+
 }
