@@ -203,7 +203,7 @@ void main(){
     expect(score.matched,3);
     expect(score.observed,3);
     expect(score.unknown,1);
-    expect(score.unanswered,0);
+    expect(score.unanswered,1);
   });
   test('match score is descriptive rather than a probability',(){
     final bolete=candidates.firstWhere((c)=>c.name=='Boleten');
@@ -224,9 +224,9 @@ void main(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
     final score=pluteus.score({4:'Plaatjes',6:'Onzeker'});
     expect(score.unknown,1);
-    expect(score.unanswered,2);
+    expect(score.unanswered,3);
     expect(score.label,contains('1 onzeker'));
-    expect(score.label,contains('2 nog niet gevraagd'));
+    expect(score.label,contains('3 nog niet gevraagd'));
   });
 
   test('coverage exposes how much relevant evidence has been assessed',(){
@@ -234,9 +234,9 @@ void main(){
     final score=pluteus.score({4:'Plaatjes',6:'Vrij'});
     expect(score.percent,100);
     expect(score.assessed,2);
-    expect(score.relevant,4);
-    expect(score.coverage,closeTo(1/2,.0001));
-    expect(score.label,contains('50% dekking'));
+    expect(score.relevant,5);
+    expect(score.coverage,closeTo(2/5,.0001));
+    expect(score.label,contains('40% dekking'));
   });
   test('equal matches rank by positive evidence, not merely coverage',(){
     const sparse=Candidate('Sparse',spore:{'Roze'});
@@ -252,8 +252,8 @@ void main(){
 
   test('complete only means every coded criterion was assessed',(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
-    expect(pluteus.score({4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'}).complete,isTrue);
-    expect(pluteus.score({4:'Plaatjes',6:'Vrij',7:'Onzeker',9:'Roze'}).complete,isTrue);
+    expect(pluteus.score({4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze',19:'Middelgroot'}).complete,isTrue);
+    expect(pluteus.score({4:'Plaatjes',6:'Vrij',7:'Onzeker',9:'Roze',19:'Middelgroot'}).complete,isTrue);
     expect(pluteus.score({4:'Plaatjes',6:'Vrij',9:'Roze'}).complete,isFalse);
   });
 
