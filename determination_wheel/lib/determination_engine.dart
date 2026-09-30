@@ -88,11 +88,11 @@ const candidates=<Candidate>[
   // Source profile explicitly states: small, no velum, white spores, strongly hygrophanous.
   Candidate('Fopzwammen · Laccaria',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
   // The 2015 combined Hygrocybe/Hygrophorus profile explicitly gives small-to-medium fruitbodies and a white spore print; gill/cap colour and velum are variable.
-  Candidate('Wasplaten / Slijmkoppen',spore:{'Wit / crème'},size:{'Klein','Middelgroot'}),
+  Candidate('Wasplaten / Slijmkoppen',underside:{'Plaatjes'},spore:{'Wit / crème'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'},size:{'Klein','Middelgroot'}),
   // Omphalina/Rickenella are explicitly small, without velum, with decurrent gills and a white-to-cream spore print; colour and substrate are only typical.
   Candidate('Trechtertjes · Omphalina/Rickenella',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein'}),
   // Taailingen are explicitly small-to-medium, without velum, with a white-to-cream spore print; toughness is only typical.
-  Candidate('Taailingen (+)',spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'}),
+  Candidate('Taailingen (+)',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'}),
   // Pluteus source profile explicitly gives no velum, free gills and a pink spore print; wood substrate is only typical.
   Candidate('Hertenzwammen · Pluteus',underside:{'Plaatjes'},spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'}),
   Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aangehecht'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'}),
