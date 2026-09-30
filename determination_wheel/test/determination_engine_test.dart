@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mushroom_determination_wheel/determination_engine.dart';
+import 'package:mushroom_determination_wheel/wheel_steps.dart';
 
 void main(){
   group('source-grounded candidate filtering',(){
