@@ -44,7 +44,36 @@ def _source_license_mismatches(catalog: dict, lock: dict) -> dict[str, dict[str,
     return mismatches
 
 
-def verify(catalog_path: Path, lock_path: Path) -> None:
+def _drift_records(species: list[dict], lock: dict) -> dict[str, list[dict]]:
+    """Return inspectable records for sources whose reviewed counts drifted."""
+    expected = lock["catalogue"]
+    nsr = [
+        {
+            "id": item.get("id"),
+            "taxon_id": item.get("taxon_id"),
+            "source_record_id": item.get("source_record_id"),
+            "nl_name": ((item.get("texts") or {}).get("nl") or {}).get("common_name"),
+        }
+        for item in species
+        if item.get("source_id") == "nsr-dutch-species-register"
+    ]
+    dgfm = [
+        {
+            "id": item.get("id"),
+            "taxon_id": item.get("taxon_id"),
+            "de_name": ((item.get("texts") or {}).get("de") or {}).get("common_name"),
+        }
+        for item in species
+        if ((item.get("texts") or {}).get("de") or {}).get("common_name_source_id")
+        == "dgfm-german-fungi"
+    ]
+    return {
+        "nsr_species": nsr if len(nsr) != expected.get("nsr_species") else [],
+        "dgfm_german_names": dgfm if len(dgfm) != expected.get("dgfm_german_names") else [],
+    }
+
+
+def verify(catalog_path: Path, lock_path: Path, report_path: Path | None = None) -> None:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     species = list(catalog.get("species") or [])
@@ -69,6 +98,22 @@ def verify(catalog_path: Path, lock_path: Path) -> None:
         if value != expected.get(key)
     }
     if missing_sources or license_mismatches or count_mismatches:
+        if report_path is not None:
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(
+                json.dumps(
+                    {
+                        "expected": expected,
+                        "actual": actual,
+                        "count_mismatches": count_mismatches,
+                        "records": _drift_records(species, lock),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                ) + "\\n",
+                encoding="utf-8",
+            )
         details = []
         if missing_sources:
             details.append(f"missing sources: {', '.join(missing_sources)}")
@@ -96,8 +141,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--catalog", default="assets/data/species_catalog.json")
     parser.add_argument("--lock", default="tool/source_snapshot_lock.json")
+    parser.add_argument("--report")
     args = parser.parse_args()
-    verify(Path(args.catalog), Path(args.lock))
+    verify(Path(args.catalog), Path(args.lock), Path(args.report) if args.report else None)
 
 
 if __name__ == "__main__":
