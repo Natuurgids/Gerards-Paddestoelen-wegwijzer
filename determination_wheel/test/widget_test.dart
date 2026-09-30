@@ -72,4 +72,36 @@ void main(){
     expect(find.textContaining('géén kans dat de determinatie juist is'),findsOneWidget);
   });
 
+  testWidgets('live candidate tooltip distinguishes hard and non-exclusive evidence',(tester)async{
+    tester.view.physicalSize=const Size(1200,1600);
+    tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const App());
+    Future<void> pick(String label)async{
+      final target=find.text(label);
+      await tester.ensureVisible(target.first);
+      await tester.tap(target.first);
+      await tester.pumpAndSettle();
+    }
+    await pick('Hoed + steel');
+    await pick('Plaatjes');
+    await pick('Glad');
+    await pick('Vrij');
+    await pick('Geen zichtbaar');
+    await pick('Nee');
+    await pick('Roze');
+    await pick('Ga verder met veldkenmerken');
+    await pick('Bos');
+    await pick('Geen duidelijke waardplant');
+    await pick('Dood hout');
+
+    final pluteus=find.byWidgetPredicate((w)=>w is Chip&&w.label is Text&&(w.label as Text).data?.contains('Hertenzwammen · Pluteus')==true);
+    expect(pluteus,findsOneWidget);
+    await tester.longPress(pluteus);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Hard: onderzijde: Plaatjes'),findsOneWidget);
+    expect(find.textContaining('Aanvullend, niet uitsluitend: substraat: Dood hout'),findsOneWidget);
+  });
+
 }
