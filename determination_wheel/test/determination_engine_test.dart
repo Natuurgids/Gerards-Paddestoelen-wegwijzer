@@ -266,4 +266,20 @@ void main(){
     expect(pores.remaining.map((c)=>c.name),isNot(contains('Leemhoeden · Agrocybe')));
   });
 
+  test('Pholiota profile keeps categorical gill and cap-surface traits',(){
+    final possible=determine({4:'Plaatjes',5:'Schubbig / wrattig',6:'Aangehecht',9:'Bruin / roest'});
+    expect(possible.remaining.map((c)=>c.name),contains('Bundelzwammen (+) · Pholiota/Kuehneromyces'));
+    final fibrous=determine({4:'Plaatjes',5:'Vezelig',6:'Aangehecht',9:'Bruin / roest'});
+    expect(fibrous.remaining.map((c)=>c.name),isNot(contains('Bundelzwammen (+) · Pholiota/Kuehneromyces')));
+    final pores=determine({4:'Buisjes / poriën',5:'Glad',6:'Aangehecht',9:'Bruin / roest'});
+    expect(pores.remaining.map((c)=>c.name),isNot(contains('Bundelzwammen (+) · Pholiota/Kuehneromyces')));
+  });
+
+  test('Stropharia group requires gilled underside but not velum',(){
+    final ringless=determine({4:'Plaatjes',7:'Geen zichtbaar',9:'Purperbruin / donker'});
+    expect(ringless.remaining.map((c)=>c.name),contains('Kaalkopjes / Stropharia (+)'));
+    final pores=determine({4:'Buisjes / poriën',9:'Purperbruin / donker'});
+    expect(pores.remaining.map((c)=>c.name),isNot(contains('Kaalkopjes / Stropharia (+)')));
+  });
+
 }
