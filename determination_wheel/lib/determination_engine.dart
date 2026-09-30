@@ -99,7 +99,7 @@ const candidates=<Candidate>[
   // Cantharellus source profile explicitly gives a centrally stalked cap with lamella-like/vein-like ridges and a cream-yellowish spore print.
   Candidate('Cantharellen · Cantharellus',form:{'Hoed + steel'},underside:{'Plooien / ribben'},spore:{'Wit / crème'}),
   // The supplied Lepiota-group profile gives free gills, a smooth-or-scaly cap, white/cream-to-pale-pink spores and saprotrophic growth on soil; velum/ring are only typical.
-  Candidate('Parasolzwammen (+)',spore:{'Wit / crème','Roze'},gill:{'Vrij'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'}),
+  Candidate('Parasolzwammen (+)',underside:{'Plaatjes'},spore:{'Wit / crème','Roze'},gill:{'Vrij'},surface:{'Glad','Schubbig / wrattig'},substrate:{'Bodem / strooisel'},size:{'Klein','Middelgroot','Groot'},typical:{7:{'Ring'}}),
   // Source profile explicitly states: small, no velum, white spores, strongly hygrophanous.
   Candidate('Fopzwammen · Laccaria',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},hygro:{'Ja'},size:{'Klein'}),
   // The 2015 combined Hygrocybe/Hygrophorus profile explicitly gives small-to-medium fruitbodies and a white spore print; gill/cap colour and velum are variable.
@@ -107,18 +107,18 @@ const candidates=<Candidate>[
   // Omphalina/Rickenella are explicitly small, without velum, with decurrent gills and a white-to-cream spore print; colour and substrate are only typical.
   Candidate('Trechtertjes · Omphalina/Rickenella',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein'},typical:{17:{'Bodem / strooisel'}}),
   // Taailingen are explicitly small-to-medium, without velum, with a white-to-cream spore print; toughness is only typical.
-  Candidate('Taailingen (+)',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'}),
+  Candidate('Taailingen (+)',underside:{'Plaatjes'},spore:{'Wit / crème'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot'},typical:{23:{'Taai / leerachtig'}}),
   // Pluteus source profile explicitly gives no velum, free gills and a pink spore print; wood substrate is only typical.
   Candidate('Hertenzwammen · Pluteus',underside:{'Plaatjes'},spore:{'Roze'},gill:{'Vrij'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'},typical:{17:{'Dood hout'}}),
   Candidate('Bundelzwammen (+) · Pholiota/Kuehneromyces',underside:{'Plaatjes'},spore:{'Bruin / roest'},gill:{'Aangehecht'},surface:{'Glad','Schubbig / wrattig','Kleverig / slijmerig'},typical:{17:{'Dood hout','Levend hout'}}),
   // Stropharia/kaalkopjes source profile makes a purple-tinted spore print categorical; velum is explicitly variable.
-  Candidate('Kaalkopjes / Stropharia (+)',underside:{'Plaatjes'},spore:{'Purperbruin / donker'}),
+  Candidate('Kaalkopjes / Stropharia (+)',underside:{'Plaatjes'},spore:{'Purperbruin / donker'},size:{'Klein','Middelgroot','Groot'}),
   // Galerina source profile explicitly states small species and an ochre-to-reddish-brown spore print; velum/substrate are variable.
   Candidate('Mosklokjes · Galerina',underside:{'Plaatjes'},spore:{'Bruin / roest'},size:{'Klein'},typical:{17:{'Gras / mos','Dood hout'}}),
   // Source profile is categorical here: without velum, with a pale-brown spore print.
   Candidate('Vaalhoeden · Hebeloma',underside:{'Plaatjes'},spore:{'Bruin / roest'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'},typical:{20:{'Bruin'}}),
   // Agrocybe source profile makes the pale-brown spore print categorical; velum and soil are only most/usually traits.
-  Candidate('Leemhoeden · Agrocybe',underside:{'Plaatjes'},spore:{'Bruin / roest'},surface:{'Glad'},typical:{17:{'Bodem / strooisel'}}),
+  Candidate('Leemhoeden · Agrocybe',underside:{'Plaatjes'},spore:{'Bruin / roest'},surface:{'Glad'},size:{'Klein','Middelgroot','Groot'},typical:{17:{'Bodem / strooisel'}}),
   Candidate('Russulaceae · Russula/Lactarius',trama:{'Broos / breekt krijtachtig'}),
 ];
 
