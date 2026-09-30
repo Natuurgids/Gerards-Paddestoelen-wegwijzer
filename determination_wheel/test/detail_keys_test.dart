@@ -3,6 +3,7 @@ import 'package:mushroom_determination_wheel/detail_keys.dart';
 
 void main(){
   test('single supported candidates receive a source-backed detail key',(){
+    expect(detailKeyFor(candidateNames:['Schelpzwammen'])?.id,'shell');
     expect(detailKeyFor(candidateNames:['Parasolzwammen (+)'])?.id,'parasol');
     expect(detailKeyFor(candidateNames:['Fopzwammen · Laccaria'])?.id,'laccaria');
     expect(detailKeyFor(candidateNames:['Hertenzwammen · Pluteus'])?.id,'pluteus');
@@ -26,4 +27,12 @@ void main(){
   test('Russulaceae genus hint takes precedence',(){
     expect(detailKeyFor(genusHint:'Lactarius',candidateNames:['Russulaceae · Russula/Lactarius'])?.id,'russulaceae');
   });
+  test('Schelpzwammen follow-up uses stem attachment, not underside exclusion',(){
+    final step=shellDetailKey.steps['stem']!;
+    expect(step.options.firstWhere((o)=>o.label=='Steel vrijwel afwezig').result,'Schelpzwammen — kandidaatgroep');
+    expect(step.options.firstWhere((o)=>o.label=='Steel zijdelings aangehecht').result,'Schelpzwammen — kandidaatgroep');
+    expect(step.options.firstWhere((o)=>o.label=='Onzeker').result,contains('blijven mogelijk'));
+    expect(shellDetailKey.sourceNote,contains('geen harde groepsfilter'));
+  });
+
 }
