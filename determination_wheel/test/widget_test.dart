@@ -36,4 +36,34 @@ void main(){
     expect(find.textContaining('Mogelijke groepen:'),findsOneWidget);
   });
 
+  testWidgets('result explains ranking is not probability and typical evidence is non-exclusive',(tester)async{
+    await tester.pumpWidget(const App());
+    Future<void> pick(String label)async{
+      await tester.tap(find.text(label).first);
+      await tester.pumpAndSettle();
+    }
+    await pick('Hoed + steel');
+    await pick('Plaatjes');
+    await pick('Glad');
+    await pick('Vrij');
+    await pick('Geen zichtbaar');
+    await pick('Nee');
+    await pick('Roze');
+    await pick('Ga verder met veldkenmerken');
+    await pick('Bos');
+    await pick('Geen duidelijke waardplant');
+    await pick('Dood hout');
+    await pick('Afzonderlijk');
+    await pick('Middelgroot');
+    await pick('Bruin');
+    await pick('Geen opvallende geur');
+    await pick('Geen melksap');
+    await pick('Vlezig / vezelig');
+    await pick('Toon eindresultaat');
+
+    expect(find.textContaining('geen waarschijnlijkheidsrangschikking'),findsOneWidget);
+    expect(find.textContaining('Typisch bronkenmerk (niet uitsluitend): substraat: Dood hout'),findsOneWidget);
+    expect(find.textContaining('géén kans dat de determinatie juist is'),findsOneWidget);
+  });
+
 }
