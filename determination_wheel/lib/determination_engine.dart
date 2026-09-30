@@ -76,7 +76,7 @@ const candidates=<Candidate>[
   Candidate('Boleten',form:{'Hoed + steel'},underside:{'Buisjes / poriën'}),
   Candidate('Schelpzwammen',underside:{'Plaatjes'}),
   // Pleurotus source profile explicitly gives no velum, decurrent whitish gills, and a white-to-cream spore print; short lateral stems and toughness are only typical.
-  Candidate('Oesterzwammen · Pleurotus',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'}),
+  Candidate('Oesterzwammen · Pleurotus',underside:{'Plaatjes'},spore:{'Wit / crème'},gill:{'Aflopend'},velum:{'Geen zichtbaar'},size:{'Klein','Middelgroot','Groot'}),
   Candidate('Amanieten · Amanita',form:{'Hoed + steel'},underside:{'Plaatjes'}),
   Candidate('Honingzwammen · Armillaria',form:{'Hoed + steel'},underside:{'Plaatjes'}),
   // Paxillus/Tapinella source profile explicitly gives (medium-)large stature, strongly decurrent gills, dark-brown bruising flesh and a brown spore print.
