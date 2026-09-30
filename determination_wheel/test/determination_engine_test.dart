@@ -456,4 +456,14 @@ void main(){
     expect(pluteus.score({4:'Plaatjes',6:'Vrij'}).unanswered,greaterThan(0));
   });
 
+  test('wheel exposes tough or leathery trama for source-backed soft evidence',(){
+    final labels=wheelSteps[23]!.options.map((o)=>o.label);
+    expect(labels,contains('Taai / leerachtig'));
+    for(final fragment in ['Pleurotus','Taailingen']){
+      final candidate=candidates.firstWhere((c)=>c.name.contains(fragment));
+      expect(candidate.typicalSupporting({23:'Taai / leerachtig'}),contains('trama / vlees: Taai / leerachtig'));
+      expect(candidate.conflict({23:'Vlezig / vezelig'}),isNull);
+    }
+  });
+
 }
