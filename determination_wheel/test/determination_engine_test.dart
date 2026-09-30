@@ -305,4 +305,11 @@ void main(){
     }
   });
 
+  test('Pluteus source allows the full small-to-large size range',(){
+    for(final size in ['Klein','Middelgroot','Groot']){
+      final result=determine({4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze',19:size});
+      expect(result.remaining.map((c)=>c.name),contains('Hertenzwammen · Pluteus'),reason:'source explicitly allows $size');
+    }
+  });
+
 }
