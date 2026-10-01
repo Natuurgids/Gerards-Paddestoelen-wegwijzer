@@ -163,4 +163,17 @@ void main(){
     expect(find.textContaining('Aanvullend, niet uitsluitend: trama / vlees: Taai / leerachtig'),findsOneWidget);
   });
 
+  testWidgets('phone layout is compact and branded without overflow',(tester)async{
+    tester.view.physicalSize=const Size(360,640);
+    tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    expect(find.text('Wiel'),findsOneWidget);
+    expect(find.text('Observatie 1'),findsOneWidget);
+    expect(find.text('Vorm vruchtlichaam'),findsOneWidget);
+    expect(find.text('Paddenstoelen Determinatiewiel'),findsNothing);
+    expect(tester.takeException(),isNull);
+  });
+
 }
