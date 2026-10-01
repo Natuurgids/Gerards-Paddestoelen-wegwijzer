@@ -8,6 +8,21 @@ void main(){
     await tester.pump();
   }
 
+  testWidgets('standalone wheel shows supplied in-app mascot', (tester) async {
+    await openWheel(tester);
+
+    final mascot = tester.widget<Image>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName == 'assets/app_icon.png',
+      ),
+    );
+
+    expect((mascot.image as AssetImage).assetName, 'assets/app_icon.png');
+  });
+
   testWidgets('non-plate underside routes show live possibilities',(tester)async{
     await openWheel(tester);
     await tester.tap(find.text('Hoed + steel'));
