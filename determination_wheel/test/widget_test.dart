@@ -6,9 +6,9 @@ void main(){
   Future<void> openWheel(WidgetTester tester) async {
     await tester.pumpWidget(const App());
     await tester.pump();
-    if (find.text('Wiel').evaluate().isNotEmpty) {
-      await tester.tap(find.byKey(const ValueKey('splash')));
-      await tester.pumpAndSettle();
+    if (find.byKey(const ValueKey('splash')).evaluate().isNotEmpty) {
+      await tester.tap(find.byType(GestureDetector).first);
+      await tester.pump(const Duration(milliseconds: 350));
     }
   }
 
