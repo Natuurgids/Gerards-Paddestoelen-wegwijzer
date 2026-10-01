@@ -32,7 +32,7 @@ Widget _capDots(){
     mainAxisSize:MainAxisSize.min,
     children:List.generate(5,(i){
       final active=i==4?ended:groups[i].steps.contains(step);
-      final complete=i==4?result.remaining.isNotEmpty:groups[i].steps.any(answers.containsKey);
+      final complete=i==4?ended:groups[i].steps.any(answers.containsKey);
       return GestureDetector(
         key:ValueKey('cap-dot-$i'),
         onTap:(){
@@ -228,4 +228,4 @@ class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
     ]),
   );
 }
-class _MushroomCapPainter extends CustomPainter{@override void paint(Canvas c,Size z){final p=Paint()..color=const Color(0xffb9342b);final path=Path()..moveTo(z.width*.08,z.height*.88)..quadraticBezierTo(z.width*.16,z.height*.08,z.width*.50,z.height*.05)..quadraticBezierTo(z.width*.84,z.height*.08,z.width*.92,z.height*.88)..quadraticBezierTo(z.width*.72,z.height*.70,z.width*.50,z.height*.78)..quadraticBezierTo(z.width*.28,z.height*.70,z.width*.08,z.height*.88);c.drawPath(path,p);final dot=Paint()..color=const Color(0xfffff4d6);for(final o in [Offset(.22,.45),Offset(.34,.22),Offset(.51,.38),Offset(.68,.20),Offset(.78,.49)])c.drawCircle(Offset(z.width*o.dx,z.height*o.dy),z.width*.022,dot);}@override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;}
+class _MushroomCapPainter extends CustomPainter{@override void paint(Canvas c,Size z){final p=Paint()..color=const Color(0xffb9342b);final path=Path()..moveTo(z.width*.08,z.height*.88)..quadraticBezierTo(z.width*.16,z.height*.08,z.width*.50,z.height*.05)..quadraticBezierTo(z.width*.84,z.height*.08,z.width*.92,z.height*.88)..quadraticBezierTo(z.width*.72,z.height*.70,z.width*.50,z.height*.78)..quadraticBezierTo(z.width*.28,z.height*.70,z.width*.08,z.height*.88);c.drawPath(path,p);}@override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;}
