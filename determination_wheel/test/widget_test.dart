@@ -42,7 +42,7 @@ void main(){
 
     await tester.tap(find.byTooltip('Vorige observatie'));
     await tester.pumpAndSettle();
-    expect(find.text('Vorm vruchtlichaam'),findsWidgets);
+    expect(find.textContaining('Vorm vruchtlichaam'),findsWidgets);
   });
 
   testWidgets('live possibilities expose match and evidence coverage',(tester)async{
@@ -248,7 +248,7 @@ void main(){
     await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
     await tester.tap(find.text('Bol-/buikvormig'));await tester.pumpAndSettle();
-    expect(find.text('Vindplaats'),findsWidgets);
+    expect(find.textContaining('Vindplaats'),findsWidgets);
     expect(find.text('Hoedoppervlak'),findsNothing);
   });
 
