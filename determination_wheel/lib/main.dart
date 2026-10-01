@@ -27,12 +27,12 @@ List<int> _reachableIn(List<int> steps){
 Widget _mobilePanel(WheelStep current){return Column(children:[_mushroomInstrument(current),const SizedBox(height:10),Expanded(child:_panel(current,compact:true))]);}
 Widget _mushroomInstrument(WheelStep current){final answered=answers.length;final possibilities=result.remaining.length;return SizedBox(height:258,child:Stack(alignment:Alignment.topCenter,children:[Positioned(top:0,left:8,right:8,height:112,child:GestureDetector(key:const ValueKey('mushroom-cap'),onTap:_showPossibilities,child:CustomPaint(painter:_MushroomCapPainter()))),Positioned(top:16,left:48,right:48,child:Column(children:[_capDots(),const SizedBox(height:4),Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Colors.white70,fontWeight:FontWeight.w700)),const SizedBox(height:3),Text(ended?'$possibilities mogelijkheden':'$possibilities mogelijkheden · ${current.title}',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900))])),Positioned(top:96,width:154,height:148,child:Container(decoration:BoxDecoration(color:const Color(0xffffefd0),borderRadius:const BorderRadius.vertical(bottom:Radius.circular(30)),border:Border.all(color:const Color(0xffd7bd8b),width:2)))),Positioned(top:104,left:20,right:20,height:140,child:_wheelStack(answered))]));}
 Widget _capDots(){
-  final groups=<List<int>>[[1,4],[5,6,7,8,9,10,11,12,13,14],[15,16,17,18],[19,20,21,22,23,24],[]];
+  final groups=_wheelGroups;
   return Row(
     mainAxisSize:MainAxisSize.min,
     children:List.generate(5,(i){
-      final active=i==4?ended:groups[i].contains(step);
-      final complete=i==4?result.remaining.isNotEmpty:groups[i].any(answers.containsKey);
+      final active=i==4?ended:groups[i].steps.contains(step);
+      final complete=i==4?result.remaining.isNotEmpty:groups[i].steps.any(answers.containsKey);
       return GestureDetector(
         key:ValueKey('cap-dot-$i'),
         onTap:i==4?()=>_showPossibilities():null,
@@ -53,7 +53,7 @@ Widget _capDots(){
     }),
   );
 }
-Widget _wheelStack(int answered){final groups=<({String title,List<int> steps})>[(title:'Bouw',steps:[1,4]),(title:'Kenmerken',steps:[5,6,7,8,9,10,11,12,13,14]),(title:'Ecologie',steps:[15,16,17,18]),(title:'Aanvullend',steps:[19,20,21,22,23,24]),(title:'Mogelijkheden',steps:[])];final active=groups.indexWhere((g)=>g.steps.contains(step));return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Transform.translate(offset:Offset(0,i==active?-3:0),child:GestureDetector(onTap:()=>groups[i].steps.isEmpty?_showPossibilities():_openWheelSelector(groups[i].title,groups[i].steps),child:AnimatedContainer(duration:const Duration(milliseconds:220),margin:const EdgeInsets.symmetric(vertical:1),height:i==active?25:20,width:i==active?210:176-i*7,decoration:BoxDecoration(gradient:LinearGradient(colors:i==active?[const Color(0xff315d35),const Color(0xff6f914f)]:[const Color(0xffd5b474),const Color(0xffb78e4e)]),borderRadius:BorderRadius.circular(18),boxShadow:i==active?[BoxShadow(color:Colors.black.withValues(alpha:.20),blurRadius:7,offset:const Offset(0,3))]:null),child:Center(child:Text('${i==active?'‹  ':''}${groups[i].title}${i==active?'  ›':''}',style:TextStyle(color:i==active?Colors.white:const Color(0xff4b3820),fontSize:12,fontWeight:FontWeight.w800))))))]);}
+Widget _wheelStack(int answered){final groups=_wheelGroups;final active=groups.indexWhere((g)=>g.steps.contains(step));return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Transform.translate(offset:Offset(0,i==active?-3:0),child:GestureDetector(onTap:()=>groups[i].steps.isEmpty?_showPossibilities():_openWheelSelector(groups[i].title,groups[i].steps),child:AnimatedContainer(duration:const Duration(milliseconds:220),margin:const EdgeInsets.symmetric(vertical:1),height:i==active?25:20,width:i==active?210:176-i*7,decoration:BoxDecoration(gradient:LinearGradient(colors:i==active?[const Color(0xff315d35),const Color(0xff6f914f)]:[const Color(0xffd5b474),const Color(0xffb78e4e)]),borderRadius:BorderRadius.circular(18),boxShadow:i==active?[BoxShadow(color:Colors.black.withValues(alpha:.20),blurRadius:7,offset:const Offset(0,3))]:null),child:Center(child:Text('${i==active?'‹  ':''}${groups[i].title}${i==active?'  ›':''}',style:TextStyle(color:i==active?Colors.white:const Color(0xff4b3820),fontSize:12,fontWeight:FontWeight.w800))))))]);}
 Future<void> _showPossibilities() async {
   await showModalBottomSheet<void>(
     context: context,
@@ -165,6 +165,18 @@ class _WheelPainter extends CustomPainter{
 }
 
 
+class _WheelGroup {
+  const _WheelGroup(this.title,this.steps);
+  final String title;
+  final List<int> steps;
+}
+const _wheelGroups=< _WheelGroup>[
+  _WheelGroup('Bouw',[1,4]),
+  _WheelGroup('Kenmerken',[5,6,7,8,9,10,11,12,13,14]),
+  _WheelGroup('Ecologie',[15,16,17,18]),
+  _WheelGroup('Aanvullend',[19,20,21,22,23,24]),
+  _WheelGroup('Mogelijkheden',[]),
+];
 class _WheelSelectorSheet extends StatefulWidget {
   const _WheelSelectorSheet({required this.title,required this.available,required this.answers,required this.controller});
   final String title; final List<int> available; final Map<int,String> answers; final PageController controller;
