@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../theme/app_theme.dart';
 
@@ -53,10 +54,29 @@ class _SplashGateState extends State<SplashGate> {
   }
 }
 
-class BrandSplashScreen extends StatelessWidget {
+class BrandSplashScreen extends StatefulWidget {
   const BrandSplashScreen({super.key, this.onContinue});
 
   final VoidCallback? onContinue;
+
+  @override
+  State<BrandSplashScreen> createState() => _BrandSplashScreenState();
+}
+
+class _BrandSplashScreenState extends State<BrandSplashScreen> {
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
+    setState(() => _version = 'v${info.version}');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,28 +84,68 @@ class BrandSplashScreen extends StatelessWidget {
       backgroundColor: AppTheme.forestDark,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onContinue,
+        onTap: widget.onContinue,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final wide = constraints.maxWidth >= 900;
             return Semantics(
-              label: "Gerard's Paddestoelen Wegwijzer. Ontdek. Leer. Beleef de natuur.",
+              label: "Gerard's Paddestoelen Wegwijzer. Wiel. ${_version ?? ''}. Ontdek. Leer. Beleef de natuur.",
               image: true,
-              child: SizedBox.expand(
-                child: Image.asset(
-                  'assets/splash.png',
-                  fit: wide ? BoxFit.contain : BoxFit.cover,
-                  alignment: Alignment.center,
-                  errorBuilder: (context, error, stackTrace) => const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [AppTheme.forest, AppTheme.forestDark],
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/splash.png',
+                    fit: wide ? BoxFit.contain : BoxFit.cover,
+                    alignment: Alignment.center,
+                    errorBuilder: (context, error, stackTrace) => const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [AppTheme.forest, AppTheme.forestDark],
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  Align(
+                    alignment: const Alignment(0, 0.88),
+                    child: SafeArea(
+                      minimum: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppTheme.forestDark.withValues(alpha: 0.72),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'Wiel',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              if (_version != null)
+                                Text(
+                                  _version!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           },
