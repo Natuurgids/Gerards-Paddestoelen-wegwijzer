@@ -119,8 +119,9 @@ class SourceIdentityRequirementTest(unittest.TestCase):
             lock_path.write_text(json.dumps({
                 "snapshot_date": "2026-09-08",
                 "catalogue": {
-                    "total_species": 0, "nsr_species": 0, "dgfm_german_names": 0,
-                    "uksi_english_names": 0, "iucn_statuses": 0,
+                    "total_species": 12908, "nsr_species": 12892,
+                    "dgfm_german_names": 1084, "uksi_english_names": 12,
+                    "iucn_statuses": 118,
                 },
                 "required_sources": [], "required_source_licenses": {},
             }), encoding="utf-8")
@@ -132,6 +133,7 @@ class SourceIdentityRequirementTest(unittest.TestCase):
                 )
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(report["actual"]["nsr_species"], 1)
+            self.assertEqual(report["expected"]["nsr_species"], 12892)
             self.assertIsNone(report["identity_diff"])
 
 
