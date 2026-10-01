@@ -33,8 +33,10 @@ Widget _capDots(){
     children:List.generate(5,(i){
       final active=i==4?ended:groups[i].steps.contains(step);
       final complete=i==4?ended:groups[i].steps.any(answers.containsKey);
+      final reachable=i==4||_reachableIn(groups[i].steps).isNotEmpty;
       return GestureDetector(
         key:ValueKey('cap-dot-$i'),
+        behavior:HitTestBehavior.opaque,
         onTap:(){
           if(i==4){_showPossibilities();return;}
           final available=_reachableIn(groups[i].steps);
@@ -48,7 +50,7 @@ Widget _capDots(){
           height:active?13:9,
           decoration:BoxDecoration(
             shape:BoxShape.circle,
-            color:Colors.white.withValues(alpha:active ? 1.0 : (complete ? 0.82 : 0.38)),
+            color:Colors.white.withValues(alpha:active ? 1.0 : (complete ? 0.82 : (reachable ? 0.52 : 0.24))),
             border:Border.all(color:Colors.white.withValues(alpha:.92),width:1.2),
             boxShadow:const [BoxShadow(color:Color(0x38000000),blurRadius:5,offset:Offset(0,2))],
           ),
