@@ -176,4 +176,16 @@ void main(){
     expect(tester.takeException(),isNull);
   });
 
+  testWidgets('mushroom wheel stack opens a swipeable selector',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    expect(find.textContaining('Bouw'),findsOneWidget);
+    await tester.tap(find.textContaining('Bouw'));
+    await tester.pumpAndSettle();
+    expect(find.text('Veeg links/rechts · tik om te selecteren'),findsOneWidget);
+    expect(find.text('Vorm vruchtlichaam'),findsOneWidget);
+    expect(tester.takeException(),isNull);
+  });
+
 }
