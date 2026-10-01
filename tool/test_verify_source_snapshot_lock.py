@@ -75,6 +75,7 @@ class SourceIdentityRequirementTest(unittest.TestCase):
                     "uksi_english_names": 0,
                     "iucn_statuses": 0,
                 },
+                "snapshot_date": "2026-10-01",
                 "required_sources": [],
                 "required_source_licenses": {},
             }), encoding="utf-8")
@@ -85,6 +86,33 @@ class SourceIdentityRequirementTest(unittest.TestCase):
                     identity_manifest_path=root / "missing.json",
                     require_identity_manifest=True,
                 )
+
+
+    def test_legacy_count_only_snapshot_can_still_report_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog_path, lock_path, report_path = root / "catalog.json", root / "lock.json", root / "report.json"
+            catalog_path.write_text(json.dumps({
+                "species": [{"id": 1, "source_id": "nsr-dutch-species-register"}],
+                "sources": [],
+            }), encoding="utf-8")
+            lock_path.write_text(json.dumps({
+                "snapshot_date": "2026-09-08",
+                "catalogue": {
+                    "total_species": 0, "nsr_species": 0, "dgfm_german_names": 0,
+                    "uksi_english_names": 0, "iucn_statuses": 0,
+                },
+                "required_sources": [], "required_source_licenses": {},
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Source snapshot drift detected"):
+                verify(
+                    catalog_path, lock_path, report_path,
+                    identity_manifest_path=root / "missing.json",
+                    require_identity_manifest=True,
+                )
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["actual"]["nsr_species"], 1)
+            self.assertIsNone(report["identity_diff"])
 
 
 class SourceSnapshotReportTest(unittest.TestCase):
