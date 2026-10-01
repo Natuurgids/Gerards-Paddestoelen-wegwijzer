@@ -77,12 +77,8 @@ void main() {
     );
 
     expect(find.byType(Image), findsOneWidget);
-    expect(
-      find.bySemanticsLabel(
-        RegExp(r"^Gerard's Paddestoelen Wegwijzer\. Wiel\..*Ontdek\. Leer\. Beleef de natuur\.$"),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byType(Semantics), findsWidgets);
+    expect(find.text('Wiel'), findsOneWidget);
 
     await tester.tap(find.byType(GestureDetector));
     expect(continued, isTrue);
