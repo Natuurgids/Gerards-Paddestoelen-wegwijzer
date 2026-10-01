@@ -3,8 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mushroom_determination_wheel/main.dart';
 
 void main(){
+  Future<void> openWheel(WidgetTester tester) async {
+    await openWheel(tester);
+    await tester.pump();
+    if (find.text('Wiel').evaluate().isNotEmpty) {
+      await tester.tap(find.byKey(const ValueKey('splash')));
+      await tester.pumpAndSettle();
+    }
+  }
+
   testWidgets('non-plate underside routes show live possibilities',(tester)async{
-    await tester.pumpWidget(const App());
+    await openWheel(tester);
     await tester.tap(find.text('Hoed + steel'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Buisjes / poriën'));
@@ -15,7 +24,7 @@ void main(){
   });
 
   testWidgets('back removes the latest observation',(tester)async{
-    await tester.pumpWidget(const App());
+    await openWheel(tester);
     await tester.tap(find.text('Hoed + steel'));
     await tester.pumpAndSettle();
     expect(find.text('Sporenvormende onderzijde'),findsWidgets);
@@ -26,7 +35,7 @@ void main(){
   });
 
   testWidgets('live possibilities expose match and evidence coverage',(tester)async{
-    await tester.pumpWidget(const App());
+    await openWheel(tester);
     await tester.tap(find.text('Hoed + steel'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Plaatjes'));
@@ -41,7 +50,7 @@ void main(){
     tester.view.devicePixelRatio=1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const App());
+    await openWheel(tester);
     Future<void> pick(String label)async{
       final target=find.text(label);
       await tester.ensureVisible(target.first);
@@ -77,7 +86,7 @@ void main(){
     tester.view.devicePixelRatio=1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const App());
+    await openWheel(tester);
     Future<void> pick(String label)async{
       final target=find.text(label);
       await tester.ensureVisible(target.first);
@@ -109,7 +118,7 @@ void main(){
     tester.view.devicePixelRatio=1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const App());
+    await openWheel(tester);
     Future<void> pick(String label)async{
       final target=find.text(label);
       await tester.ensureVisible(target.first);
