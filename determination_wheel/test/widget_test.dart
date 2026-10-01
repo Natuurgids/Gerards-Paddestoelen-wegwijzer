@@ -183,7 +183,8 @@ void main(){
     expect(find.textContaining('Bouw'),findsOneWidget);
     await tester.tap(find.textContaining('Bouw'));
     await tester.pumpAndSettle();
-    expect(find.text('Veeg links/rechts · tik om te selecteren'),findsOneWidget);
+    expect(find.text('Veeg links/rechts · centreer de observatie'),findsOneWidget);
+    expect(find.text('Selecteer deze observatie'),findsOneWidget);
     expect(find.text('Vorm vruchtlichaam'),findsWidgets);
     expect(find.text('Veeg links/rechts · tik om te selecteren'),findsOneWidget);
     expect(tester.takeException(),isNull);
@@ -219,6 +220,19 @@ void main(){
     await tester.tap(find.byKey(const ValueKey('cap-dot-4')));
     await tester.pumpAndSettle();
     expect(find.textContaining('Geen waarschijnlijkheden.'),findsOneWidget);
+  });
+
+  testWidgets('swiping a wheel does not select until explicitly confirmed',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Hoed + steel'));await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Bouw'));await tester.pumpAndSettle();
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
+    expect(find.text('Selecteer deze observatie'),findsOneWidget);
+    expect(find.text('Plaatjes'),findsNothing);
+    await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
+    expect(find.text('Hoed + steel'),findsWidgets);
   });
 
 }
