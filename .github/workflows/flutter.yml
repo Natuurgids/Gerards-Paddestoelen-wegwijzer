@@ -90,7 +90,7 @@ jobs:
       - name: Verify reviewed source snapshot
         id: source-snapshot
         continue-on-error: true
-        run: python3 tool/verify_source_snapshot_lock.py --report build/source-snapshot-drift.json --identity-manifest tool/source_snapshot_identities.json
+        run: python3 tool/verify_source_snapshot_lock.py --report build/source-snapshot-drift.json --identity-manifest tool/source_snapshot_identities.json --require-identity-manifest
       - name: Build source identity review candidate
         if: steps.source-snapshot.outcome == 'failure'
         run: python3 tool/verify_source_snapshot_lock.py --write-identity-manifest build/source-identity-review.json
