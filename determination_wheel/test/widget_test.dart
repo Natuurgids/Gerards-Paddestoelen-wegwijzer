@@ -269,7 +269,7 @@ void main(){
     await tester.tap(find.byKey(const ValueKey('cap-dot-0')));await tester.pumpAndSettle();
     expect(find.text('Bouw'),findsWidgets);
     expect(find.text('Selecteer deze observatie'),findsOneWidget);
-    Navigator.of(tester.element(find.byType(_WheelSelectorSheet))).pop();await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10,10));await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('cap-dot-2')));await tester.pumpAndSettle();
     expect(find.text('Selecteer deze observatie'),findsNothing);
   });
