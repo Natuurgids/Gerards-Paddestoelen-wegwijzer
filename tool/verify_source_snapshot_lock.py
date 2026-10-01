@@ -134,6 +134,13 @@ def _drift_records(species: list[dict], lock: dict) -> dict[str, list[dict]]:
 
 
 def write_identity_manifest(catalog_path: Path, manifest_path: Path) -> None:
+    if require_identity_manifest and (
+        identity_manifest_path is None or not identity_manifest_path.exists()
+    ):
+        raise ValueError(
+            "Reviewed source identity manifest is required; create it only when "
+            "accepting a source snapshot deliberately."
+        )
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(
@@ -147,6 +154,7 @@ def verify(
     lock_path: Path,
     report_path: Path | None = None,
     identity_manifest_path: Path | None = None,
+    require_identity_manifest: bool = False,
 ) -> None:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
@@ -225,6 +233,11 @@ def main() -> None:
     parser.add_argument("--lock", default="tool/source_snapshot_lock.json")
     parser.add_argument("--report")
     parser.add_argument(
+        "--require-identity-manifest",
+        action="store_true",
+        help="Fail if the reviewed identity manifest is absent.",
+    )
+    parser.add_argument(
         "--identity-manifest",
         help="Reviewed identity manifest used to report exact additions/removals/changes.",
     )
@@ -241,6 +254,7 @@ def main() -> None:
         Path(args.lock),
         Path(args.report) if args.report else None,
         Path(args.identity_manifest) if args.identity_manifest else None,
+        args.require_identity_manifest,
     )
 
 
