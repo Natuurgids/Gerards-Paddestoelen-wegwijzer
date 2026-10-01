@@ -153,7 +153,14 @@ def verify(
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     # The 2026-09-08 lock predates identity manifests and is the one deliberate
     # legacy exception. Every newly accepted snapshot must include identities.
-    legacy_count_only_snapshot = lock.get("snapshot_date") == "2026-09-08"
+    legacy_count_only_snapshot = (
+        lock.get("snapshot_date") == "2026-09-08"
+        and (lock.get("catalogue") or {}).get("total_species") == 12908
+        and (lock.get("catalogue") or {}).get("nsr_species") == 12892
+        and (lock.get("catalogue") or {}).get("dgfm_german_names") == 1084
+        and (lock.get("catalogue") or {}).get("uksi_english_names") == 12
+        and (lock.get("catalogue") or {}).get("iucn_statuses") == 118
+    )
     if require_identity_manifest and not legacy_count_only_snapshot and (
         identity_manifest_path is None or not identity_manifest_path.exists()
     ):
