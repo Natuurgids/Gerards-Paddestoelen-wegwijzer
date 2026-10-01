@@ -82,6 +82,28 @@ def _identity_manifest(species: list[dict]) -> dict[str, list[dict]]:
     return {"nsr_species": nsr, "dgfm_german_names": dgfm}
 
 
+def _manifest_diff(current: dict[str, list[dict]], reviewed: dict[str, list[dict]]) -> dict[str, dict[str, list[dict]]]:
+    """Exact additions/removals when a reviewed identity manifest is available."""
+    out: dict[str, dict[str, list[dict]]] = {}
+    for category in ("nsr_species", "dgfm_german_names"):
+        def key(item: dict) -> str:
+            if category == "nsr_species":
+                return str(item.get("source_record_id") or item.get("taxon_id") or item.get("id"))
+            return str(item.get("taxon_id") or item.get("id"))
+        now = {key(item): item for item in current.get(category, [])}
+        old = {key(item): item for item in reviewed.get(category, [])}
+        out[category] = {
+            "added": [now[k] for k in sorted(now.keys() - old.keys())],
+            "removed": [old[k] for k in sorted(old.keys() - now.keys())],
+            "changed": [
+                {"reviewed": old[k], "current": now[k]}
+                for k in sorted(now.keys() & old.keys())
+                if now[k] != old[k]
+            ],
+        }
+    return out
+
+
 def _drift_records(species: list[dict], lock: dict) -> dict[str, list[dict]]:
     """Return inspectable records for sources whose reviewed counts drifted."""
     expected = lock["catalogue"]
@@ -120,7 +142,12 @@ def write_identity_manifest(catalog_path: Path, manifest_path: Path) -> None:
     )
 
 
-def verify(catalog_path: Path, lock_path: Path, report_path: Path | None = None) -> None:
+def verify(
+    catalog_path: Path,
+    lock_path: Path,
+    report_path: Path | None = None,
+    identity_manifest_path: Path | None = None,
+) -> None:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     species = list(catalog.get("species") or [])
@@ -154,6 +181,14 @@ def verify(catalog_path: Path, lock_path: Path, report_path: Path | None = None)
                         "actual": actual,
                         "count_mismatches": count_mismatches,
                         "records": _drift_records(species, lock),
+                        "identity_diff": (
+                            _manifest_diff(
+                                _identity_manifest(species),
+                                json.loads(identity_manifest_path.read_text(encoding="utf-8")),
+                            )
+                            if identity_manifest_path is not None and identity_manifest_path.exists()
+                            else None
+                        ),
                     },
                     ensure_ascii=False,
                     indent=2,
@@ -190,6 +225,10 @@ def main() -> None:
     parser.add_argument("--lock", default="tool/source_snapshot_lock.json")
     parser.add_argument("--report")
     parser.add_argument(
+        "--identity-manifest",
+        help="Reviewed identity manifest used to report exact additions/removals/changes.",
+    )
+    parser.add_argument(
         "--write-identity-manifest",
         help="Write stable NSR/DGfM identities for a deliberately reviewed snapshot.",
     )
@@ -197,7 +236,12 @@ def main() -> None:
     if args.write_identity_manifest:
         write_identity_manifest(Path(args.catalog), Path(args.write_identity_manifest))
         return
-    verify(Path(args.catalog), Path(args.lock), Path(args.report) if args.report else None)
+    verify(
+        Path(args.catalog),
+        Path(args.lock),
+        Path(args.report) if args.report else None,
+        Path(args.identity_manifest) if args.identity_manifest else None,
+    )
 
 
 if __name__ == "__main__":
