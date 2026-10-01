@@ -1,9 +1,9 @@
 {
-  "snapshot_date": "2026-09-08",
+  "snapshot_date": "2026-10-01",
   "catalogue": {
-    "total_species": 12908,
-    "nsr_species": 12892,
-    "dgfm_german_names": 1084,
+    "total_species": 12983,
+    "nsr_species": 12967,
+    "dgfm_german_names": 1086,
     "uksi_english_names": 12,
     "iucn_statuses": 118
   },
@@ -20,5 +20,6 @@
     "uksi-natural-history-museum": "CC BY 4.0",
     "iucn-red-list": "CC BY 4.0",
     "fungaltraits-globi": "CC BY 4.0"
-  }
+  },
+  "identity_manifest_sha256": "802074b70d7674381b9ba89a2148d2ce12cb1fb328eb00d1d6520fe098b56849"
 }
