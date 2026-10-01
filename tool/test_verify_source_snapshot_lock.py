@@ -67,7 +67,17 @@ class SourceIdentityRequirementTest(unittest.TestCase):
             root = Path(tmp)
             catalog_path, lock_path = root / "catalog.json", root / "lock.json"
             catalog_path.write_text(json.dumps({"species": [], "sources": []}), encoding="utf-8")
-            lock_path.write_text(json.dumps({"catalogue": {}, "required_sources": [], "required_source_licenses": {}}), encoding="utf-8")
+            lock_path.write_text(json.dumps({
+                "catalogue": {
+                    "total_species": 0,
+                    "nsr_species": 0,
+                    "dgfm_german_names": 0,
+                    "uksi_english_names": 0,
+                    "iucn_statuses": 0,
+                },
+                "required_sources": [],
+                "required_source_licenses": {},
+            }), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "identity manifest is required"):
                 verify(
                     catalog_path,
