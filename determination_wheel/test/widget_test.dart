@@ -211,4 +211,14 @@ void main(){
     expect(tester.takeException(),isNull);
   });
 
+  testWidgets('five cap spots represent the determination wheels',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    for(var i=0;i<5;i++){expect(find.byKey(ValueKey('cap-dot-'+i.toString())),findsOneWidget);}
+    await tester.tap(find.byKey(const ValueKey('cap-dot-4')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Geen waarschijnlijkheden.'),findsOneWidget);
+  });
+
 }
