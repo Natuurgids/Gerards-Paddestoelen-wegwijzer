@@ -149,15 +149,18 @@ def verify(
     identity_manifest_path: Path | None = None,
     require_identity_manifest: bool = False,
 ) -> None:
-    if require_identity_manifest and (
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    # The 2026-09-08 lock predates identity manifests and is the one deliberate
+    # legacy exception. Every newly accepted snapshot must include identities.
+    legacy_count_only_snapshot = lock.get("snapshot_date") == "2026-09-08"
+    if require_identity_manifest and not legacy_count_only_snapshot and (
         identity_manifest_path is None or not identity_manifest_path.exists()
     ):
         raise ValueError(
             "Reviewed source identity manifest is required; create it only when "
             "accepting a source snapshot deliberately."
         )
-    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-    lock = json.loads(lock_path.read_text(encoding="utf-8"))
     species = list(catalog.get("species") or [])
     expected = lock["catalogue"]
 
