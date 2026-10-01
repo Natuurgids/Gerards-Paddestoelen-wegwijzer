@@ -230,7 +230,8 @@ void main(){
     await tester.tap(find.textContaining('Bouw'));await tester.pumpAndSettle();
     await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
     expect(find.text('Selecteer deze observatie'),findsOneWidget);
-    expect(find.text('Plaatjes'),findsNothing);
+    expect(find.byKey(const ValueKey('select-centered-observation')),findsOneWidget);
+    expect(find.text('Sporenvormende onderzijde'),findsWidgets);
     await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
     expect(find.text('Hoed + steel'),findsWidgets);
   });
