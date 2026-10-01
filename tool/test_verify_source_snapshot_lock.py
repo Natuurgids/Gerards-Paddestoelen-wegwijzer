@@ -61,6 +61,22 @@ class SourceLicenseLockTest(unittest.TestCase):
         )
 
 
+class SourceIdentityRequirementTest(unittest.TestCase):
+    def test_missing_required_identity_manifest_fails_before_snapshot_acceptance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog_path, lock_path = root / "catalog.json", root / "lock.json"
+            catalog_path.write_text(json.dumps({"species": [], "sources": []}), encoding="utf-8")
+            lock_path.write_text(json.dumps({"catalogue": {}, "required_sources": [], "required_source_licenses": {}}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "identity manifest is required"):
+                verify(
+                    catalog_path,
+                    lock_path,
+                    identity_manifest_path=root / "missing.json",
+                    require_identity_manifest=True,
+                )
+
+
 class SourceSnapshotReportTest(unittest.TestCase):
     def test_drift_records_only_include_changed_source_categories(self):
         species = [
