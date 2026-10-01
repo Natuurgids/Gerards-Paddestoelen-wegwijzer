@@ -89,7 +89,7 @@ jobs:
         run: flutter test
       - name: Generate determination wheel Android scaffolding
         working-directory: determination_wheel
-        run: flutter create . --platforms=android --project-name mushroom_determination_wheel --org nl.natuurgids
+        run: flutter create . --platforms=android,ios --project-name mushroom_determination_wheel --org nl.natuurgids
       - name: Generate determination wheel launcher icons
         working-directory: determination_wheel
         run: dart run flutter_launcher_icons
