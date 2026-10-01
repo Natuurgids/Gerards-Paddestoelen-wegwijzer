@@ -134,13 +134,6 @@ def _drift_records(species: list[dict], lock: dict) -> dict[str, list[dict]]:
 
 
 def write_identity_manifest(catalog_path: Path, manifest_path: Path) -> None:
-    if require_identity_manifest and (
-        identity_manifest_path is None or not identity_manifest_path.exists()
-    ):
-        raise ValueError(
-            "Reviewed source identity manifest is required; create it only when "
-            "accepting a source snapshot deliberately."
-        )
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(
@@ -156,6 +149,13 @@ def verify(
     identity_manifest_path: Path | None = None,
     require_identity_manifest: bool = False,
 ) -> None:
+    if require_identity_manifest and (
+        identity_manifest_path is None or not identity_manifest_path.exists()
+    ):
+        raise ValueError(
+            "Reviewed source identity manifest is required; create it only when "
+            "accepting a source snapshot deliberately."
+        )
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     species = list(catalog.get("species") or [])
