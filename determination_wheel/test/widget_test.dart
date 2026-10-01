@@ -236,4 +236,19 @@ void main(){
     expect(find.text('Hoed + steel'),findsWidgets);
   });
 
+  testWidgets('changing an earlier observation discards downstream answers',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Hoed + steel'));await tester.pumpAndSettle();
+    await tester.tap(find.text('Plaatjes'));await tester.pumpAndSettle();
+    expect(find.text('Hoedoppervlak'),findsWidgets);
+    await tester.tap(find.textContaining('Bouw'));await tester.pumpAndSettle();
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
+    await tester.tap(find.text('Bol-/buikvormig'));await tester.pumpAndSettle();
+    expect(find.text('Vindplaats'),findsWidgets);
+    expect(find.text('Hoedoppervlak'),findsNothing);
+  });
+
 }
