@@ -1,0 +1,38 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mushroom_determination_wheel/detail_keys.dart';
+
+void main(){
+  test('single supported candidates receive a source-backed detail key',(){
+    expect(detailKeyFor(candidateNames:['Schelpzwammen'])?.id,'shell');
+    expect(detailKeyFor(candidateNames:['Parasolzwammen (+)'])?.id,'parasol');
+    expect(detailKeyFor(candidateNames:['Fopzwammen · Laccaria'])?.id,'laccaria');
+    expect(detailKeyFor(candidateNames:['Hertenzwammen · Pluteus'])?.id,'pluteus');
+    expect(detailKeyFor(candidateNames:['Oesterzwammen · Pleurotus'])?.id,'pleurotus');
+    expect(detailKeyFor(candidateNames:['Wasplaten / Slijmkoppen'])?.id,'waxcaps');
+    expect(detailKeyFor(candidateNames:['Trechtertjes · Omphalina/Rickenella'])?.id,'funnel');
+    expect(detailKeyFor(candidateNames:['Taailingen (+)'])?.id,'toughshanks');
+    expect(detailKeyFor(candidateNames:['Bundelzwammen (+) · Pholiota/Kuehneromyces'])?.id,'pholiota');
+    expect(detailKeyFor(candidateNames:['Kaalkopjes / Stropharia (+)'])?.id,'stropharia');
+    expect(detailKeyFor(candidateNames:['Krulzomen · Paxillus/Tapinella'])?.id,'paxillus');
+    expect(detailKeyFor(candidateNames:['Cantharellen · Cantharellus'])?.id,'cantharellus');
+  });
+  test('Galerina detail key does not exclude another substrate',(){
+    final step=galerinaDetailKey.steps['substrate']!;
+    final option=step.options.firstWhere((o)=>o.label=='Andere groeiplaats');
+    expect(option.result,'Galerina-kandidaat; ecologie niet doorslaggevend');
+  });
+  test('ambiguous candidate sets do not pretend to have a detail key',(){
+    expect(detailKeyFor(candidateNames:['Hertenzwammen · Pluteus','Mosklokjes · Galerina']),isNull);
+  });
+  test('Russulaceae genus hint takes precedence',(){
+    expect(detailKeyFor(genusHint:'Lactarius',candidateNames:['Russulaceae · Russula/Lactarius'])?.id,'russulaceae');
+  });
+  test('Schelpzwammen follow-up uses stem attachment, not underside exclusion',(){
+    final step=shellDetailKey.steps['stem']!;
+    expect(step.options.firstWhere((o)=>o.label=='Steel vrijwel afwezig').result,'Schelpzwammen — kandidaatgroep');
+    expect(step.options.firstWhere((o)=>o.label=='Steel zijdelings aangehecht').result,'Schelpzwammen — kandidaatgroep');
+    expect(step.options.firstWhere((o)=>o.label=='Onzeker').result,contains('blijven mogelijk'));
+    expect(shellDetailKey.sourceNote,contains('geen harde groepsfilter'));
+  });
+
+}

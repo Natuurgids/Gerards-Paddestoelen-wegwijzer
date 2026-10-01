@@ -64,6 +64,8 @@ jobs:
       - name: Collect iNaturalist reference-image pilot
         run: python3 tool/collect_inaturalist_reference_images.py --limit 16 --delay 0.5
       - name: Upload iNaturalist reference-image pilot
+        # Diagnostic evidence must not prevent analyze/test when artifact storage is full.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: inaturalist-reference-image-pilot
@@ -71,17 +73,60 @@ jobs:
             build/inaturalist-reference-images/
             build/inaturalist-reference-report.json
           if-no-files-found: error
-          retention-days: 14
-      - name: Verify reviewed source snapshot
-        run: python3 tool/verify_source_snapshot_lock.py
-      - name: Generate packaged reference database
-        run: REFERENCE_DATABASE_OUTPUT=assets/data/reference.sqlite flutter test tool/reference_database_builder_test.dart
-      - name: Generate launcher icons
-        run: dart run flutter_launcher_icons
+          retention-days: 7
       - name: Analyze
         run: flutter analyze
       - name: Test
         run: flutter test
+      - name: Install determination wheel dependencies
+        working-directory: determination_wheel
+        run: flutter pub get
+      - name: Analyze determination wheel
+        working-directory: determination_wheel
+        run: flutter analyze
+      - name: Test determination wheel
+        working-directory: determination_wheel
+        run: flutter test
+      - name: Generate determination wheel Android scaffolding
+        working-directory: determination_wheel
+        run: flutter create . --platforms=android,ios --project-name mushroom_determination_wheel --org nl.natuurgids
+      - name: Generate determination wheel launcher icons
+        working-directory: determination_wheel
+        run: dart run flutter_launcher_icons
+      - name: Build determination wheel APK
+        working-directory: determination_wheel
+        run: flutter build apk --release
+      - name: Upload determination wheel APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: paddenstoelen-determinatiewiel-android-apk
+          path: determination_wheel/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Verify reviewed source snapshot
+        id: source-snapshot
+        continue-on-error: true
+        run: python3 tool/verify_source_snapshot_lock.py --report build/source-snapshot-drift.json --identity-manifest tool/source_snapshot_identities.json --require-identity-manifest
+      - name: Build source identity review candidate
+        if: steps.source-snapshot.outcome == 'failure'
+        run: python3 tool/verify_source_snapshot_lock.py --write-identity-manifest build/source-identity-review.json
+      - name: Upload source snapshot drift report
+        if: steps.source-snapshot.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-snapshot-drift
+          path: |
+            build/source-snapshot-drift.json
+            build/source-identity-review.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Enforce reviewed source snapshot
+        if: steps.source-snapshot.outcome == 'failure'
+        run: exit 1
+      - name: Generate packaged reference database
+        run: REFERENCE_DATABASE_OUTPUT=assets/data/reference.sqlite flutter test tool/reference_database_builder_test.dart
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
       - name: Prepare collected species assets for Android release
         if: github.event_name == 'push'
         run: |

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -44,10 +45,140 @@ def _source_license_mismatches(catalog: dict, lock: dict) -> dict[str, dict[str,
     return mismatches
 
 
-def verify(catalog_path: Path, lock_path: Path) -> None:
+def _identity_manifest(species: list[dict]) -> dict[str, list[dict]]:
+    """Stable source identities used to make future drift an exact diff."""
+    nsr = sorted(
+        (
+            {
+                "id": item.get("id"),
+                "taxon_id": item.get("taxon_id"),
+                "source_record_id": item.get("source_record_id"),
+            }
+            for item in species
+            if item.get("source_id") == "nsr-dutch-species-register"
+        ),
+        key=lambda item: (
+            str(item.get("source_record_id") or ""),
+            str(item.get("taxon_id") or ""),
+            str(item.get("id") or ""),
+        ),
+    )
+    dgfm = sorted(
+        (
+            {
+                "id": item.get("id"),
+                "taxon_id": item.get("taxon_id"),
+                "de_name": ((item.get("texts") or {}).get("de") or {}).get("common_name"),
+            }
+            for item in species
+            if ((item.get("texts") or {}).get("de") or {}).get("common_name_source_id")
+            == "dgfm-german-fungi"
+        ),
+        key=lambda item: (
+            str(item.get("taxon_id") or ""),
+            str(item.get("id") or ""),
+            str(item.get("de_name") or ""),
+        ),
+    )
+    return {"nsr_species": nsr, "dgfm_german_names": dgfm}
+
+
+def _manifest_diff(current: dict[str, list[dict]], reviewed: dict[str, list[dict]]) -> dict[str, dict[str, list[dict]]]:
+    """Exact additions/removals when a reviewed identity manifest is available."""
+    out: dict[str, dict[str, list[dict]]] = {}
+    for category in ("nsr_species", "dgfm_german_names"):
+        def key(item: dict) -> str:
+            if category == "nsr_species":
+                return str(item.get("source_record_id") or item.get("taxon_id") or item.get("id"))
+            return str(item.get("taxon_id") or item.get("id"))
+        now = {key(item): item for item in current.get(category, [])}
+        old = {key(item): item for item in reviewed.get(category, [])}
+        out[category] = {
+            "added": [now[k] for k in sorted(now.keys() - old.keys())],
+            "removed": [old[k] for k in sorted(old.keys() - now.keys())],
+            "changed": [
+                {"reviewed": old[k], "current": now[k]}
+                for k in sorted(now.keys() & old.keys())
+                if now[k] != old[k]
+            ],
+        }
+    return out
+
+
+def _drift_records(species: list[dict], lock: dict) -> dict[str, list[dict]]:
+    """Return inspectable records for sources whose reviewed counts drifted."""
+    expected = lock["catalogue"]
+    nsr = [
+        {
+            "id": item.get("id"),
+            "taxon_id": item.get("taxon_id"),
+            "source_record_id": item.get("source_record_id"),
+            "nl_name": ((item.get("texts") or {}).get("nl") or {}).get("common_name"),
+        }
+        for item in species
+        if item.get("source_id") == "nsr-dutch-species-register"
+    ]
+    dgfm = [
+        {
+            "id": item.get("id"),
+            "taxon_id": item.get("taxon_id"),
+            "de_name": ((item.get("texts") or {}).get("de") or {}).get("common_name"),
+        }
+        for item in species
+        if ((item.get("texts") or {}).get("de") or {}).get("common_name_source_id")
+        == "dgfm-german-fungi"
+    ]
+    return {
+        "nsr_species": nsr if len(nsr) != expected.get("nsr_species") else [],
+        "dgfm_german_names": dgfm if len(dgfm) != expected.get("dgfm_german_names") else [],
+    }
+
+
+def write_identity_manifest(catalog_path: Path, manifest_path: Path) -> None:
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(
+        json.dumps(_identity_manifest(list(catalog.get("species") or [])), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def verify(
+    catalog_path: Path,
+    lock_path: Path,
+    report_path: Path | None = None,
+    identity_manifest_path: Path | None = None,
+    require_identity_manifest: bool = False,
+) -> None:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    # The 2026-09-08 lock predates identity manifests and is the one deliberate
+    # legacy exception. Every newly accepted snapshot must include identities.
+    legacy_count_only_snapshot = (
+        lock.get("snapshot_date") == "2026-09-08"
+        and (lock.get("catalogue") or {}).get("total_species") == 12908
+        and (lock.get("catalogue") or {}).get("nsr_species") == 12892
+        and (lock.get("catalogue") or {}).get("dgfm_german_names") == 1084
+        and (lock.get("catalogue") or {}).get("uksi_english_names") == 12
+        and (lock.get("catalogue") or {}).get("iucn_statuses") == 118
+    )
+    reviewed_identity_hash = lock.get("identity_manifest_sha256")
+    has_identity_manifest = identity_manifest_path is not None and identity_manifest_path.exists()
+    if require_identity_manifest and not legacy_count_only_snapshot and not (
+        has_identity_manifest or reviewed_identity_hash
+    ):
+        raise ValueError(
+            "Reviewed source identity manifest or SHA-256 baseline is required; "
+            "create it only when accepting a source snapshot deliberately."
+        )
     species = list(catalog.get("species") or [])
+    current_identity_json = (
+        json.dumps(_identity_manifest(species), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    )
+    current_identity_hash = hashlib.sha256(current_identity_json.encode("utf-8")).hexdigest()
+    identity_hash_mismatch = bool(
+        reviewed_identity_hash and current_identity_hash != reviewed_identity_hash
+    )
     expected = lock["catalogue"]
 
     actual = {
@@ -68,7 +199,35 @@ def verify(catalog_path: Path, lock_path: Path) -> None:
         for key, value in actual.items()
         if value != expected.get(key)
     }
-    if missing_sources or license_mismatches or count_mismatches:
+    if missing_sources or license_mismatches or count_mismatches or identity_hash_mismatch:
+        if report_path is not None:
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(
+                json.dumps(
+                    {
+                        "expected": expected,
+                        "actual": actual,
+                        "count_mismatches": count_mismatches,
+                        "records": _drift_records(species, lock),
+                        "identity_sha256": {
+                            "expected": reviewed_identity_hash,
+                            "actual": current_identity_hash,
+                        },
+                        "identity_diff": (
+                            _manifest_diff(
+                                _identity_manifest(species),
+                                json.loads(identity_manifest_path.read_text(encoding="utf-8")),
+                            )
+                            if identity_manifest_path is not None and identity_manifest_path.exists()
+                            else None
+                        ),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                ) + "\n",
+                encoding="utf-8",
+            )
         details = []
         if missing_sources:
             details.append(f"missing sources: {', '.join(missing_sources)}")
@@ -79,6 +238,10 @@ def verify(catalog_path: Path, lock_path: Path) -> None:
         if count_mismatches:
             details.append(
                 f"count drift: {json.dumps(count_mismatches, sort_keys=True)}"
+            )
+        if identity_hash_mismatch:
+            details.append(
+                f"identity drift: expected {reviewed_identity_hash}, actual {current_identity_hash}"
             )
         raise ValueError(
             "Source snapshot drift detected; review upstream changes and update "
@@ -96,8 +259,31 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--catalog", default="assets/data/species_catalog.json")
     parser.add_argument("--lock", default="tool/source_snapshot_lock.json")
+    parser.add_argument("--report")
+    parser.add_argument(
+        "--require-identity-manifest",
+        action="store_true",
+        help="Fail if the reviewed identity manifest is absent.",
+    )
+    parser.add_argument(
+        "--identity-manifest",
+        help="Reviewed identity manifest used to report exact additions/removals/changes.",
+    )
+    parser.add_argument(
+        "--write-identity-manifest",
+        help="Write stable NSR/DGfM identities for a deliberately reviewed snapshot.",
+    )
     args = parser.parse_args()
-    verify(Path(args.catalog), Path(args.lock))
+    if args.write_identity_manifest:
+        write_identity_manifest(Path(args.catalog), Path(args.write_identity_manifest))
+        return
+    verify(
+        Path(args.catalog),
+        Path(args.lock),
+        Path(args.report) if args.report else None,
+        Path(args.identity_manifest) if args.identity_manifest else None,
+        args.require_identity_manifest,
+    )
 
 
 if __name__ == "__main__":
