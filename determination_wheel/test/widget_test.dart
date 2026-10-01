@@ -251,4 +251,14 @@ void main(){
     expect(find.text('Hoedoppervlak'),findsNothing);
   });
 
+  testWidgets('mushroom cap shows and opens the live outcome',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    expect(find.textContaining('mogelijkheden · Vorm vruchtlichaam'),findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('mushroom-cap')));await tester.pumpAndSettle();
+    expect(find.textContaining('Op basis van de observaties tot nu toe.'),findsOneWidget);
+    expect(find.textContaining('Geen waarschijnlijkheden.'),findsOneWidget);
+  });
+
 }
