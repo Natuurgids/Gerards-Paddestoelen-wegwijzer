@@ -165,44 +165,50 @@ class _WheelPainter extends CustomPainter{
 }
 
 
-class _WheelSelectorSheet extends StatelessWidget {
+class _WheelSelectorSheet extends StatefulWidget {
   const _WheelSelectorSheet({required this.title,required this.available,required this.answers,required this.controller});
   final String title; final List<int> available; final Map<int,String> answers; final PageController controller;
-  @override Widget build(BuildContext context) => Container(
-    height: 360,
-    padding: const EdgeInsets.only(top: 12,bottom: 24),
-    decoration: const BoxDecoration(color: Color(0xfff6f8f1),borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
-    child: Column(children: [
-      Container(width: 42,height: 4,decoration: BoxDecoration(color: Colors.black26,borderRadius: BorderRadius.circular(2))),
-      const SizedBox(height: 12),
-      Text(title,style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-      const Text('Veeg links/rechts · tik om te selecteren'),
-      const SizedBox(height: 12),
-      Expanded(child: PageView.builder(
-        controller: controller,itemCount: available.length,
-        itemBuilder: (context,i) {
-          final s=available[i]; final ws=wheelSteps[s]!; final selected=answers[s];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 7,vertical: 10),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(28),onTap: ()=>Navigator.pop(context,s),
-              child: Card(
-                elevation: 6,shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center,children: [
-                    CircleAvatar(radius: 26,backgroundColor: const Color(0xff315d35),foregroundColor: Colors.white,child: Text('$s',style: const TextStyle(fontWeight: FontWeight.w900))),
-                    const SizedBox(height: 12),
-                    Text(ws.title,textAlign: TextAlign.center,style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 8),
-                    Text(selected ?? 'Nog niet ingevuld',textAlign: TextAlign.center,maxLines: 2,overflow: TextOverflow.ellipsis,style: TextStyle(color: selected==null?Colors.black54:const Color(0xff315d35),fontWeight: selected==null?FontWeight.normal:FontWeight.w700)),
-                  ]),
-                ),
-              ),
-            ),
+  @override State<_WheelSelectorSheet> createState()=>_WheelSelectorSheetState();
+}
+class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
+  late int centered;
+  @override void initState(){super.initState();centered=widget.controller.initialPage.clamp(0,widget.available.length-1);}
+  @override Widget build(BuildContext context)=>Container(
+    height:380,padding:const EdgeInsets.only(top:12,bottom:18),
+    decoration:const BoxDecoration(color:Color(0xfff6f8f1),borderRadius:BorderRadius.vertical(top:Radius.circular(30))),
+    child:Column(children:[
+      Container(width:42,height:4,decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(2))),
+      const SizedBox(height:12),
+      Text(widget.title,style:Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.w900)),
+      const Text('Veeg links/rechts · centreer de observatie'),
+      const SizedBox(height:8),
+      Expanded(child:PageView.builder(
+        key:const ValueKey('observation-wheel'),
+        controller:widget.controller,itemCount:widget.available.length,
+        onPageChanged:(i)=>setState(()=>centered=i),
+        itemBuilder:(context,i){
+          final s=widget.available[i],ws=wheelSteps[s]!,selected=widget.answers[s],isCentered=i==centered;
+          return AnimatedScale(
+            duration:const Duration(milliseconds:180),scale:isCentered?1:.90,
+            child:Padding(padding:const EdgeInsets.symmetric(horizontal:7,vertical:10),child:Card(
+              elevation:isCentered?7:2,
+              shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(28)),
+              child:Padding(padding:const EdgeInsets.all(18),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+                CircleAvatar(radius:26,backgroundColor:isCentered?const Color(0xff315d35):const Color(0xff9aaa8e),foregroundColor:Colors.white,child:Text('$s',style:const TextStyle(fontWeight:FontWeight.w900))),
+                const SizedBox(height:12),
+                Text(ws.title,textAlign:TextAlign.center,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800)),
+                const SizedBox(height:8),
+                Text(selected??'Nog niet ingevuld',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(color:selected==null?Colors.black54:const Color(0xff315d35),fontWeight:selected==null?FontWeight.normal:FontWeight.w700)),
+              ])),
+            )),
           );
         },
       )),
+      Padding(padding:const EdgeInsets.symmetric(horizontal:24),child:SizedBox(width:double.infinity,child:FilledButton.icon(
+        key:const ValueKey('select-centered-observation'),
+        onPressed:()=>Navigator.pop(context,widget.available[centered]),
+        icon:const Icon(Icons.check_circle_outline),label:const Text('Selecteer deze observatie'),
+      ))),
     ]),
   );
 }
