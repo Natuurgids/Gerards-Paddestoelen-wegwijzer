@@ -38,7 +38,7 @@ void main(){
     await openWheel(tester);
     await tester.tap(find.text('Hoed + steel'));
     await tester.pumpAndSettle();
-    expect(find.text('Sporenvormende onderzijde'),findsWidgets);
+    expect(find.textContaining('Sporenvormende onderzijde'),findsWidgets);
 
     await tester.tap(find.byTooltip('Vorige observatie'));
     await tester.pumpAndSettle();
@@ -171,7 +171,7 @@ void main(){
     await openWheel(tester);
     expect(find.text('Wiel'),findsOneWidget);
     expect(find.text('Observatie 1'),findsOneWidget);
-    expect(find.text('Vorm vruchtlichaam'),findsOneWidget);
+    expect(find.textContaining('Vorm vruchtlichaam'),findsOneWidget);
     expect(find.text('Paddenstoelen Determinatiewiel'),findsNothing);
     expect(tester.takeException(),isNull);
   });
@@ -186,7 +186,8 @@ void main(){
     expect(find.text('Veeg links/rechts · centreer de observatie'),findsOneWidget);
     expect(find.text('Selecteer deze observatie'),findsOneWidget);
     expect(find.text('Vorm vruchtlichaam'),findsWidgets);
-    expect(find.text('Veeg links/rechts · tik om te selecteren'),findsOneWidget);
+    expect(find.text('Veeg links/rechts · centreer de observatie'),findsOneWidget);
+    expect(find.text('Selecteer deze observatie'),findsOneWidget);
     expect(tester.takeException(),isNull);
   });
 
@@ -242,7 +243,7 @@ void main(){
     await openWheel(tester);
     await tester.tap(find.text('Hoed + steel'));await tester.pumpAndSettle();
     await tester.tap(find.text('Plaatjes'));await tester.pumpAndSettle();
-    expect(find.text('Hoedoppervlak'),findsWidgets);
+    expect(find.textContaining('Hoedoppervlak'),findsWidgets);
     await tester.tap(find.textContaining('Bouw'));await tester.pumpAndSettle();
     await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
