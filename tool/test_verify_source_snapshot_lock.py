@@ -72,6 +72,35 @@ class SourceSnapshotReportTest(unittest.TestCase):
         self.assertEqual(len(records["nsr_species"]), 1)
         self.assertEqual(records["dgfm_german_names"], [])
 
+    def test_verify_reports_exact_identity_diff_when_reviewed_manifest_exists(self):
+        catalog = {
+            "species": [
+                {"id": 2, "taxon_id": 12, "source_id": "nsr-dutch-species-register", "source_record_id": "new"},
+            ],
+            "sources": [{"id": "nsr-dutch-species-register", "license": "CC BY 4.0"}],
+        }
+        lock = {
+            "catalogue": {"total_species": 0, "nsr_species": 0, "dgfm_german_names": 0, "uksi_english_names": 0, "iucn_statuses": 0},
+            "required_sources": ["nsr-dutch-species-register"],
+            "required_source_licenses": {"nsr-dutch-species-register": "CC BY 4.0"},
+        }
+        reviewed = {
+            "nsr_species": [{"id": 1, "taxon_id": 11, "source_record_id": "old"}],
+            "dgfm_german_names": [],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog_path, lock_path = root / "catalog.json", root / "lock.json"
+            report_path, manifest_path = root / "report.json", root / "identities.json"
+            catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
+            lock_path.write_text(json.dumps(lock), encoding="utf-8")
+            manifest_path.write_text(json.dumps(reviewed), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Source snapshot drift detected"):
+                verify(catalog_path, lock_path, report_path, manifest_path)
+            diff = json.loads(report_path.read_text(encoding="utf-8"))["identity_diff"]["nsr_species"]
+            self.assertEqual([x["source_record_id"] for x in diff["added"]], ["new"])
+            self.assertEqual([x["source_record_id"] for x in diff["removed"]], ["old"])
+
     def test_verify_writes_valid_json_report_before_raising(self):
         catalog = {
             "species": [{"id": 1, "taxon_id": 11, "source_id": "nsr-dutch-species-register", "source_record_id": "nsr-1", "texts": {"nl": {"common_name": "Naam"}}}],
