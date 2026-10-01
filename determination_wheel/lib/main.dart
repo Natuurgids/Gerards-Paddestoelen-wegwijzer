@@ -14,7 +14,26 @@ class _WheelState extends State<Wheel>{int step=1;bool ended=false,showExcluded=
 Widget _mobilePanel(WheelStep current){return Column(children:[_mushroomInstrument(current),const SizedBox(height:10),Expanded(child:_panel(current,compact:true))]);}
 Widget _mushroomInstrument(WheelStep current){final answered=answers.length;final possibilities=result.remaining.length;return SizedBox(height:230,child:Stack(alignment:Alignment.topCenter,children:[Positioned(top:0,left:8,right:8,height:112,child:CustomPaint(painter:_MushroomCapPainter())),Positioned(top:20,left:48,right:48,child:Column(children:[Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Colors.white70,fontWeight:FontWeight.w700)),const SizedBox(height:3),Text(ended?'$possibilities mogelijkheden':current.title,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900))])),Positioned(top:96,width:154,height:128,child:Container(decoration:BoxDecoration(color:const Color(0xffffefd0),borderRadius:const BorderRadius.vertical(bottom:Radius.circular(30)),border:Border.all(color:const Color(0xffd7bd8b),width:2)))),Positioned(top:104,left:20,right:20,height:112,child:_wheelStack(answered))]));}
 Widget _wheelStack(int answered){final groups=<({String title,List<int> steps})>[(title:'Bouw',steps:[1,4]),(title:'Kenmerken',steps:[5,6,7,8,9,11,12,13]),(title:'Ecologie',steps:[15,16,17,18]),(title:'Aanvullend',steps:[19,20,21,22,23,24])];final active=groups.indexWhere((g)=>g.steps.contains(step));return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Transform.translate(offset:Offset(0,i==active?-3:0),child:GestureDetector(onTap:()=>_openWheelSelector(groups[i].title,groups[i].steps),child:AnimatedContainer(duration:const Duration(milliseconds:220),margin:const EdgeInsets.symmetric(vertical:2),height:i==active?28:23,width:i==active?210:176-i*7,decoration:BoxDecoration(gradient:LinearGradient(colors:i==active?[const Color(0xff315d35),const Color(0xff6f914f)]:[const Color(0xffd5b474),const Color(0xffb78e4e)]),borderRadius:BorderRadius.circular(18),boxShadow:i==active?[BoxShadow(color:Colors.black.withValues(alpha:.20),blurRadius:7,offset:const Offset(0,3))]:null),child:Center(child:Text('${i==active?'‹  ':''}${groups[i].title}${i==active?'  ›':''}',style:TextStyle(color:i==active?Colors.white:const Color(0xff4b3820),fontSize:12,fontWeight:FontWeight.w800))))))]);}
-Future<void> _openWheelSelector(String title,List<int> steps)async{final available=steps.where(wheelSteps.containsKey).toList();if(available.isEmpty)return;var initial=available.indexOf(step);if(initial<0)initial=0;final controller=PageController(viewportFraction:.72,initialPage:initial);final picked=await showModalBottomSheet<int>(context:context,isScrollControlled:true,backgroundColor:Colors.transparent,builder:(ctx){return Container(height:360,padding:const EdgeInsets.only(top:12,bottom:24),decoration:const BoxDecoration(color:Color(0xfff6f8f1),borderRadius:BorderRadius.vertical(top:Radius.circular(30))),child:Column(children:[Container(width:42,height:4,decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(2))),const SizedBox(height:12),Text(title,style:Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.w900)),const Text('Veeg links/rechts · tik om te selecteren'),const SizedBox(height:12),Expanded(child:PageView.builder(controller:controller,itemCount:available.length,itemBuilder:(ctx,i){final s=available[i];final ws=wheelSteps[s]!;final selected=answers[s];return Padding(padding:const EdgeInsets.symmetric(horizontal:7,vertical:10),child:InkWell(borderRadius:BorderRadius.circular(28),onTap:()=>Navigator.pop(ctx,s),child:Card(elevation:6,shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(28)),child:Padding(padding:const EdgeInsets.all(18),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[CircleAvatar(radius:26,backgroundColor:const Color(0xff315d35),foregroundColor:Colors.white,child:Text('$s',style:const TextStyle(fontWeight:FontWeight.w900))),const SizedBox(height:12),Text(ws.title,textAlign:TextAlign.center,style:Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800)),const SizedBox(height:8),Text(selected??'Nog niet ingevuld',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(color:selected==null?Colors.black54:const Color(0xff315d35),fontWeight:selected==null?FontWeight.normal:FontWeight.w700))]))))));}))]));});controller.dispose();if(picked!=null&&mounted)setState((){step=picked;ended=false;});}
+Future<void> _openWheelSelector(String title, List<int> steps) async {
+  final available = steps.where(wheelSteps.containsKey).toList();
+  if (available.isEmpty) return;
+  var initial = available.indexOf(step);
+  if (initial < 0) initial = 0;
+  final controller = PageController(viewportFraction: .72, initialPage: initial);
+  final picked = await showModalBottomSheet<int>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => _WheelSelectorSheet(
+      title: title,
+      available: available,
+      answers: answers,
+      controller: controller,
+    ),
+  );
+  controller.dispose();
+  if (picked != null && mounted) setState(() { step = picked; ended = false; });
+}
 Widget _wheel(WheelStep current){
   return Center(
     child:AspectRatio(
@@ -84,4 +103,46 @@ class _WheelPainter extends CustomPainter{
   @override bool shouldRepaint(covariant _WheelPainter old)=>old.completed!=completed||old.ended!=ended;
 }
 
+
+class _WheelSelectorSheet extends StatelessWidget {
+  const _WheelSelectorSheet({required this.title,required this.available,required this.answers,required this.controller});
+  final String title; final List<int> available; final Map<int,String> answers; final PageController controller;
+  @override Widget build(BuildContext context) => Container(
+    height: 360,
+    padding: const EdgeInsets.only(top: 12,bottom: 24),
+    decoration: const BoxDecoration(color: Color(0xfff6f8f1),borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+    child: Column(children: [
+      Container(width: 42,height: 4,decoration: BoxDecoration(color: Colors.black26,borderRadius: BorderRadius.circular(2))),
+      const SizedBox(height: 12),
+      Text(title,style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+      const Text('Veeg links/rechts · tik om te selecteren'),
+      const SizedBox(height: 12),
+      Expanded(child: PageView.builder(
+        controller: controller,itemCount: available.length,
+        itemBuilder: (context,i) {
+          final s=available[i]; final ws=wheelSteps[s]!; final selected=answers[s];
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 7,vertical: 10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(28),onTap: ()=>Navigator.pop(context,s),
+              child: Card(
+                elevation: 6,shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center,children: [
+                    CircleAvatar(radius: 26,backgroundColor: const Color(0xff315d35),foregroundColor: Colors.white,child: Text('$s',style: const TextStyle(fontWeight: FontWeight.w900))),
+                    const SizedBox(height: 12),
+                    Text(ws.title,textAlign: TextAlign.center,style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 8),
+                    Text(selected ?? 'Nog niet ingevuld',textAlign: TextAlign.center,maxLines: 2,overflow: TextOverflow.ellipsis,style: TextStyle(color: selected==null?Colors.black54:const Color(0xff315d35),fontWeight: selected==null?FontWeight.normal:FontWeight.w700)),
+                  ]),
+                ),
+              ),
+            ),
+          );
+        },
+      )),
+    ]),
+  );
+}
 class _MushroomCapPainter extends CustomPainter{@override void paint(Canvas c,Size z){final p=Paint()..color=const Color(0xffb9342b);final path=Path()..moveTo(z.width*.08,z.height*.88)..quadraticBezierTo(z.width*.16,z.height*.08,z.width*.50,z.height*.05)..quadraticBezierTo(z.width*.84,z.height*.08,z.width*.92,z.height*.88)..quadraticBezierTo(z.width*.72,z.height*.70,z.width*.50,z.height*.78)..quadraticBezierTo(z.width*.28,z.height*.70,z.width*.08,z.height*.88);c.drawPath(path,p);final dot=Paint()..color=const Color(0xfffff4d6);for(final o in [Offset(.22,.45),Offset(.34,.22),Offset(.51,.38),Offset(.68,.20),Offset(.78,.49)])c.drawCircle(Offset(z.width*o.dx,z.height*o.dy),z.width*.022,dot);}@override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;}
