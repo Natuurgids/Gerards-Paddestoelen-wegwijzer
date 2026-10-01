@@ -4,12 +4,8 @@ import 'package:mushroom_determination_wheel/main.dart';
 
 void main(){
   Future<void> openWheel(WidgetTester tester) async {
-    await tester.pumpWidget(const App());
+    await tester.pumpWidget(const App(skipSplash: true));
     await tester.pump();
-    if (find.byKey(const ValueKey('splash')).evaluate().isNotEmpty) {
-      await tester.tap(find.byType(GestureDetector).first);
-      await tester.pump(const Duration(milliseconds: 350));
-    }
   }
 
   testWidgets('non-plate underside routes show live possibilities',(tester)async{
