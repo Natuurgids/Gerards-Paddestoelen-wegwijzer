@@ -4,7 +4,7 @@ import 'package:mushroom_determination_wheel/main.dart';
 
 void main(){
   Future<void> openWheel(WidgetTester tester) async {
-    await openWheel(tester);
+    await tester.pumpWidget(const App());
     await tester.pump();
     if (find.text('Wiel').evaluate().isNotEmpty) {
       await tester.tap(find.byKey(const ValueKey('splash')));
