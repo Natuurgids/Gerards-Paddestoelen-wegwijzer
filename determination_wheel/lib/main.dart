@@ -35,7 +35,11 @@ Widget _capDots(){
       final complete=i==4?result.remaining.isNotEmpty:groups[i].steps.any(answers.containsKey);
       return GestureDetector(
         key:ValueKey('cap-dot-$i'),
-        onTap:i==4?()=>_showPossibilities():null,
+        onTap:(){
+          if(i==4){_showPossibilities();return;}
+          final available=_reachableIn(groups[i].steps);
+          if(available.isNotEmpty)_openWheelSelector(groups[i].title,groups[i].steps);
+        },
         child:AnimatedContainer(
           duration:const Duration(milliseconds:240),
           curve:Curves.easeOutBack,
