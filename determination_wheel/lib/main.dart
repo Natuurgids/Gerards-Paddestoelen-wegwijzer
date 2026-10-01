@@ -23,6 +23,16 @@ void _selectObservation(int picked)=>setState((){
 List<int> _reachableIn(List<int> steps){
   final reached=<int>{...history,step};
   return steps.where(reached.contains).toList();
+}
+bool _groupReachable(int index){
+  if(index==4)return true;
+  return _reachableIn(_wheelGroups[index].steps).isNotEmpty;
+}
+void _openGroup(int index){
+  if(index==4){_showPossibilities();return;}
+  if(!_groupReachable(index))return;
+  final group=_wheelGroups[index];
+  _openWheelSelector(group.title,group.steps);
 }@override Widget build(BuildContext context){final current=wheelSteps[step]!;return Scaffold(backgroundColor:const Color(0xfff6f8f1),appBar:AppBar(backgroundColor:Colors.white,surfaceTintColor:Colors.transparent,titleSpacing:14,title:Row(children:[ClipRRect(borderRadius:BorderRadius.circular(11),child:Image.asset('assets/app_icon.png',width:42,height:42,fit:BoxFit.cover)),const SizedBox(width:12),Text('Wiel',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.w800,color:const Color(0xff315d35)))]),actions:[IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt_rounded)),const SizedBox(width:4)]),body:SafeArea(child:LayoutBuilder(builder:(context,b){final mobile=b.maxWidth<850;return Padding(padding:EdgeInsets.fromLTRB(mobile?12:24,12,mobile?12:24,12),child:mobile?_mobilePanel(current):Row(children:[Expanded(flex:4,child:_wheel(current)),const SizedBox(width:24),Expanded(flex:6,child:_panel(current))]));})));}
 Widget _mobilePanel(WheelStep current){return Column(children:[_mushroomInstrument(current),const SizedBox(height:10),Expanded(child:_panel(current,compact:true))]);}
 Widget _mushroomInstrument(WheelStep current){final answered=answers.length;final possibilities=result.remaining.length;return SizedBox(height:258,child:Stack(alignment:Alignment.topCenter,children:[Positioned(top:0,left:8,right:8,height:112,child:CustomPaint(painter:_MushroomCapPainter())),Positioned(top:16,left:48,right:48,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[_capDots(),const SizedBox(height:4),Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Colors.white70,fontWeight:FontWeight.w700)),const SizedBox(height:3),Text(ended?'$possibilities mogelijkheden':'$possibilities mogelijkheden · ${current.title}',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900))]))),Positioned(top:96,width:154,height:148,child:Container(decoration:BoxDecoration(color:const Color(0xffffefd0),borderRadius:const BorderRadius.vertical(bottom:Radius.circular(30)),border:Border.all(color:const Color(0xffd7bd8b),width:2)))),Positioned(top:104,left:20,right:20,height:140,child:_wheelStack(answered))]));}
@@ -33,15 +43,11 @@ Widget _capDots(){
     children:List.generate(5,(i){
       final active=i==4?ended:groups[i].steps.contains(step);
       final complete=i==4?ended:groups[i].steps.any(answers.containsKey);
-      final reachable=i==4||_reachableIn(groups[i].steps).isNotEmpty;
+      final reachable=_groupReachable(i);
       return GestureDetector(
         key:ValueKey('cap-dot-$i'),
         behavior:HitTestBehavior.opaque,
-        onTap:(){
-          if(i==4){_showPossibilities();return;}
-          final available=_reachableIn(groups[i].steps);
-          if(available.isNotEmpty)_openWheelSelector(groups[i].title,groups[i].steps);
-        },
+        onTap:()=>_openGroup(i),
         child:AnimatedContainer(
           duration:const Duration(milliseconds:240),
           curve:Curves.easeOutBack,
@@ -59,7 +65,7 @@ Widget _capDots(){
     }),
   );
 }
-Widget _wheelStack(int answered){final groups=_wheelGroups;final active=groups.indexWhere((g)=>g.steps.contains(step));return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Builder(builder:(context){final reachable=i==4||_reachableIn(groups[i].steps).isNotEmpty;final complete=i==4?ended:groups[i].steps.any(answers.containsKey);return Transform.translate(offset:Offset(0,i==active?-3:0),child:GestureDetector(key:ValueKey('stem-wheel-$i'),behavior:HitTestBehavior.opaque,onTap:!reachable?null:(){if(i==4){_showPossibilities();return;}_openWheelSelector(groups[i].title,groups[i].steps);},child:AnimatedOpacity(duration:const Duration(milliseconds:220),opacity:reachable?1:.38,child:AnimatedContainer(duration:const Duration(milliseconds:220),margin:const EdgeInsets.symmetric(vertical:1),height:i==active?25:20,width:i==active?210:176-i*7,decoration:BoxDecoration(gradient:LinearGradient(colors:i==active?[const Color(0xff315d35),const Color(0xff6f914f)]:complete?[const Color(0xffd5b474),const Color(0xffb78e4e)]:[const Color(0xffead7ad),const Color(0xffc9aa70)]),borderRadius:BorderRadius.circular(18),boxShadow:i==active?[BoxShadow(color:Colors.black.withValues(alpha:.20),blurRadius:7,offset:const Offset(0,3))]:null),child:Center(child:Text('${i==active?'‹  ':''}${groups[i].title}${i==active?'  ›':''}',style:TextStyle(color:i==active?Colors.white:const Color(0xff4b3820),fontSize:12,fontWeight:FontWeight.w800)))))));}))]);}
+Widget _wheelStack(int answered){final groups=_wheelGroups;final active=groups.indexWhere((g)=>g.steps.contains(step));return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Builder(builder:(context){final reachable=_groupReachable(i);final complete=i==4?ended:groups[i].steps.any(answers.containsKey);return Transform.translate(offset:Offset(0,i==active?-3:0),child:GestureDetector(key:ValueKey('stem-wheel-$i'),behavior:HitTestBehavior.opaque,onTap:!reachable?null:()=>_openGroup(i),child:AnimatedOpacity(duration:const Duration(milliseconds:220),opacity:reachable?1:.38,child:AnimatedContainer(duration:const Duration(milliseconds:220),margin:const EdgeInsets.symmetric(vertical:1),height:i==active?25:20,width:i==active?210:176-i*7,decoration:BoxDecoration(gradient:LinearGradient(colors:i==active?[const Color(0xff315d35),const Color(0xff6f914f)]:complete?[const Color(0xffd5b474),const Color(0xffb78e4e)]:[const Color(0xffead7ad),const Color(0xffc9aa70)]),borderRadius:BorderRadius.circular(18),boxShadow:i==active?[BoxShadow(color:Colors.black.withValues(alpha:.20),blurRadius:7,offset:const Offset(0,3))]:null),child:Center(child:Text('${i==active?'‹  ':''}${groups[i].title}${i==active?'  ›':''}',style:TextStyle(color:i==active?Colors.white:const Color(0xff4b3820),fontSize:12,fontWeight:FontWeight.w800)))))));}))]);}
 Future<void> _showPossibilities() async {
   await showModalBottomSheet<void>(
     context: context,
