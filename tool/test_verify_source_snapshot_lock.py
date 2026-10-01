@@ -79,7 +79,7 @@ class SourceIdentityRequirementTest(unittest.TestCase):
                 "required_sources": [],
                 "required_source_licenses": {},
             }), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "identity manifest is required"):
+            with self.assertRaisesRegex(ValueError, "identity manifest or SHA-256 baseline is required"):
                 verify(
                     catalog_path,
                     lock_path,
@@ -101,7 +101,7 @@ class SourceIdentityRequirementTest(unittest.TestCase):
                 },
                 "required_sources": [], "required_source_licenses": {},
             }), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "identity manifest is required"):
+            with self.assertRaisesRegex(ValueError, "identity manifest or SHA-256 baseline is required"):
                 verify(
                     catalog_path, lock_path,
                     identity_manifest_path=root / "missing.json",
