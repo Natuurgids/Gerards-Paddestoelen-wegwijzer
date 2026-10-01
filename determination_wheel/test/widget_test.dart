@@ -274,4 +274,16 @@ void main(){
     expect(find.text('Selecteer deze observatie'),findsNothing);
   });
 
+  testWidgets('stem wheels cannot jump ahead of the determination route',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.byKey(const ValueKey('stem-wheel-0')));await tester.pumpAndSettle();
+    expect(find.text('Selecteer deze observatie'),findsOneWidget);
+    await tester.tapAt(const Offset(10,10));await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('stem-wheel-2')));await tester.pumpAndSettle();
+    expect(find.text('Selecteer deze observatie'),findsNothing);
+    expect(find.textContaining('Vorm vruchtlichaam'),findsWidgets);
+  });
+
 }
