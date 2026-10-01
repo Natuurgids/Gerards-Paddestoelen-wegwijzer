@@ -46,7 +46,7 @@ Widget _capDots(){
             shape:BoxShape.circle,
             color:Colors.white.withValues(alpha:active ? 1.0 : (complete ? 0.82 : 0.38)),
             border:Border.all(color:Colors.white.withValues(alpha:.92),width:1.2),
-            boxShadow:active?[BoxShadow(color:Colors.black.withValues(alpha:.22),blurRadius:5,offset:const Offset(0,2))]:null,
+            boxShadow:const [BoxShadow(color:Color(0x38000000),blurRadius:5,offset:Offset(0,2))],
           ),
         ),
       );
@@ -174,7 +174,7 @@ class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
   late int centered;
   @override void initState(){super.initState();centered=widget.controller.initialPage.clamp(0,widget.available.length-1);}
   @override Widget build(BuildContext context)=>Container(
-    height:380,padding:const EdgeInsets.only(top:12,bottom:18),
+    height:410,padding:const EdgeInsets.only(top:12,bottom:14),
     decoration:const BoxDecoration(color:Color(0xfff6f8f1),borderRadius:BorderRadius.vertical(top:Radius.circular(30))),
     child:Column(children:[
       Container(width:42,height:4,decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(2))),
@@ -194,10 +194,10 @@ class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
               elevation:isCentered?7:2,
               shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(28)),
               child:Padding(padding:const EdgeInsets.all(18),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-                CircleAvatar(radius:26,backgroundColor:isCentered?const Color(0xff315d35):const Color(0xff9aaa8e),foregroundColor:Colors.white,child:Text('$s',style:const TextStyle(fontWeight:FontWeight.w900))),
-                const SizedBox(height:12),
-                Text(ws.title,textAlign:TextAlign.center,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800)),
+                CircleAvatar(radius:22,backgroundColor:isCentered?const Color(0xff315d35):const Color(0xff9aaa8e),foregroundColor:Colors.white,child:Text('$s',style:const TextStyle(fontWeight:FontWeight.w900))),
                 const SizedBox(height:8),
+                Text(ws.title,textAlign:TextAlign.center,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800)),
+                const SizedBox(height:4),
                 Text(selected??'Nog niet ingevuld',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(color:selected==null?Colors.black54:const Color(0xff315d35),fontWeight:selected==null?FontWeight.normal:FontWeight.w700)),
               ])),
             )),
