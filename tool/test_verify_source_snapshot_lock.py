@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tool.verify_source_snapshot_lock import _drift_records, _source_license_mismatches, verify
+from tool.verify_source_snapshot_lock import _drift_records, _identity_manifest, _manifest_diff, _source_license_mismatches, verify, write_identity_manifest
 
 
 class SourceLicenseLockTest(unittest.TestCase):
@@ -92,6 +92,49 @@ class SourceSnapshotReportTest(unittest.TestCase):
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(report["actual"]["nsr_species"], 1)
             self.assertEqual(report["records"]["nsr_species"][0]["source_record_id"], "nsr-1")
+
+
+class SourceIdentityManifestTest(unittest.TestCase):
+    def test_manifest_diff_reports_added_removed_and_changed_identities(self):
+        reviewed = {
+            "nsr_species": [
+                {"id": 1, "taxon_id": 11, "source_record_id": "a"},
+                {"id": 2, "taxon_id": 12, "source_record_id": "b"},
+            ],
+            "dgfm_german_names": [
+                {"id": 3, "taxon_id": 13, "de_name": "Alt"},
+            ],
+        }
+        current = {
+            "nsr_species": [
+                {"id": 2, "taxon_id": 12, "source_record_id": "b"},
+                {"id": 4, "taxon_id": 14, "source_record_id": "c"},
+            ],
+            "dgfm_german_names": [
+                {"id": 3, "taxon_id": 13, "de_name": "Neu"},
+            ],
+        }
+        diff = _manifest_diff(current, reviewed)
+        self.assertEqual([x["source_record_id"] for x in diff["nsr_species"]["added"]], ["c"])
+        self.assertEqual([x["source_record_id"] for x in diff["nsr_species"]["removed"]], ["a"])
+        self.assertEqual(len(diff["dgfm_german_names"]["changed"]), 1)
+
+    def test_identity_manifest_writer_is_stable_and_source_scoped(self):
+        catalog = {
+            "species": [
+                {"id": 2, "taxon_id": 12, "source_id": "other"},
+                {"id": 1, "taxon_id": 11, "source_id": "nsr-dutch-species-register", "source_record_id": "a"},
+                {"id": 3, "taxon_id": 13, "texts": {"de": {"common_name": "Name", "common_name_source_id": "dgfm-german-fungi"}}},
+            ]
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog_path = Path(tmp) / "catalog.json"
+            manifest_path = Path(tmp) / "manifest.json"
+            catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
+            write_identity_manifest(catalog_path, manifest_path)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["nsr_species"], [{"id": 1, "source_record_id": "a", "taxon_id": 11}])
+            self.assertEqual(manifest["dgfm_german_names"], [{"de_name": "Name", "id": 3, "taxon_id": 13}])
 
 
 if __name__ == "__main__":
