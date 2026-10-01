@@ -44,6 +44,44 @@ def _source_license_mismatches(catalog: dict, lock: dict) -> dict[str, dict[str,
     return mismatches
 
 
+def _identity_manifest(species: list[dict]) -> dict[str, list[dict]]:
+    """Stable source identities used to make future drift an exact diff."""
+    nsr = sorted(
+        (
+            {
+                "id": item.get("id"),
+                "taxon_id": item.get("taxon_id"),
+                "source_record_id": item.get("source_record_id"),
+            }
+            for item in species
+            if item.get("source_id") == "nsr-dutch-species-register"
+        ),
+        key=lambda item: (
+            str(item.get("source_record_id") or ""),
+            str(item.get("taxon_id") or ""),
+            str(item.get("id") or ""),
+        ),
+    )
+    dgfm = sorted(
+        (
+            {
+                "id": item.get("id"),
+                "taxon_id": item.get("taxon_id"),
+                "de_name": ((item.get("texts") or {}).get("de") or {}).get("common_name"),
+            }
+            for item in species
+            if ((item.get("texts") or {}).get("de") or {}).get("common_name_source_id")
+            == "dgfm-german-fungi"
+        ),
+        key=lambda item: (
+            str(item.get("taxon_id") or ""),
+            str(item.get("id") or ""),
+            str(item.get("de_name") or ""),
+        ),
+    )
+    return {"nsr_species": nsr, "dgfm_german_names": dgfm}
+
+
 def _drift_records(species: list[dict], lock: dict) -> dict[str, list[dict]]:
     """Return inspectable records for sources whose reviewed counts drifted."""
     expected = lock["catalogue"]
@@ -71,6 +109,15 @@ def _drift_records(species: list[dict], lock: dict) -> dict[str, list[dict]]:
         "nsr_species": nsr if len(nsr) != expected.get("nsr_species") else [],
         "dgfm_german_names": dgfm if len(dgfm) != expected.get("dgfm_german_names") else [],
     }
+
+
+def write_identity_manifest(catalog_path: Path, manifest_path: Path) -> None:
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(
+        json.dumps(_identity_manifest(list(catalog.get("species") or [])), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def verify(catalog_path: Path, lock_path: Path, report_path: Path | None = None) -> None:
@@ -142,7 +189,14 @@ def main() -> None:
     parser.add_argument("--catalog", default="assets/data/species_catalog.json")
     parser.add_argument("--lock", default="tool/source_snapshot_lock.json")
     parser.add_argument("--report")
+    parser.add_argument(
+        "--write-identity-manifest",
+        help="Write stable NSR/DGfM identities for a deliberately reviewed snapshot.",
+    )
     args = parser.parse_args()
+    if args.write_identity_manifest:
+        write_identity_manifest(Path(args.catalog), Path(args.write_identity_manifest))
+        return
     verify(Path(args.catalog), Path(args.lock), Path(args.report) if args.report else None)
 
 
