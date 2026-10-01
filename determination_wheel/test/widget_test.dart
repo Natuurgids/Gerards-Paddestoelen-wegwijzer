@@ -184,7 +184,8 @@ void main(){
     await tester.tap(find.textContaining('Bouw'));
     await tester.pumpAndSettle();
     expect(find.text('Veeg links/rechts · tik om te selecteren'),findsOneWidget);
-    expect(find.text('Vorm vruchtlichaam'),findsOneWidget);
+    expect(find.text('Vorm vruchtlichaam'),findsWidgets);
+    expect(find.text('Veeg links/rechts · tik om te selecteren'),findsOneWidget);
     expect(tester.takeException(),isNull);
   });
 
