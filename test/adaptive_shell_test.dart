@@ -79,7 +79,7 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
     expect(
       find.bySemanticsLabel(
-        "Gerard's Paddestoelen Wegwijzer. Ontdek. Leer. Beleef de natuur.",
+        RegExp(r"^Gerard's Paddestoelen Wegwijzer\. Wiel\..*Ontdek\. Leer\. Beleef de natuur\.$"),
       ),
       findsOneWidget,
     );
