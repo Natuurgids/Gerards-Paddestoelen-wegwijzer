@@ -189,4 +189,26 @@ void main(){
     expect(tester.takeException(),isNull);
   });
 
+  testWidgets('unreached observations stay out of popped wheels',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.textContaining('Bouw'));
+    await tester.pumpAndSettle();
+    expect(find.text('Vorm vruchtlichaam'),findsWidgets);
+    expect(find.text('Sporenvormende onderzijde'),findsNothing);
+  });
+
+  testWidgets('possibilities are a fifth live wheel',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    expect(find.text('Mogelijkheden'),findsOneWidget);
+    await tester.tap(find.text('Mogelijkheden'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('mogelijkheden'),findsWidgets);
+    expect(find.textContaining('Geen waarschijnlijkheden.'),findsOneWidget);
+    expect(tester.takeException(),isNull);
+  });
+
 }
