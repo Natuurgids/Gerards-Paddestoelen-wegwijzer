@@ -44,7 +44,7 @@ Widget _capDots(){
           height:active?13:9,
           decoration:BoxDecoration(
             shape:BoxShape.circle,
-            color:Colors.white.withValues(alpha:active?1:(complete?.82:.38)),
+            color:Colors.white.withValues(alpha:active ? 1.0 : (complete ? 0.82 : 0.38)),
             border:Border.all(color:Colors.white.withValues(alpha:.92),width:1.2),
             boxShadow:active?[BoxShadow(color:Colors.black.withValues(alpha:.22),blurRadius:5,offset:const Offset(0,2))]:null,
           ),
