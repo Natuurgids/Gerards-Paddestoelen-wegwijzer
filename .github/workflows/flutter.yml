@@ -91,14 +91,19 @@ jobs:
         id: source-snapshot
         continue-on-error: true
         run: python3 tool/verify_source_snapshot_lock.py --report build/source-snapshot-drift.json
+      - name: Build source identity review candidate
+        if: steps.source-snapshot.outcome == 'failure'
+        run: python3 tool/verify_source_snapshot_lock.py --write-identity-manifest build/source-identity-review.json
       - name: Upload source snapshot drift report
         if: steps.source-snapshot.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: source-snapshot-drift
-          path: build/source-snapshot-drift.json
+          path: |
+            build/source-snapshot-drift.json
+            build/source-identity-review.json
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
       - name: Enforce reviewed source snapshot
         if: steps.source-snapshot.outcome == 'failure'
         run: exit 1
