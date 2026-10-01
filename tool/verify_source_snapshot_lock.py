@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -161,14 +162,23 @@ def verify(
         and (lock.get("catalogue") or {}).get("uksi_english_names") == 12
         and (lock.get("catalogue") or {}).get("iucn_statuses") == 118
     )
-    if require_identity_manifest and not legacy_count_only_snapshot and (
-        identity_manifest_path is None or not identity_manifest_path.exists()
+    reviewed_identity_hash = lock.get("identity_manifest_sha256")
+    has_identity_manifest = identity_manifest_path is not None and identity_manifest_path.exists()
+    if require_identity_manifest and not legacy_count_only_snapshot and not (
+        has_identity_manifest or reviewed_identity_hash
     ):
         raise ValueError(
-            "Reviewed source identity manifest is required; create it only when "
-            "accepting a source snapshot deliberately."
+            "Reviewed source identity manifest or SHA-256 baseline is required; "
+            "create it only when accepting a source snapshot deliberately."
         )
     species = list(catalog.get("species") or [])
+    current_identity_json = (
+        json.dumps(_identity_manifest(species), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    )
+    current_identity_hash = hashlib.sha256(current_identity_json.encode("utf-8")).hexdigest()
+    identity_hash_mismatch = bool(
+        reviewed_identity_hash and current_identity_hash != reviewed_identity_hash
+    )
     expected = lock["catalogue"]
 
     actual = {
@@ -189,7 +199,7 @@ def verify(
         for key, value in actual.items()
         if value != expected.get(key)
     }
-    if missing_sources or license_mismatches or count_mismatches:
+    if missing_sources or license_mismatches or count_mismatches or identity_hash_mismatch:
         if report_path is not None:
             report_path.parent.mkdir(parents=True, exist_ok=True)
             report_path.write_text(
@@ -199,6 +209,10 @@ def verify(
                         "actual": actual,
                         "count_mismatches": count_mismatches,
                         "records": _drift_records(species, lock),
+                        "identity_sha256": {
+                            "expected": reviewed_identity_hash,
+                            "actual": current_identity_hash,
+                        },
                         "identity_diff": (
                             _manifest_diff(
                                 _identity_manifest(species),
@@ -224,6 +238,10 @@ def verify(
         if count_mismatches:
             details.append(
                 f"count drift: {json.dumps(count_mismatches, sort_keys=True)}"
+            )
+        if identity_hash_mismatch:
+            details.append(
+                f"identity drift: expected {reviewed_identity_hash}, actual {current_identity_hash}"
             )
         raise ValueError(
             "Source snapshot drift detected; review upstream changes and update "
