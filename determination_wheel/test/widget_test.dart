@@ -303,4 +303,27 @@ void main(){
     expect(find.text('Hoedoppervlak'),findsNothing);
   });
 
+  testWidgets('cap and stem controls expose the same route reachability',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+
+    GestureDetector cap(int i)=>tester.widget<GestureDetector>(find.byKey(ValueKey('cap-dot-$i')));
+    GestureDetector stem(int i)=>tester.widget<GestureDetector>(find.byKey(ValueKey('stem-wheel-$i')));
+
+    expect(cap(0).onTap,isNotNull);
+    expect(stem(0).onTap,isNotNull);
+    expect(cap(2).onTap,isNull);
+    expect(stem(2).onTap,isNull);
+    expect(cap(4).onTap,isNotNull);
+    expect(stem(4).onTap,isNotNull);
+
+    await tester.tap(find.text('Bol-/buikvormig'));await tester.pumpAndSettle();
+
+    expect(cap(2).onTap,isNotNull);
+    expect(stem(2).onTap,isNotNull);
+    expect(cap(1).onTap,isNull);
+    expect(stem(1).onTap,isNull);
+  });
+
 }
