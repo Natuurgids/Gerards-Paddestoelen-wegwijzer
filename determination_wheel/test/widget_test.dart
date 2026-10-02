@@ -326,4 +326,39 @@ void main(){
     expect(stem(1).onTap,isNull);
   });
 
+  testWidgets('centering then dismissing preserves the determination state',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Hoed + steel'));await tester.pumpAndSettle();
+
+    expect(find.textContaining('Sporenvormende onderzijde'),findsWidgets);
+    await tester.tap(find.byKey(const ValueKey('stem-wheel-0')));await tester.pumpAndSettle();
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
+
+    expect(find.text('Vorm vruchtlichaam'),findsWidgets);
+    expect(find.text('Hoed + steel'),findsWidgets);
+    await tester.tapAt(const Offset(10,10));await tester.pumpAndSettle();
+
+    expect(find.textContaining('Sporenvormende onderzijde'),findsWidgets);
+    expect(find.text('Hoed + steel'),findsNothing);
+    expect(find.byTooltip('Vorige observatie'),findsOneWidget);
+  });
+
+  testWidgets('confirming a centered earlier observation is the mutation boundary',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Hoed + steel'));await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('cap-dot-0')));await tester.pumpAndSettle();
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
+
+    expect(find.text('Hoed + steel'),findsWidgets);
+    expect(find.textContaining('Vorm vruchtlichaam'),findsWidgets);
+    expect(find.textContaining('Sporenvormende onderzijde'),findsNothing);
+    expect(find.byTooltip('Vorige observatie'),findsOneWidget);
+  });
+
 }
