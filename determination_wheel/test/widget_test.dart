@@ -361,4 +361,50 @@ void main(){
     expect(find.byTooltip('Vorige observatie'),findsOneWidget);
   });
 
+  testWidgets('back after a route edit cannot resurrect discarded observations',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Hoed + steel'));await tester.pumpAndSettle();
+    await tester.tap(find.text('Plaatjes'));await tester.pumpAndSettle();
+    expect(find.textContaining('Hoedoppervlak'),findsWidgets);
+
+    await tester.tap(find.byKey(const ValueKey('stem-wheel-0')));await tester.pumpAndSettle();
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
+    await tester.tap(find.text('Bol-/buikvormig'));await tester.pumpAndSettle();
+    expect(find.textContaining('Vindplaats'),findsWidgets);
+
+    await tester.tap(find.byTooltip('Vorige observatie'));await tester.pumpAndSettle();
+
+    expect(find.textContaining('Vorm vruchtlichaam'),findsWidgets);
+    expect(find.textContaining('Sporenvormende onderzijde'),findsNothing);
+    expect(find.textContaining('Hoedoppervlak'),findsNothing);
+    final capEcology=tester.widget<GestureDetector>(find.byKey(const ValueKey('cap-dot-2')));
+    final stemEcology=tester.widget<GestureDetector>(find.byKey(const ValueKey('stem-wheel-2')));
+    expect(capEcology.onTap,isNull);
+    expect(stemEcology.onTap,isNull);
+  });
+
+  testWidgets('reset restores only the initial wheel route',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Bol-/buikvormig'));await tester.pumpAndSettle();
+    expect(tester.widget<GestureDetector>(find.byKey(const ValueKey('stem-wheel-2'))).onTap,isNotNull);
+
+    await tester.tap(find.byTooltip('Nieuwe determinatie'));await tester.pumpAndSettle();
+
+    expect(find.textContaining('Vorm vruchtlichaam'),findsWidgets);
+    expect(find.textContaining('Vindplaats'),findsNothing);
+    expect(tester.widget<GestureDetector>(find.byKey(const ValueKey('cap-dot-0'))).onTap,isNotNull);
+    expect(tester.widget<GestureDetector>(find.byKey(const ValueKey('stem-wheel-0'))).onTap,isNotNull);
+    for(final i in [1,2,3]){
+      expect(tester.widget<GestureDetector>(find.byKey(ValueKey('cap-dot-$i'))).onTap,isNull);
+      expect(tester.widget<GestureDetector>(find.byKey(ValueKey('stem-wheel-$i'))).onTap,isNull);
+    }
+    expect(tester.widget<GestureDetector>(find.byKey(const ValueKey('cap-dot-4'))).onTap,isNotNull);
+    expect(tester.widget<GestureDetector>(find.byKey(const ValueKey('stem-wheel-4'))).onTap,isNotNull);
+  });
+
 }
