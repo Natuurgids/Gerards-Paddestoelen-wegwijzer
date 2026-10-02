@@ -418,12 +418,16 @@ void main(){
     expect(find.textContaining('Substraat'),findsWidgets);
     await tester.tap(find.byKey(const ValueKey('stem-wheel-2')));await tester.pumpAndSettle();
 
-    expect(find.text('Vindplaats / vegetatietype'),findsOneWidget);
-    expect(find.text('Waardplant / boomassociatie'),findsOneWidget);
     expect(find.text('Substraat'),findsOneWidget);
+    expect(find.text('Waardplant / boomassociatie'),findsOneWidget);
+    expect(find.text('Groeigedrag'),findsNothing);
+    // PageView builds lazily: move one page so the earliest reached
+    // observation is rendered before selecting it.
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(300,0));await tester.pumpAndSettle();
+    expect(find.text('Vindplaats / vegetatietype'),findsOneWidget);
     expect(find.text('Groeigedrag'),findsNothing);
 
-    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(600,0));await tester.pumpAndSettle();
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(300,0));await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
 
     expect(find.text('Bos'),findsWidgets);
@@ -440,7 +444,10 @@ void main(){
     tester.view.physicalSize=const Size(1200,1600);tester.view.devicePixelRatio=1;
     addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
     await openWheel(tester);
-    Finder semantic(String label)=>find.byWidgetPredicate((w)=>w is Semantics&&w.properties.label==label);
+    final semantics= tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    String capPossibilities()=>tester.getSemantics(find.byKey(const ValueKey('cap-wheel-semantics-4'))).label;
+    String stemPossibilities()=>tester.getSemantics(find.byKey(const ValueKey('stem-wheel-semantics-4'))).label;
     Future<void> pick(String label)async{
       final target=find.text(label);
       await tester.ensureVisible(target.first);
@@ -448,7 +455,8 @@ void main(){
       await tester.pumpAndSettle();
     }
 
-    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
+    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     await pick('Hoed + steel');
     await pick('Plaatjes');
     await pick('Glad');
@@ -467,16 +475,17 @@ void main(){
     await pick('Geen melksap');
     await pick('Vlezig / vezelig');
 
-    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
-    expect(semantic('Mogelijkheden — actief en voltooid'),findsNothing);
+    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     await pick('Toon eindresultaat');
 
-    expect(semantic('Mogelijkheden — actief en voltooid'),findsNWidgets(2));
+    expect(capPossibilities(),'Mogelijkheden — actief en voltooid');
+    expect(stemPossibilities(),'Mogelijkheden — actief en voltooid');
     expect(find.text('Nieuwe determinatie'),findsWidgets);
 
     await tester.tap(find.byTooltip('Vorige observatie'));await tester.pumpAndSettle();
-    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
-    expect(semantic('Mogelijkheden — actief en voltooid'),findsNothing);
+    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     expect(find.text('Toon eindresultaat'),findsOneWidget);
   });
 

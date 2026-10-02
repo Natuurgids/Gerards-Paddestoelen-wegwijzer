@@ -46,6 +46,7 @@ Widget _capDots(){
       final reachable=_groupReachable(i);
       final state=active&&complete?'actief en voltooid':active?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';
       return Semantics(
+        key:ValueKey('cap-wheel-semantics-$i'),
         label:'${groups[i].title} — $state',
         button:true,
         enabled:reachable,
@@ -82,6 +83,7 @@ Widget _wheelStack(int answered){
           final complete=i==4?ended:groups[i].steps.any(answers.containsKey);
           final state=i==active&&complete?'actief en voltooid':i==active?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';
           return Semantics(
+            key:ValueKey('stem-wheel-semantics-$i'),
             label:'${groups[i].title} — $state',
             button:true,
             enabled:reachable,
