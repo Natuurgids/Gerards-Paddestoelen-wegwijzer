@@ -446,8 +446,7 @@ void main(){
     await openWheel(tester);
     final semantics= tester.ensureSemantics();
     addTearDown(semantics.dispose);
-    String capPossibilities()=>tester.getSemantics(find.byKey(const ValueKey('cap-wheel-semantics-4'))).label;
-    String stemPossibilities()=>tester.getSemantics(find.byKey(const ValueKey('stem-wheel-semantics-4'))).label;
+    Finder semantic(String label)=>find.bySemanticsLabel(label);
     Future<void> pick(String label)async{
       final target=find.text(label);
       await tester.ensureVisible(target.first);
@@ -455,8 +454,7 @@ void main(){
       await tester.pumpAndSettle();
     }
 
-    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
-    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
     await pick('Hoed + steel');
     await pick('Plaatjes');
     await pick('Glad');
@@ -475,17 +473,14 @@ void main(){
     await pick('Geen melksap');
     await pick('Vlezig / vezelig');
 
-    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
-    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
     await pick('Toon eindresultaat');
 
-    expect(capPossibilities(),'Mogelijkheden — actief en voltooid');
-    expect(stemPossibilities(),'Mogelijkheden — actief en voltooid');
+    expect(semantic('Mogelijkheden — actief en voltooid'),findsNWidgets(2));
     expect(find.text('Nieuwe determinatie'),findsWidgets);
 
     await tester.tap(find.byTooltip('Vorige observatie'));await tester.pumpAndSettle();
-    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
-    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
     expect(find.text('Toon eindresultaat'),findsOneWidget);
   });
 
