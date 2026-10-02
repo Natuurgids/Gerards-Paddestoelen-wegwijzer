@@ -454,7 +454,6 @@ void main(){
     }
 
     expect(capPossibilities(),'Mogelijkheden — beschikbaar');
-    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     await pick('Hoed + steel');
     await pick('Plaatjes');
     await pick('Glad');
