@@ -47,7 +47,7 @@ Widget _capDots(){
       return GestureDetector(
         key:ValueKey('cap-dot-$i'),
         behavior:HitTestBehavior.opaque,
-        onTap:()=>_openGroup(i),
+        onTap:reachable?()=>_openGroup(i):null,
         child:AnimatedContainer(
           duration:const Duration(milliseconds:240),
           curve:Curves.easeOutBack,
