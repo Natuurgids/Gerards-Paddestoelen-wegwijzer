@@ -436,4 +436,48 @@ void main(){
     expect(find.text('Loofboom'),findsOneWidget);
   });
 
+  testWidgets('possibilities wheel completes only at the actual end state',(tester)async{
+    tester.view.physicalSize=const Size(1200,1600);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    Finder semantic(String label)=>find.byWidgetPredicate((w)=>w is Semantics&&w.properties.label==label);
+    Future<void> pick(String label)async{
+      final target=find.text(label);
+      await tester.ensureVisible(target.first);
+      await tester.tap(target.first);
+      await tester.pumpAndSettle();
+    }
+
+    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
+    await pick('Hoed + steel');
+    await pick('Plaatjes');
+    await pick('Glad');
+    await pick('Vrij');
+    await pick('Geen zichtbaar');
+    await pick('Nee');
+    await pick('Roze');
+    await pick('Ga verder met veldkenmerken');
+    await pick('Bos');
+    await pick('Geen duidelijke waardplant');
+    await pick('Dood hout');
+    await pick('Afzonderlijk');
+    await pick('Middelgroot');
+    await pick('Bruin');
+    await pick('Geen opvallende geur');
+    await pick('Geen melksap');
+    await pick('Vlezig / vezelig');
+
+    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
+    expect(semantic('Mogelijkheden — actief en voltooid'),findsNothing);
+    await pick('Toon eindresultaat');
+
+    expect(semantic('Mogelijkheden — actief en voltooid'),findsNWidgets(2));
+    expect(find.text('Nieuwe determinatie'),findsWidgets);
+
+    await tester.tap(find.byTooltip('Vorige observatie'));await tester.pumpAndSettle();
+    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
+    expect(semantic('Mogelijkheden — actief en voltooid'),findsNothing);
+    expect(find.text('Toon eindresultaat'),findsOneWidget);
+  });
+
 }
