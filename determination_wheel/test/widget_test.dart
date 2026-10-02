@@ -444,9 +444,8 @@ void main(){
     tester.view.physicalSize=const Size(1200,1600);tester.view.devicePixelRatio=1;
     addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
     await openWheel(tester);
-    final semantics= tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-    Finder semantic(String label)=>find.bySemanticsLabel(label);
+    String capPossibilities()=>tester.widget<Semantics>(find.byKey(const ValueKey('cap-wheel-semantics-4'))).properties.label!;
+    String stemPossibilities()=>tester.widget<Semantics>(find.byKey(const ValueKey('stem-wheel-semantics-4'))).properties.label!;
     Future<void> pick(String label)async{
       final target=find.text(label);
       await tester.ensureVisible(target.first);
@@ -454,7 +453,8 @@ void main(){
       await tester.pumpAndSettle();
     }
 
-    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
+    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     await pick('Hoed + steel');
     await pick('Plaatjes');
     await pick('Glad');
@@ -473,14 +473,17 @@ void main(){
     await pick('Geen melksap');
     await pick('Vlezig / vezelig');
 
-    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
+    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     await pick('Toon eindresultaat');
 
-    expect(semantic('Mogelijkheden — actief en voltooid'),findsNWidgets(2));
+    expect(capPossibilities(),'Mogelijkheden — actief en voltooid');
+    expect(stemPossibilities(),'Mogelijkheden — actief en voltooid');
     expect(find.text('Nieuwe determinatie'),findsWidgets);
 
     await tester.tap(find.byTooltip('Vorige observatie'));await tester.pumpAndSettle();
-    expect(semantic('Mogelijkheden — beschikbaar'),findsNWidgets(2));
+    expect(capPossibilities(),'Mogelijkheden — beschikbaar');
+    expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     expect(find.text('Toon eindresultaat'),findsOneWidget);
   });
 
