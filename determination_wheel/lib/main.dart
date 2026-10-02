@@ -44,7 +44,12 @@ Widget _capDots(){
       final active=i==4?ended:groups[i].steps.contains(step);
       final complete=i==4?ended:groups[i].steps.any(answers.containsKey);
       final reachable=_groupReachable(i);
-      return GestureDetector(
+      final state=active?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';
+      return Semantics(
+        label:'${groups[i].title} — $state',
+        button:true,
+        enabled:reachable,
+        child:GestureDetector(
         key:ValueKey('cap-dot-$i'),
         behavior:HitTestBehavior.opaque,
         onTap:reachable?()=>_openGroup(i):null,
@@ -61,11 +66,11 @@ Widget _capDots(){
             boxShadow:const [BoxShadow(color:Color(0x38000000),blurRadius:5,offset:Offset(0,2))],
           ),
         ),
-      );
+      ));
     }),
   );
 }
-Widget _wheelStack(int answered){final groups=_wheelGroups;final active=groups.indexWhere((g)=>g.steps.contains(step));return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Builder(builder:(context){final reachable=_groupReachable(i);final complete=i==4?ended:groups[i].steps.any(answers.containsKey);return Transform.translate(offset:Offset(0,i==active?-3:0),child:GestureDetector(key:ValueKey('stem-wheel-$i'),behavior:HitTestBehavior.opaque,onTap:!reachable?null:()=>_openGroup(i),child:AnimatedOpacity(duration:const Duration(milliseconds:220),opacity:reachable?1:.38,child:AnimatedContainer(duration:const Duration(milliseconds:220),margin:const EdgeInsets.symmetric(vertical:1),height:i==active?25:20,width:i==active?210:176-i*7,decoration:BoxDecoration(gradient:LinearGradient(colors:i==active?[const Color(0xff315d35),const Color(0xff6f914f)]:complete?[const Color(0xffd5b474),const Color(0xffb78e4e)]:[const Color(0xffead7ad),const Color(0xffc9aa70)]),borderRadius:BorderRadius.circular(18),boxShadow:i==active?[BoxShadow(color:Colors.black.withValues(alpha:.20),blurRadius:7,offset:const Offset(0,3))]:null),child:Center(child:Text('${i==active?'‹  ':''}${groups[i].title}${i==active?'  ›':''}',style:TextStyle(color:i==active?Colors.white:const Color(0xff4b3820),fontSize:12,fontWeight:FontWeight.w800)))))));}))]);}
+Widget _wheelStack(int answered){final groups=_wheelGroups;final active=groups.indexWhere((g)=>g.steps.contains(step));return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Builder(builder:(context){final reachable=_groupReachable(i);final complete=i==4?ended:groups[i].steps.any(answers.containsKey);final state=i==active?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';return Semantics(label:'${groups[i].title} — $state',button:true,enabled:reachable,child:Transform.translate(offset:Offset(0,i==active?-3:0),child:GestureDetector(key:ValueKey('stem-wheel-$i'),behavior:HitTestBehavior.opaque,onTap:!reachable?null:()=>_openGroup(i),child:AnimatedOpacity(duration:const Duration(milliseconds:220),opacity:reachable?1:.38,child:AnimatedContainer(duration:const Duration(milliseconds:220),margin:const EdgeInsets.symmetric(vertical:1),height:i==active?25:20,width:i==active?210:176-i*7,decoration:BoxDecoration(gradient:LinearGradient(colors:i==active?[const Color(0xff315d35),const Color(0xff6f914f)]:complete?[const Color(0xffd5b474),const Color(0xffb78e4e)]:[const Color(0xffead7ad),const Color(0xffc9aa70)]),borderRadius:BorderRadius.circular(18),boxShadow:i==active?[BoxShadow(color:Colors.black.withValues(alpha:.20),blurRadius:7,offset:const Offset(0,3))]:null),child:Center(child:Text('${i==active?'‹  ':''}${groups[i].title}${i==active?'  ›':''}',style:TextStyle(color:i==active?Colors.white:const Color(0xff4b3820),fontSize:12,fontWeight:FontWeight.w800)))))))));}))]);}
 Future<void> _showPossibilities() async {
   await showModalBottomSheet<void>(
     context: context,
