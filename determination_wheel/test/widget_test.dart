@@ -407,4 +407,33 @@ void main(){
     expect(tester.widget<GestureDetector>(find.byKey(const ValueKey('stem-wheel-4'))).onTap,isNotNull);
   });
 
+  testWidgets('later wheel exposes only reached observations and truncates from selection',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Bol-/buikvormig'));await tester.pumpAndSettle();
+    await tester.tap(find.text('Bos'));await tester.pumpAndSettle();
+    await tester.tap(find.text('Loofboom'));await tester.pumpAndSettle();
+
+    expect(find.textContaining('Substraat'),findsWidgets);
+    await tester.tap(find.byKey(const ValueKey('stem-wheel-2')));await tester.pumpAndSettle();
+
+    expect(find.text('Vindplaats / vegetatietype'),findsOneWidget);
+    expect(find.text('Waardplant / boomassociatie'),findsOneWidget);
+    expect(find.text('Substraat'),findsOneWidget);
+    expect(find.text('Groeigedrag'),findsNothing);
+
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(600,0));await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('select-centered-observation')));await tester.pumpAndSettle();
+
+    expect(find.text('Bos'),findsWidgets);
+    expect(find.textContaining('Vindplaats / vegetatietype'),findsWidgets);
+    expect(find.textContaining('Waardplant / boomassociatie'),findsNothing);
+    expect(find.textContaining('Substraat'),findsNothing);
+
+    await tester.tap(find.text('Grasland / open terrein'));await tester.pumpAndSettle();
+    expect(find.textContaining('Waardplant / boomassociatie'),findsWidgets);
+    expect(find.text('Loofboom'),findsOneWidget);
+  });
+
 }
