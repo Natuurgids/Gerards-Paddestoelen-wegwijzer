@@ -34,90 +34,39 @@ void _openGroup(int index){
   final group=_wheelGroups[index];
   _openWheelSelector(group.title,group.steps);
 }@override Widget build(BuildContext context){final current=wheelSteps[step]!;return Scaffold(backgroundColor:const Color(0xfff6f8f1),appBar:AppBar(backgroundColor:Colors.white,surfaceTintColor:Colors.transparent,titleSpacing:14,title:Row(children:[ClipRRect(borderRadius:BorderRadius.circular(11),child:Image.asset('assets/app_icon.png',width:42,height:42,fit:BoxFit.cover)),const SizedBox(width:12),Text('Wiel',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.w800,color:const Color(0xff315d35)))]),actions:[IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt_rounded)),const SizedBox(width:4)]),body:SafeArea(child:LayoutBuilder(builder:(context,b){final mobile=b.maxWidth<850;return Padding(padding:EdgeInsets.fromLTRB(mobile?12:24,12,mobile?12:24,12),child:mobile?_mobilePanel(current):Row(children:[Expanded(flex:4,child:_wheel(current)),const SizedBox(width:24),Expanded(flex:6,child:_panel(current))]));})));}
-Widget _mobilePanel(WheelStep current){return Column(children:[_mushroomInstrument(current),const SizedBox(height:10),Expanded(child:_panel(current,compact:true))]);}
-Widget _mushroomInstrument(WheelStep current){final answered=answers.length;final possibilities=result.remaining.length;return SizedBox(height:258,child:Stack(alignment:Alignment.topCenter,children:[Positioned(top:0,left:8,right:8,height:112,child:CustomPaint(painter:_MushroomCapPainter())),Positioned(top:16,left:48,right:48,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[_capDots(),const SizedBox(height:4),Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Colors.white70,fontWeight:FontWeight.w700)),const SizedBox(height:3),Text(ended?'$possibilities mogelijkheden':'$possibilities mogelijkheden · ${current.title}',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900))]))),Positioned(top:96,width:154,height:148,child:Container(decoration:BoxDecoration(color:const Color(0xffffefd0),borderRadius:const BorderRadius.vertical(bottom:Radius.circular(30)),border:Border.all(color:const Color(0xffd7bd8b),width:2)))),Positioned(top:104,left:20,right:20,height:140,child:_wheelStack(answered))]));}
+Widget _mobilePanel(WheelStep current){return Column(children:[_mushroomInstrument(current),const SizedBox(height:6),Expanded(child:_panel(current,compact:true))]);}
+Widget _mushroomInstrument(WheelStep current){
+  final answered=answers.length,possibilities=result.remaining.length;
+  return SizedBox(height:274,child:Stack(alignment:Alignment.topCenter,clipBehavior:Clip.none,children:[
+    Positioned(top:4,left:2,right:2,height:126,child:CustomPaint(painter:_MushroomCapPainter())),
+    Positioned(top:22,left:44,right:44,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[
+      _capDots(),const SizedBox(height:7),
+      Text(ended?'MOGELIJKHEDEN':'OBSERVATIE ${route.length+1}',style:const TextStyle(color:Color(0xffffe8d6),fontSize:10.5,fontWeight:FontWeight.w800,letterSpacing:1.25)),
+      const SizedBox(height:3),
+      Text(ended?'$possibilities mogelijkheden':current.title,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900,height:1.02)),
+      if(!ended)...[const SizedBox(height:3),Text('$possibilities mogelijkheden',style:TextStyle(color:Colors.white.withValues(alpha:.78),fontSize:12,fontWeight:FontWeight.w600))],
+    ]))),
+    Positioned(top:108,width:164,height:154,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xfffff3d8),Color(0xffead3a5)]),borderRadius:const BorderRadius.only(bottomLeft:Radius.circular(44),bottomRight:Radius.circular(44)),border:Border.all(color:const Color(0xffcaa96d),width:1.4),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.10),blurRadius:10,offset:const Offset(0,5))]))),
+    Positioned(top:111,width:178,height:18,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xfff8e7c2),Color(0xffd8ba7e),Color(0xfff8e7c2)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:const Color(0xffc8a567))))),
+    Positioned(top:120,left:16,right:16,height:134,child:_wheelStack(answered)),
+  ]));
+}
 Widget _capDots(){
   final groups=_wheelGroups;
-  return Row(
-    mainAxisSize:MainAxisSize.min,
-    children:List.generate(5,(i){
-      final active=i==4?ended:groups[i].steps.contains(step);
-      final complete=i==4?ended:groups[i].steps.any(answers.containsKey);
-      final reachable=_groupReachable(i);
-      final state=active&&complete?'actief en voltooid':active?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';
-      return Semantics(
-        key:ValueKey('cap-wheel-semantics-$i'),
-        label:'${groups[i].title} — $state',
-        button:true,
-        enabled:reachable,
-        child:GestureDetector(
-        key:ValueKey('cap-dot-$i'),
-        behavior:HitTestBehavior.opaque,
-        onTap:reachable?()=>_openGroup(i):null,
-        child:AnimatedContainer(
-          duration:const Duration(milliseconds:240),
-          curve:Curves.easeOutBack,
-          margin:const EdgeInsets.symmetric(horizontal:4),
-          width:active?13:9,
-          height:active?13:9,
-          decoration:BoxDecoration(
-            shape:BoxShape.circle,
-            color:Colors.white.withValues(alpha:active ? 1.0 : (complete ? 0.82 : (reachable ? 0.52 : 0.24))),
-            border:Border.all(color:Colors.white.withValues(alpha:.92),width:1.2),
-            boxShadow:const [BoxShadow(color:Color(0x38000000),blurRadius:5,offset:Offset(0,2))],
-          ),
-        ),
-      ));
-    }),
-  );
+  return Row(mainAxisSize:MainAxisSize.min,children:List.generate(5,(i){
+    final active=i==4?ended:groups[i].steps.contains(step),complete=i==4?ended:groups[i].steps.any(answers.containsKey),reachable=_groupReachable(i);
+    final state=active&&complete?'actief en voltooid':active?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';
+    return Semantics(key:ValueKey('cap-wheel-semantics-$i'),label:'${groups[i].title} — $state',button:true,enabled:reachable,child:GestureDetector(key:ValueKey('cap-dot-$i'),behavior:HitTestBehavior.opaque,onTap:reachable?()=>_openGroup(i):null,child:AnimatedContainer(duration:const Duration(milliseconds:240),curve:Curves.easeOutBack,margin:const EdgeInsets.symmetric(horizontal:5),width:active?14:10,height:active?14:10,decoration:BoxDecoration(shape:BoxShape.circle,color:Colors.white.withValues(alpha:active?1:(complete?.88:(reachable?.58:.25))),border:Border.all(color:Colors.white.withValues(alpha:.95),width:1.2),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:active?.28:.16),blurRadius:active?7:4,offset:const Offset(0,2))]))));
+  }));
 }
 Widget _wheelStack(int answered){
-  final groups=_wheelGroups;
-  final active=groups.indexWhere((g)=>g.steps.contains(step));
-  return Column(
-    mainAxisAlignment:MainAxisAlignment.center,
-    children:[
-      for(var i=0;i<groups.length;i++)
-        Builder(builder:(context){
-          final reachable=_groupReachable(i);
-          final complete=i==4?ended:groups[i].steps.any(answers.containsKey);
-          final state=i==active&&complete?'actief en voltooid':i==active?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';
-          return Semantics(
-            key:ValueKey('stem-wheel-semantics-$i'),
-            label:'${groups[i].title} — $state',
-            button:true,
-            enabled:reachable,
-            child:Transform.translate(
-              offset:Offset(0,i==active?-3:0),
-              child:GestureDetector(
-                key:ValueKey('stem-wheel-$i'),
-                behavior:HitTestBehavior.opaque,
-                onTap:!reachable?null:()=>_openGroup(i),
-                child:AnimatedOpacity(
-                  duration:const Duration(milliseconds:220),
-                  opacity:reachable?1:.38,
-                  child:AnimatedContainer(
-                    duration:const Duration(milliseconds:220),
-                    margin:const EdgeInsets.symmetric(vertical:1),
-                    height:i==active?25:20,
-                    width:i==active?210:176-i*7,
-                    decoration:BoxDecoration(
-                      gradient:LinearGradient(colors:i==active?[const Color(0xff315d35),const Color(0xff6f914f)]:complete?[const Color(0xffd5b474),const Color(0xffb78e4e)]:[const Color(0xffead7ad),const Color(0xffc9aa70)]),
-                      borderRadius:BorderRadius.circular(18),
-                      boxShadow:i==active?[BoxShadow(color:Colors.black.withValues(alpha:.20),blurRadius:7,offset:const Offset(0,3))]:null,
-                    ),
-                    child:Center(child:Text(
-                      '${i==active?'‹  ':''}${groups[i].title}${i==active?'  ›':''}',
-                      style:TextStyle(color:i==active?Colors.white:const Color(0xff4b3820),fontSize:12,fontWeight:FontWeight.w800),
-                    )),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
-    ],
-  );
+  final groups=_wheelGroups,active=_wheelGroups.indexWhere((g)=>g.steps.contains(step));
+  return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Builder(builder:(context){
+    final reachable=_groupReachable(i),complete=i==4?ended:groups[i].steps.any(answers.containsKey),isActive=i==active;
+    final state=isActive&&complete?'actief en voltooid':isActive?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';
+    final width=isActive?218.0:184.0-i*6;
+    return Semantics(key:ValueKey('stem-wheel-semantics-$i'),label:'${groups[i].title} — $state',button:true,enabled:reachable,child:Transform.translate(offset:Offset(0,isActive?-2:0),child:GestureDetector(key:ValueKey('stem-wheel-$i'),behavior:HitTestBehavior.opaque,onTap:!reachable?null:()=>_openGroup(i),child:AnimatedOpacity(duration:const Duration(milliseconds:220),opacity:reachable?1:.38,child:AnimatedContainer(duration:const Duration(milliseconds:220),curve:Curves.easeOutCubic,margin:const EdgeInsets.symmetric(vertical:1.5),height:isActive?27:20,width:width,decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:isActive?[const Color(0xff477748),const Color(0xff274f31)]:complete?[const Color(0xffe4c98d),const Color(0xffb78e4e)]:[const Color(0xffffedc8),const Color(0xffcfad70)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:isActive?const Color(0xff204126):const Color(0xffb89255),width:isActive?1.4:1),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:isActive?.22:.10),blurRadius:isActive?7:3,offset:Offset(0,isActive?3:1)),BoxShadow(color:Colors.white.withValues(alpha:.45),blurRadius:1,offset:const Offset(0,-1))]),child:Center(child:Row(mainAxisSize:MainAxisSize.min,children:[if(isActive)const Icon(Icons.chevron_left_rounded,size:16,color:Colors.white),Text(groups[i].title,style:TextStyle(color:isActive?Colors.white:const Color(0xff4b3820),fontSize:isActive?12.5:11.5,fontWeight:FontWeight.w800,letterSpacing:.15)),if(isActive)const Icon(Icons.chevron_right_rounded,size:16,color:Colors.white)]))))))));
+  })]);
 }
 Future<void> _showPossibilities() async {
   await showModalBottomSheet<void>(
@@ -289,4 +238,14 @@ class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
     ]),
   );
 }
-class _MushroomCapPainter extends CustomPainter{@override void paint(Canvas c,Size z){final p=Paint()..color=const Color(0xffb9342b);final path=Path()..moveTo(z.width*.08,z.height*.88)..quadraticBezierTo(z.width*.16,z.height*.08,z.width*.50,z.height*.05)..quadraticBezierTo(z.width*.84,z.height*.08,z.width*.92,z.height*.88)..quadraticBezierTo(z.width*.72,z.height*.70,z.width*.50,z.height*.78)..quadraticBezierTo(z.width*.28,z.height*.70,z.width*.08,z.height*.88);c.drawPath(path,p);}@override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;}
+class _MushroomCapPainter extends CustomPainter{
+  @override void paint(Canvas c,Size z){
+    final shadow=Paint()..color=Colors.black.withValues(alpha:.16)..maskFilter=const MaskFilter.blur(BlurStyle.normal,8);
+    final path=Path()..moveTo(z.width*.035,z.height*.86)..cubicTo(z.width*.09,z.height*.25,z.width*.29,z.height*.035,z.width*.50,z.height*.045)..cubicTo(z.width*.73,z.height*.035,z.width*.91,z.height*.28,z.width*.965,z.height*.86)..cubicTo(z.width*.78,z.height*.73,z.width*.66,z.height*.77,z.width*.50,z.height*.82)..cubicTo(z.width*.34,z.height*.77,z.width*.22,z.height*.73,z.width*.035,z.height*.86);
+    c.save();c.translate(0,4);c.drawPath(path,shadow);c.restore();
+    final fill=Paint()..shader=const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xffd95243),Color(0xffa82d28)]).createShader(Offset.zero&z);c.drawPath(path,fill);
+    final highlight=Paint()..color=Colors.white.withValues(alpha:.09);c.drawOval(Rect.fromCenter(center:Offset(z.width*.38,z.height*.31),width:z.width*.28,height:z.height*.18),highlight);
+    final rim=Paint()..color=const Color(0xff7f211f).withValues(alpha:.42)..style=PaintingStyle.stroke..strokeWidth=1.4;c.drawPath(path,rim);
+  }
+  @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
+}
