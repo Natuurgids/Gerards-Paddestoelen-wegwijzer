@@ -45,9 +45,9 @@ Widget _mushroomInstrument(WheelStep current){
       const SizedBox(height:3),
       Text(ended?'$possibilities mogelijkheden':'$possibilities mogelijkheden · ${current.title}',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900,height:1.02)),
     ]))),
-    Positioned(top:108,width:164,height:154,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xfffff3d8),Color(0xffead3a5)]),borderRadius:const BorderRadius.only(bottomLeft:Radius.circular(44),bottomRight:Radius.circular(44)),border:Border.all(color:const Color(0xffcaa96d),width:1.4),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.10),blurRadius:10,offset:const Offset(0,5))]))),
-    Positioned(top:111,width:178,height:18,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xfff8e7c2),Color(0xffd8ba7e),Color(0xfff8e7c2)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:const Color(0xffc8a567))))),
-    Positioned(top:120,left:16,right:16,height:134,child:_wheelStack(answered)),
+    Positioned(top:105,width:156,height:158,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xfffff6df),Color(0xffead3a5)]),borderRadius:const BorderRadius.only(topLeft:Radius.circular(20),topRight:Radius.circular(20),bottomLeft:Radius.circular(48),bottomRight:Radius.circular(48)),border:Border.all(color:const Color(0xffcaa96d),width:1.4),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.10),blurRadius:10,offset:const Offset(0,5))]))),
+    Positioned(top:108,width:180,height:19,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xfffff2d4),Color(0xffd2ad6b),Color(0xfffff2d4)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:const Color(0xffb98f51)),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.08),blurRadius:4,offset:const Offset(0,2))]))),
+    Positioned(top:118,left:16,right:16,height:136,child:_wheelStack(answered)),
   ]));
 }
 Widget _capDots(){
@@ -428,7 +428,7 @@ class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
 class _MushroomCapPainter extends CustomPainter{
   @override void paint(Canvas c,Size z){
     final shadow=Paint()..color=Colors.black.withValues(alpha:.16)..maskFilter=const MaskFilter.blur(BlurStyle.normal,8);
-    final path=Path()..moveTo(z.width*.035,z.height*.86)..cubicTo(z.width*.09,z.height*.25,z.width*.29,z.height*.035,z.width*.50,z.height*.045)..cubicTo(z.width*.73,z.height*.035,z.width*.91,z.height*.28,z.width*.965,z.height*.86)..cubicTo(z.width*.78,z.height*.73,z.width*.66,z.height*.77,z.width*.50,z.height*.82)..cubicTo(z.width*.34,z.height*.77,z.width*.22,z.height*.73,z.width*.035,z.height*.86);
+    final path=Path()..moveTo(z.width*.025,z.height*.88)..cubicTo(z.width*.08,z.height*.29,z.width*.27,z.height*.045,z.width*.50,z.height*.035)..cubicTo(z.width*.74,z.height*.04,z.width*.92,z.height*.30,z.width*.975,z.height*.88)..cubicTo(z.width*.82,z.height*.77,z.width*.67,z.height*.75,z.width*.50,z.height*.81)..cubicTo(z.width*.33,z.height*.75,z.width*.18,z.height*.77,z.width*.025,z.height*.88);
     c.save();c.translate(0,4);c.drawPath(path,shadow);c.restore();
     final fill=Paint()..shader=const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xffd95243),Color(0xffa82d28)]).createShader(Offset.zero&z);c.drawPath(path,fill);
     final highlight=Paint()..color=Colors.white.withValues(alpha:.09);c.drawOval(Rect.fromCenter(center:Offset(z.width*.38,z.height*.31),width:z.width*.28,height:z.height*.18),highlight);
