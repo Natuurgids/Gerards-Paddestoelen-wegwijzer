@@ -60,13 +60,100 @@ Widget _capDots(){
   }));
 }
 Widget _wheelStack(int answered){
-  final groups=_wheelGroups,active=_wheelGroups.indexWhere((g)=>g.steps.contains(step));
-  return Column(mainAxisAlignment:MainAxisAlignment.center,children:[for(var i=0;i<groups.length;i++)Builder(builder:(context){
-    final reachable=_groupReachable(i),complete=i==4?ended:groups[i].steps.any(answers.containsKey),isActive=i==active;
-    final state=isActive&&complete?'actief en voltooid':isActive?'actief':complete?'voltooid':reachable?'beschikbaar':'niet bereikbaar';
-    final width=isActive?218.0:184.0-i*6;
-    return Semantics(key:ValueKey('stem-wheel-semantics-$i'),label:'${groups[i].title} — $state',button:true,enabled:reachable,child:Transform.translate(offset:Offset(0,isActive?-2:0),child:GestureDetector(key:ValueKey('stem-wheel-$i'),behavior:HitTestBehavior.opaque,onTap:!reachable?null:()=>_openGroup(i),child:AnimatedOpacity(duration:const Duration(milliseconds:220),opacity:reachable?1:.38,child:AnimatedContainer(duration:const Duration(milliseconds:220),curve:Curves.easeOutCubic,margin:const EdgeInsets.symmetric(vertical:1.5),height:isActive?27:20,width:width,decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:isActive?[const Color(0xff477748),const Color(0xff274f31)]:complete?[const Color(0xffe4c98d),const Color(0xffb78e4e)]:[const Color(0xffffedc8),const Color(0xffcfad70)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:isActive?const Color(0xff204126):const Color(0xffb89255),width:isActive?1.4:1),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:isActive ? .22 : .10),blurRadius:isActive?7:3,offset:Offset(0,isActive?3:1)),BoxShadow(color:Colors.white.withValues(alpha:.45),blurRadius:1,offset:const Offset(0,-1))]),child:Center(child:Row(mainAxisSize:MainAxisSize.min,children:[if(isActive)const Icon(Icons.chevron_left_rounded,size:16,color:Colors.white),Text(groups[i].title,style:TextStyle(color:isActive?Colors.white:const Color(0xff4b3820),fontSize:isActive?12.5:11.5,fontWeight:FontWeight.w800,letterSpacing:.15)),if(isActive)const Icon(Icons.chevron_right_rounded,size:16,color:Colors.white)]))))))));
-  })]);
+  final groups=_wheelGroups;
+  final active=groups.indexWhere((g)=>g.steps.contains(step));
+  return Column(
+    mainAxisAlignment:MainAxisAlignment.center,
+    children:[
+      for(var i=0;i<groups.length;i++)
+        Builder(builder:(context){
+          final reachable=_groupReachable(i);
+          final complete=i==4?ended:groups[i].steps.any(answers.containsKey);
+          final isActive=i==active;
+          final state=isActive&&complete
+              ?'actief en voltooid'
+              :isActive
+                  ?'actief'
+                  :complete
+                      ?'voltooid'
+                      :reachable
+                          ?'beschikbaar'
+                          :'niet bereikbaar';
+          final width=isActive?218.0:184.0-i*6;
+          return Semantics(
+            key:ValueKey('stem-wheel-semantics-$i'),
+            label:'${groups[i].title} — $state',
+            button:true,
+            enabled:reachable,
+            child:Transform.translate(
+              offset:Offset(0,isActive?-2:0),
+              child:GestureDetector(
+                key:ValueKey('stem-wheel-$i'),
+                behavior:HitTestBehavior.opaque,
+                onTap:!reachable?null:()=>_openGroup(i),
+                child:AnimatedOpacity(
+                  duration:const Duration(milliseconds:220),
+                  opacity:reachable?1:.38,
+                  child:AnimatedContainer(
+                    duration:const Duration(milliseconds:220),
+                    curve:Curves.easeOutCubic,
+                    margin:const EdgeInsets.symmetric(vertical:1.5),
+                    height:isActive?27:20,
+                    width:width,
+                    decoration:BoxDecoration(
+                      gradient:LinearGradient(
+                        begin:Alignment.topCenter,
+                        end:Alignment.bottomCenter,
+                        colors:isActive
+                            ?[const Color(0xff477748),const Color(0xff274f31)]
+                            :complete
+                                ?[const Color(0xffe4c98d),const Color(0xffb78e4e)]
+                                :[const Color(0xffffedc8),const Color(0xffcfad70)],
+                      ),
+                      borderRadius:BorderRadius.circular(50),
+                      border:Border.all(
+                        color:isActive?const Color(0xff204126):const Color(0xffb89255),
+                        width:isActive?1.4:1,
+                      ),
+                      boxShadow:[
+                        BoxShadow(
+                          color:Colors.black.withValues(alpha:isActive ? .22 : .10),
+                          blurRadius:isActive?7:3,
+                          offset:Offset(0,isActive?3:1),
+                        ),
+                        BoxShadow(
+                          color:Colors.white.withValues(alpha:.45),
+                          blurRadius:1,
+                          offset:const Offset(0,-1),
+                        ),
+                      ],
+                    ),
+                    child:Center(
+                      child:Row(
+                        mainAxisSize:MainAxisSize.min,
+                        children:[
+                          if(isActive)const Icon(Icons.chevron_left_rounded,size:16,color:Colors.white),
+                          Text(
+                            groups[i].title,
+                            style:TextStyle(
+                              color:isActive?Colors.white:const Color(0xff4b3820),
+                              fontSize:isActive?12.5:11.5,
+                              fontWeight:FontWeight.w800,
+                              letterSpacing:.15,
+                            ),
+                          ),
+                          if(isActive)const Icon(Icons.chevron_right_rounded,size:16,color:Colors.white),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+    ],
+  );
 }
 Future<void> _showPossibilities() async {
   await showModalBottomSheet<void>(
