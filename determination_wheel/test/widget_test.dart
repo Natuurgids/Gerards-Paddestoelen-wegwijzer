@@ -64,6 +64,9 @@ void main(){
     await openWheel(tester);
     Future<void> pick(String label)async{
       final target=find.text(label);
+      if(target.evaluate().isEmpty){
+        await tester.scrollUntilVisible(target,180,scrollable:find.byType(Scrollable).last);
+      }
       await tester.ensureVisible(target.first);
       await tester.tap(target.first);
       await tester.pumpAndSettle();
