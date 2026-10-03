@@ -424,7 +424,7 @@ void main(){
     expect(find.textContaining('Substraat'),findsWidgets);
     await tester.tap(find.byKey(const ValueKey('stem-wheel-2')));await tester.pumpAndSettle();
 
-    expect(find.text('Substraat'),findsOneWidget);
+    expect(find.descendant(of:find.byKey(const ValueKey('observation-wheel')),matching:find.text('Substraat')),findsOneWidget);
     expect(find.text('Waardplant / boomassociatie'),findsOneWidget);
     expect(find.text('Groeigedrag'),findsNothing);
     // PageView builds lazily: move one page so the earliest reached

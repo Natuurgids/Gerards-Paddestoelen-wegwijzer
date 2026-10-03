@@ -41,10 +41,9 @@ Widget _mushroomInstrument(WheelStep current){
     Positioned(top:4,left:2,right:2,height:126,child:CustomPaint(painter:_MushroomCapPainter())),
     Positioned(top:22,left:44,right:44,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[
       _capDots(),const SizedBox(height:7),
-      Text(ended?'MOGELIJKHEDEN':'OBSERVATIE ${route.length+1}',style:const TextStyle(color:Color(0xffffe8d6),fontSize:10.5,fontWeight:FontWeight.w800,letterSpacing:1.25)),
+      Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Color(0xffffe8d6),fontSize:11,fontWeight:FontWeight.w800,letterSpacing:.35)),
       const SizedBox(height:3),
-      Text(ended?'$possibilities mogelijkheden':current.title,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900,height:1.02)),
-      if(!ended)...[const SizedBox(height:3),Text('$possibilities mogelijkheden',style:TextStyle(color:Colors.white.withValues(alpha:.78),fontSize:12,fontWeight:FontWeight.w600))],
+      Text(ended?'$possibilities mogelijkheden':'$possibilities mogelijkheden · ${current.title}',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900,height:1.02)),
     ]))),
     Positioned(top:108,width:164,height:154,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xfffff3d8),Color(0xffead3a5)]),borderRadius:const BorderRadius.only(bottomLeft:Radius.circular(44),bottomRight:Radius.circular(44)),border:Border.all(color:const Color(0xffcaa96d),width:1.4),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.10),blurRadius:10,offset:const Offset(0,5))]))),
     Positioned(top:111,width:178,height:18,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xfff8e7c2),Color(0xffd8ba7e),Color(0xfff8e7c2)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:const Color(0xffc8a567))))),
