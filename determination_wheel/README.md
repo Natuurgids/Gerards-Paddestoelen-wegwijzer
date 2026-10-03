@@ -12,6 +12,24 @@ Unknown observations neither support nor contradict a candidate. A 100% match th
 
 Terminal routes that are not yet supported to species level explicitly request a genus/detail key, microscopy, chemistry or DNA as appropriate instead of inventing a species. Multiple unresolved species are a valid endpoint when the supplied source does not support a reliable distinction.
 
+## Mobile determination instrument
+
+On phones, the mushroom itself is the determination instrument rather than decoration. The cap shows the current observation/live outcome and contains exactly five functional spots. The stem contains the same five determination wheels:
+
+1. Bouw
+2. Kenmerken
+3. Ecologie
+4. Aanvullend
+5. Mogelijkheden
+
+A wheel only exposes observations that have actually been reached on the current branching route; **Mogelijkheden** remains available as a live view throughout. Reopening an earlier observation and selecting it truncates downstream answers so stale route state cannot survive a revision.
+
+The pop-out selector follows a deliberate interaction boundary: **swipe left/right → centre an observation → explicitly select that observation → choose a characteristic**. Merely centring or dismissing an observation never mutates the determination. Answer choices are shown underneath as illustrated cards after the observation has been explicitly selected.
+
+The five cap spots and five stacked stem discs are two controls for the same route state. Unreached wheels cannot be used to jump ahead. Completion means that a wheel has recorded an answer on the active route; the fifth wheel is complete only at the actual terminal state. Earlier observations remain revisitable.
+
+The supplied app icon and splash artwork under `assets/` are product artwork and should be preserved exactly rather than regenerated during UI styling.
+
 ## Illustrations
 
 The current prototype uses schematic symbols only. Diagnostic illustrations should be purpose-made and reviewed before they are used as evidence in the key. Planned plates include:
