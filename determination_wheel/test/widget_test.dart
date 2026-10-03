@@ -492,4 +492,37 @@ void main(){
     expect(find.text('Toon eindresultaat'),findsOneWidget);
   });
 
+  testWidgets('mobile instrument keeps exactly five functional wheel controls',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+
+    for(var i=0;i<5;i++){
+      expect(find.byKey(ValueKey('cap-dot-$i')),findsOneWidget);
+      expect(find.byKey(ValueKey('stem-wheel-$i')),findsOneWidget);
+      expect(find.byKey(ValueKey('cap-wheel-semantics-$i')),findsOneWidget);
+      expect(find.byKey(ValueKey('stem-wheel-semantics-$i')),findsOneWidget);
+    }
+    expect(find.byKey(const ValueKey('cap-dot-5')),findsNothing);
+    expect(find.byKey(const ValueKey('stem-wheel-5')),findsNothing);
+  });
+
+  testWidgets('selector keeps explicit confirmation after visual polish',(tester)async{
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Hoed + steel'));await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('stem-wheel-0')));await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('observation-wheel')),findsOneWidget);
+    expect(find.byKey(const ValueKey('select-centered-observation')),findsOneWidget);
+
+    await tester.drag(find.byKey(const ValueKey('observation-wheel')),const Offset(260,0));await tester.pumpAndSettle();
+    expect(find.textContaining('Sporenvormende onderzijde'),findsWidgets);
+
+    await tester.tapAt(const Offset(10,10));await tester.pumpAndSettle();
+    expect(find.textContaining('Sporenvormende onderzijde'),findsWidgets);
+    expect(find.text('Hoed + steel'),findsNothing);
+  });
+
 }
