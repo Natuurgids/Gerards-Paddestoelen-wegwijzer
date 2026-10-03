@@ -4,7 +4,7 @@ A separate Flutter application inside the Gerards-Paddestoelen-wegwijzer reposit
 
 ## Current architecture
 
-The UI is a 24-marker wheel, but determination is branching rather than a forced 24-question sequence. Each observation moves to the next relevant marker and records the route. The first encoded paths cover the source-supported general-key concepts: fruitbody form, hymenium/underside, cap surface, gill attachment, velum, hygrophanous character, spore colour, pore-bearing forms, bruising/colour change, stem surface, ecology and look-alike checking.
+The determination model contains 24 source-coded observation markers, grouped in the phone UI into five functional wheels. Determination is branching rather than a forced 24-question sequence: each answer moves to the next relevant observation and records the route. The first encoded paths cover the source-supported general-key concepts: fruitbody form, hymenium/underside, cap surface, gill attachment, velum, hygrophanous character, spore colour, pore-bearing forms, bruising/colour change, stem surface, ecology and look-alike checking.
 
 The result is deliberately possibility-first: observations narrow the set of still-compatible groups, but the app does not turn a match score into a probability of identification. Hard source criteria may exclude a group; source wording such as "vaak", "meestal" or "soms" is additional, non-exclusive evidence only and never excludes a possibility. This additional evidence is used only after hard match percentage and hard evidence when otherwise equal candidates are ordered.
 
@@ -32,7 +32,7 @@ The supplied app icon and splash artwork under `assets/` are product artwork and
 
 ## Illustrations
 
-The current prototype uses schematic symbols only. Diagnostic illustrations should be purpose-made and reviewed before they are used as evidence in the key. Planned plates include:
+The current answer cards use schematic diagnostic symbols. These illustrations are explanatory UI aids, not determination evidence; any future diagnostic plate intended to carry evidential meaning must be purpose-made and reviewed. Useful illustration coverage includes:
 
 - fruitbody forms
 - gills / pores / teeth / folds
