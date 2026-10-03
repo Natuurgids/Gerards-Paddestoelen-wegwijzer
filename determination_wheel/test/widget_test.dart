@@ -441,7 +441,7 @@ void main(){
   });
 
   testWidgets('possibilities wheel completes only at the actual end state',(tester)async{
-    tester.view.physicalSize=const Size(1200,1600);tester.view.devicePixelRatio=1;
+    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
     addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
     await openWheel(tester);
     String capPossibilities()=>tester.widget<Semantics>(find.byKey(const ValueKey('cap-wheel-semantics-4'))).properties.label!;
