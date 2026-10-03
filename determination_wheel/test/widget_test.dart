@@ -482,7 +482,7 @@ void main(){
     expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     await pick('Toon eindresultaat');
 
-    expect(capPossibilities(),'Mogelijkheden — voltooid');
+    expect(capPossibilities(),'Mogelijkheden — actief en voltooid');
     expect(stemPossibilities(),'Mogelijkheden — voltooid');
     expect(find.text('Nieuwe determinatie'),findsWidgets);
 
