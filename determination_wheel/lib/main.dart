@@ -286,14 +286,21 @@ class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
   late int centered;
   @override void initState(){super.initState();centered=widget.controller.initialPage.clamp(0,widget.available.length-1);}
   @override Widget build(BuildContext context)=>Container(
-    height:410,padding:const EdgeInsets.only(top:12,bottom:14),
-    decoration:const BoxDecoration(color:Color(0xfff6f8f1),borderRadius:BorderRadius.vertical(top:Radius.circular(30))),
+    height:424,
+    padding:const EdgeInsets.only(top:10,bottom:16),
+    decoration:BoxDecoration(
+      gradient:const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xfffff7e7),Color(0xfff3ead6)]),
+      borderRadius:const BorderRadius.vertical(top:Radius.circular(32)),
+      border:const Border(top:BorderSide(color:Color(0xffd7bd89),width:1.2)),
+      boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.18),blurRadius:22,offset:const Offset(0,-6))],
+    ),
     child:Column(children:[
-      Container(width:42,height:4,decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(2))),
-      const SizedBox(height:12),
-      Text(widget.title,style:Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.w900)),
-      const Text('Veeg links/rechts · centreer de observatie'),
-      const SizedBox(height:8),
+      Container(width:44,height:4,decoration:BoxDecoration(color:const Color(0xff8d744d).withValues(alpha:.38),borderRadius:BorderRadius.circular(2))),
+      const SizedBox(height:11),
+      Text(widget.title.toUpperCase(),style:Theme.of(context).textTheme.labelLarge?.copyWith(color:const Color(0xff315d35),fontWeight:FontWeight.w900,letterSpacing:1.1)),
+      const SizedBox(height:3),
+      Text('Veeg links/rechts · centreer de observatie',style:Theme.of(context).textTheme.bodySmall?.copyWith(color:const Color(0xff6c604c),fontWeight:FontWeight.w600)),
+      const SizedBox(height:7),
       Expanded(child:PageView.builder(
         key:const ValueKey('observation-wheel'),
         controller:widget.controller,itemCount:widget.available.length,
@@ -301,26 +308,57 @@ class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
         itemBuilder:(context,i){
           final s=widget.available[i],ws=wheelSteps[s]!,selected=widget.answers[s],isCentered=i==centered;
           return AnimatedScale(
-            duration:const Duration(milliseconds:180),scale:isCentered?1:.90,
-            child:Padding(padding:const EdgeInsets.symmetric(horizontal:7,vertical:10),child:Card(
-              elevation:isCentered?7:2,
-              shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(28)),
-              child:Padding(padding:const EdgeInsets.all(18),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-                CircleAvatar(radius:22,backgroundColor:isCentered?const Color(0xff315d35):const Color(0xff9aaa8e),foregroundColor:Colors.white,child:Text('$s',style:const TextStyle(fontWeight:FontWeight.w900))),
-                const SizedBox(height:8),
-                Text(ws.title,textAlign:TextAlign.center,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800)),
-                const SizedBox(height:4),
-                Text(selected??'Nog niet ingevuld',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(color:selected==null?Colors.black54:const Color(0xff315d35),fontWeight:selected==null?FontWeight.normal:FontWeight.w700)),
-              ])),
-            )),
+            duration:const Duration(milliseconds:180),scale:isCentered?1:.91,
+            child:Padding(
+              padding:const EdgeInsets.symmetric(horizontal:7,vertical:10),
+              child:AnimatedContainer(
+                duration:const Duration(milliseconds:180),
+                decoration:BoxDecoration(
+                  color:isCentered?const Color(0xfffffcf4):const Color(0xffeee2c9),
+                  borderRadius:BorderRadius.circular(28),
+                  border:Border.all(color:isCentered?const Color(0xff527653):const Color(0xffd0b98a),width:isCentered?2:1),
+                  boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:isCentered ? .13 : .06),blurRadius:isCentered?12:5,offset:Offset(0,isCentered?5:2))],
+                ),
+                child:Padding(
+                  padding:const EdgeInsets.all(18),
+                  child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+                    Container(
+                      width:48,height:48,
+                      decoration:BoxDecoration(
+                        shape:BoxShape.circle,
+                        gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:isCentered?[const Color(0xff4c7a4e),const Color(0xff294e31)]:[const Color(0xffbca475),const Color(0xff90764d)]),
+                        boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.12),blurRadius:5,offset:const Offset(0,2))],
+                      ),
+                      alignment:Alignment.center,
+                      child:Text('$s',style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:16)),
+                    ),
+                    const SizedBox(height:10),
+                    Text(ws.title,textAlign:TextAlign.center,style:Theme.of(context).textTheme.titleMedium?.copyWith(color:const Color(0xff30291f),fontWeight:FontWeight.w900,height:1.15)),
+                    const SizedBox(height:8),
+                    DecoratedBox(
+                      decoration:BoxDecoration(color:selected==null?const Color(0xffeee7d8):const Color(0xffe1eddd),borderRadius:BorderRadius.circular(30)),
+                      child:Padding(
+                        padding:const EdgeInsets.symmetric(horizontal:12,vertical:6),
+                        child:Text(selected??'Nog niet ingevuld',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(color:selected==null?const Color(0xff756b59):const Color(0xff315d35),fontSize:12,fontWeight:FontWeight.w700)),
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
           );
         },
       )),
-      Padding(padding:const EdgeInsets.symmetric(horizontal:24),child:SizedBox(width:double.infinity,child:FilledButton.icon(
-        key:const ValueKey('select-centered-observation'),
-        onPressed:()=>Navigator.pop(context,widget.available[centered]),
-        icon:const Icon(Icons.check_circle_outline),label:const Text('Selecteer deze observatie'),
-      ))),
+      Padding(
+        padding:const EdgeInsets.fromLTRB(24,2,24,0),
+        child:SizedBox(width:double.infinity,child:FilledButton.icon(
+          key:const ValueKey('select-centered-observation'),
+          style:FilledButton.styleFrom(backgroundColor:const Color(0xff315d35),foregroundColor:Colors.white,padding:const EdgeInsets.symmetric(vertical:14),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(18))),
+          onPressed:()=>Navigator.pop(context,widget.available[centered]),
+          icon:const Icon(Icons.check_circle_outline),
+          label:const Text('Selecteer deze observatie',style:TextStyle(fontWeight:FontWeight.w800)),
+        )),
+      ),
     ]),
   );
 }
