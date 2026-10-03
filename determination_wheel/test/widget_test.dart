@@ -447,16 +447,13 @@ void main(){
   });
 
   testWidgets('possibilities wheel completes only at the actual end state',(tester)async{
-    tester.view.physicalSize=const Size(390,844);tester.view.devicePixelRatio=1;
+    tester.view.physicalSize=const Size(390,1600);tester.view.devicePixelRatio=1;
     addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
     await openWheel(tester);
     String capPossibilities()=>tester.widget<Semantics>(find.byKey(const ValueKey('cap-wheel-semantics-4'))).properties.label!;
     String stemPossibilities()=>tester.widget<Semantics>(find.byKey(const ValueKey('stem-wheel-semantics-4'))).properties.label!;
     Future<void> pick(String label)async{
       final target=find.text(label);
-      if(target.evaluate().isEmpty){
-        await tester.scrollUntilVisible(target,180,scrollable:find.byType(Scrollable).last);
-      }
       await tester.ensureVisible(target.first);
       await tester.tap(target.first);
       await tester.pumpAndSettle();
