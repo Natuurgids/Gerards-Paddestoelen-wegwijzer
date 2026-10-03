@@ -235,11 +235,73 @@ Widget _wheel(WheelStep current){
     ),
   );
 }
-Widget _panel(WheelStep current,{bool compact=false}){final r=result;return Card(elevation:compact?0:1,margin:EdgeInsets.zero,shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(22),side:BorderSide(color:Theme.of(context).colorScheme.outlineVariant.withValues(alpha:.45))),child:Padding(padding:EdgeInsets.all(compact?12:18),child:ListView(children:[if(!compact)...[Text(ended?'Determinatie-overzicht':'Observatie ${route.length+1} — ${current.title}',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:10)],if(answers.containsKey(4))...[_candidatePanel(r),const Divider(height:20)],if(ended)_resultPanel(r)else...current.options.map(_optionCard),if(route.isNotEmpty)...[const Divider(height:28),Row(children:[const Expanded(child:Text('Gevolgde route',style:TextStyle(fontWeight:FontWeight.bold))),if(history.isNotEmpty)TextButton.icon(onPressed:back,icon:const Icon(Icons.undo),label:const Text('Vorige'))]),Text(route.join('  →  '))]])));}
+Widget _panel(WheelStep current,{bool compact=false}){
+  final r=result;
+  return Card(
+    elevation:compact?0:1,
+    margin:EdgeInsets.zero,
+    color:compact?const Color(0xfffffcf5):null,
+    shape:RoundedRectangleBorder(
+      borderRadius:BorderRadius.circular(compact?26:22),
+      side:BorderSide(color:compact?const Color(0xffd7bd89):Theme.of(context).colorScheme.outlineVariant.withValues(alpha:.45)),
+    ),
+    child:Padding(
+      padding:EdgeInsets.fromLTRB(compact?12:18,compact?10:18,compact?12:18,compact?12:18),
+      child:ListView(children:[
+        if(compact&&!ended)...[
+          Center(child:Container(width:44,height:4,decoration:BoxDecoration(color:const Color(0xffc8ae7c),borderRadius:BorderRadius.circular(2)))),
+          const SizedBox(height:8),
+          Text('KIES WAT JE ZIET',textAlign:TextAlign.center,style:Theme.of(context).textTheme.labelSmall?.copyWith(color:const Color(0xff315d35),fontWeight:FontWeight.w900,letterSpacing:1.05)),
+          const SizedBox(height:8),
+        ],
+        if(!compact)...[
+          Text(ended?'Determinatie-overzicht':'Observatie ${route.length+1} — ${current.title}',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),
+          const SizedBox(height:10),
+        ],
+        if(answers.containsKey(4))...[_candidatePanel(r),const Divider(height:20)],
+        if(ended)_resultPanel(r)else...current.options.map(_optionCard),
+        if(route.isNotEmpty)...[
+          const Divider(height:28),
+          Row(children:[const Expanded(child:Text('Gevolgde route',style:TextStyle(fontWeight:FontWeight.bold))),if(history.isNotEmpty)TextButton.icon(onPressed:back,icon:const Icon(Icons.undo),label:const Text('Vorige'))]),
+          Text(route.join('  →  ')),
+        ],
+      ]),
+    ),
+  );
+}
 Widget _candidatePanel(DeterminationResult r)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(children:[Expanded(child:Text('Mogelijke groepen: ${r.remaining.length} · beste overeenkomst eerst',style:const TextStyle(fontWeight:FontWeight.bold))),TextButton.icon(onPressed:()=>setState(()=>showExcluded=!showExcluded),icon:Icon(showExcluded?Icons.expand_less:Icons.expand_more),label:Text('${r.excluded.length} uitgesloten'))]),Wrap(spacing:6,runSpacing:4,children:r.remaining.map((x){final score=x.score(answers),hard=x.supporting(answers),soft=x.typicalSupporting(answers);final evidence=<String>[if(hard.isNotEmpty)'Hard: ${hard.join(' • ')}',if(soft.isNotEmpty)'Aanvullend, niet uitsluitend: ${soft.join(' • ')}'];return Tooltip(message:evidence.isEmpty?'Nog geen specifiek bevestigend bronkenmerk vastgelegd':evidence.join('\n'),child:Chip(avatar:Icon(score.complete?Icons.task_alt:Icons.pending_outlined,size:16),label:Text('${x.name} · ${score.percent==null?'—':'${score.percent}%'} · ${(score.coverage*100).round()}% dekking')));}).toList()),if(showExcluded)...r.excluded.entries.map((e)=>ListTile(dense:true,leading:const Icon(Icons.block,size:18),title:Text(e.key.name),subtitle:Text(e.value)))]);
 Widget _resultPanel(DeterminationResult r){final key=detailKeyFor(genusHint:r.genusHint,candidateNames:r.remaining.map((x)=>x.name));return Column(children:[const Icon(Icons.fact_check_outlined,size:48),if(r.remaining.length>1)const Padding(padding:EdgeInsets.only(bottom:8),child:Text('Gerangschikt op overeenkomst met harde bronkenmerken; aanvullende bronkenmerken breken alleen gelijke scores en sluiten nooit uit. Dit is geen waarschijnlijkheidsrangschikking.',textAlign:TextAlign.center)),if(r.genusHint!=null)ListTile(leading:const Icon(Icons.call_split),title:Text('Bronondersteunde geslachtssplitsing: ${r.genusHint}')),...r.remaining.map((x)=>ListTile(leading:const Icon(Icons.eco_outlined),title:Text(x.name),subtitle:Text('${x.score(answers).label}\n${x.supporting(answers).isEmpty?'Niet uitgesloten door de ingevoerde harde kenmerken':'Ondersteund door: ${x.supporting(answers).join(' • ')}'}${x.typicalSupporting(answers).isEmpty?'':'\nAanvullend bronkenmerk (niet uitsluitend): ${x.typicalSupporting(answers).join(' • ')}'}'))),if(key!=null)Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[Text(key.title,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:6),Text(key.sourceNote,textAlign:TextAlign.center),const SizedBox(height:10),FilledButton.icon(onPressed:()=>_openDetailKey(key),icon:const Icon(Icons.account_tree_outlined),label:const Text('Open detailsleutel'))])))else const Text('Voor deze kandidaat bevat de huidige bronset nog geen eenduidige gecodeerde detailsleutel. Vul geen soortnaam in op basis van aannames.',textAlign:TextAlign.center),const SizedBox(height:12),const Text('De matchscore is géén kans dat de determinatie juist is: hij geeft alleen aan welk deel van de voor die kandidaat gecodeerde, beoordeelde kenmerken overeenkomt. Onbekende kenmerken tellen niet als fout. Sommige taxa vragen microscopie, chemische kenmerken of DNA voor verdere bevestiging.',textAlign:TextAlign.center),const SizedBox(height:12),Card(color:Theme.of(context).colorScheme.errorContainer,child:const Padding(padding:EdgeInsets.all(12),child:Text('Niet gebruiken als bewijs van eetbaarheid. Bevestig een determinatie onafhankelijk.'))),FilledButton.icon(onPressed:reset,icon:const Icon(Icons.restart_alt),label:const Text('Nieuwe determinatie'))]);}
 void _openDetailKey(DetailKey key){String? initial;if(key.id=='russulaceae')initial=answers[22];if(key.id=='galerina')initial=answers[17];Navigator.of(context).push(MaterialPageRoute(builder:(_)=>DetailKeyPage(keyData:key,initialAnswer:initial)));}
-Widget _optionCard(WheelOption o)=>Padding(padding:const EdgeInsets.only(bottom:10),child:Semantics(button:true,label:'Kies ${o.label}',child:InkWell(borderRadius:BorderRadius.circular(16),onTap:()=>choose(o),child:Container(padding:const EdgeInsets.symmetric(horizontal:14,vertical:10),decoration:BoxDecoration(color:Colors.white,border:Border.all(color:Theme.of(context).colorScheme.outlineVariant.withValues(alpha:.65)),borderRadius:BorderRadius.circular(18),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.035),blurRadius:10,offset:const Offset(0,3))]),child:Row(children:[Container(width:64,height:64,decoration:BoxDecoration(color:const Color(0xffeef3e8),borderRadius:BorderRadius.circular(15)),child:Center(child:DiagnosticIllustration(art:artFor(o.label),size:54))),const SizedBox(width:14),Expanded(child:Text(o.label,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w700))),const Icon(Icons.chevron_right_rounded,color:Color(0xff315d35))])))));}
+Widget _optionCard(WheelOption o)=>Padding(
+  padding:const EdgeInsets.only(bottom:10),
+  child:Semantics(
+    button:true,
+    label:'Kies ${o.label}',
+    child:InkWell(
+      borderRadius:BorderRadius.circular(18),
+      onTap:()=>choose(o),
+      child:Container(
+        padding:const EdgeInsets.symmetric(horizontal:12,vertical:9),
+        decoration:BoxDecoration(
+          gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xffffffff),Color(0xfffff8ea)]),
+          border:Border.all(color:const Color(0xffddc99f)),
+          borderRadius:BorderRadius.circular(18),
+          boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.045),blurRadius:9,offset:const Offset(0,3))],
+        ),
+        child:Row(children:[
+          Container(
+            width:62,height:62,
+            decoration:BoxDecoration(color:const Color(0xffedf3e7),borderRadius:BorderRadius.circular(16),border:Border.all(color:const Color(0xffd5e0cf))),
+            child:Center(child:DiagnosticIllustration(art:artFor(o.label),size:52)),
+          ),
+          const SizedBox(width:13),
+          Expanded(child:Text(o.label,style:Theme.of(context).textTheme.titleMedium?.copyWith(color:const Color(0xff332c21),fontWeight:FontWeight.w800))),
+          Container(width:30,height:30,decoration:const BoxDecoration(color:Color(0xffe4eddf),shape:BoxShape.circle),child:const Icon(Icons.chevron_right_rounded,color:Color(0xff315d35),size:21)),
+        ]),
+      ),
+    ),
+  ),
+);
 class DetailKeyPage extends StatefulWidget{const DetailKeyPage({super.key,required this.keyData,this.initialAnswer});final DetailKey keyData;final String? initialAnswer;@override State<DetailKeyPage> createState()=>_DetailKeyPageState();}
 class _DetailKeyPageState extends State<DetailKeyPage>{late String stepId;String? result;SourceTaxonCatalog? get catalog=>sourceCatalogs[widget.keyData.id];@override void initState(){super.initState();stepId=widget.keyData.start;if(widget.initialAnswer!=null){final step=widget.keyData.steps[stepId]!;for(final o in step.options){if(o.label==widget.initialAnswer&&o.result!=null)result=o.result;}}}void pick(DetailOption o)=>setState((){if(o.result!=null)result=o.result;if(o.next!=null)stepId=o.next!;});@override Widget build(BuildContext context){final step=widget.keyData.steps[stepId]!,cat=catalog;return Scaffold(appBar:AppBar(title:Text(widget.keyData.title)),body:ListView(padding:const EdgeInsets.all(20),children:[Text(widget.keyData.sourceNote,style:Theme.of(context).textTheme.bodySmall),if(cat!=null)...[const SizedBox(height:12),Card(child:ExpansionTile(initiallyExpanded:true,title:Text('Bronprofiel — ${cat.group}'),children:[for(final p in cat.profile)ListTile(dense:true,leading:const Icon(Icons.check_circle_outline,size:18),title:Text(p)),if(cat.taxa.isNotEmpty)...[const Divider(),ListTile(leading:const Icon(Icons.filter_alt_outlined),title:Text('${cat.taxa.length} nog mogelijke soort${cat.taxa.length==1?'':'en'} uit de aangeleverde bron',style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Deze namen blijven mogelijk binnen de overgebleven groep; ze zijn niet bevestigd.')),Padding(padding:const EdgeInsets.fromLTRB(16,0,16,12),child:Wrap(spacing:6,runSpacing:6,children:[for(final taxon in cat.taxa)Chip(avatar:const Icon(Icons.help_outline,size:16),label:Text(taxon))]))],if(cat.possibilityCaveat!=null)Padding(padding:const EdgeInsets.fromLTRB(16,0,16,12),child:Text(cat.possibilityCaveat!,style:Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle:FontStyle.italic))),if(cat.nextEvidence.isNotEmpty)...[const Divider(),const ListTile(title:Text('Wat kan verder onderscheid geven?',style:TextStyle(fontWeight:FontWeight.bold))),for(final evidence in cat.nextEvidence)ListTile(dense:true,leading:const Icon(Icons.biotech_outlined,size:18),title:Text(evidence))],Padding(padding:const EdgeInsets.all(12),child:Text(cat.note,style:Theme.of(context).textTheme.bodySmall))]))],const SizedBox(height:20),if(result==null)...[Text(step.title,style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:8),Text(step.help),const SizedBox(height:16),...step.options.map((o)=>Card(child:ListTile(leading:DiagnosticIllustration(art:artFor(o.label),size:58),title:Text(o.label),trailing:const Icon(Icons.chevron_right),onTap:()=>pick(o)))),],if(result!=null)...[const Icon(Icons.account_tree_outlined,size:64),const SizedBox(height:12),Text(result!,textAlign:TextAlign.center,style:Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:12),const Text('Dit is het diepste niveau dat de momenteel gecodeerde broncriteria ondersteunen. Genoemde soorten blijven mogelijke referenties; een macroscopische sleutel kan niet altijd verder scheiden. Waar nodig moet verdere bevestiging met microscopie, chemische kenmerken of DNA gebeuren.',textAlign:TextAlign.center),const SizedBox(height:20),OutlinedButton(onPressed:()=>setState(()=>result=null),child:const Text('Waarneming opnieuw beoordelen'))]]));}}
 class _WheelPainter extends CustomPainter{
