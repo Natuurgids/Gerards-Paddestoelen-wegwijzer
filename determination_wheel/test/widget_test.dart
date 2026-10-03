@@ -482,8 +482,8 @@ void main(){
     expect(stemPossibilities(),'Mogelijkheden — beschikbaar');
     await pick('Toon eindresultaat');
 
-    expect(capPossibilities(),'Mogelijkheden — actief en voltooid');
-    expect(stemPossibilities(),'Mogelijkheden — actief en voltooid');
+    expect(capPossibilities(),'Mogelijkheden — voltooid');
+    expect(stemPossibilities(),'Mogelijkheden — voltooid');
     expect(find.text('Nieuwe determinatie'),findsWidgets);
 
     await tester.tap(find.byTooltip('Vorige observatie'));await tester.pumpAndSettle();
