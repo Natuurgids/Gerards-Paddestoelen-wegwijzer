@@ -497,11 +497,14 @@ void main(){
     addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
     await openWheel(tester);
 
+    const wheelNames=['Bouw','Kenmerken','Ecologie','Aanvullend','Mogelijkheden'];
     for(var i=0;i<5;i++){
       expect(find.byKey(ValueKey('cap-dot-$i')),findsOneWidget);
       expect(find.byKey(ValueKey('stem-wheel-$i')),findsOneWidget);
-      expect(find.byKey(ValueKey('cap-wheel-semantics-$i')),findsOneWidget);
-      expect(find.byKey(ValueKey('stem-wheel-semantics-$i')),findsOneWidget);
+      final cap=tester.widget<Semantics>(find.byKey(ValueKey('cap-wheel-semantics-$i')));
+      final stem=tester.widget<Semantics>(find.byKey(ValueKey('stem-wheel-semantics-$i')));
+      expect(cap.properties.label,startsWith(wheelNames[i]));
+      expect(stem.properties.label,startsWith(wheelNames[i]));
     }
     expect(find.byKey(const ValueKey('cap-dot-5')),findsNothing);
     expect(find.byKey(const ValueKey('stem-wheel-5')),findsNothing);
