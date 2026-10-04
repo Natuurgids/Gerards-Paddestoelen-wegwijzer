@@ -94,6 +94,7 @@ void main(){
     expect(find.textContaining('geen waarschijnlijkheidsrangschikking'),findsOneWidget);
     expect(find.textContaining('Aanvullend bronkenmerk (niet uitsluitend): substraat: Dood hout'),findsOneWidget);
     expect(find.textContaining('géén kans dat de determinatie juist is'),findsOneWidget);
+    expect(find.text('Niet gebruiken als bewijs van eetbaarheid. Bevestig een determinatie onafhankelijk.'),findsOneWidget);
   });
 
   testWidgets('live candidate tooltip distinguishes hard and non-exclusive evidence',(tester)async{
