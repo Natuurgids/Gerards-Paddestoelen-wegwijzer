@@ -558,7 +558,17 @@ void main(){
       find.textContaining('microscopie, chemische kenmerken of DNA'),
       findsOneWidget,
     );
-    expect(find.text('Waarneming opnieuw beoordelen'), findsOneWidget);
+    final reassess = find.text('Waarneming opnieuw beoordelen');
+    expect(reassess, findsOneWidget);
+
+    await tester.tap(reassess);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Galerina-kandidaat; ecologie niet doorslaggevend'),
+      findsNothing,
+    );
+    expect(find.text('Waar groeit het exemplaar?'), findsOneWidget);
   });
 
 }
