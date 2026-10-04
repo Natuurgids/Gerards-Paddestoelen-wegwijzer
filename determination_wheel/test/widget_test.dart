@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mushroom_determination_wheel/detail_keys.dart';
 import 'package:mushroom_determination_wheel/main.dart';
 
 void main(){
@@ -526,6 +527,32 @@ void main(){
     await tester.tapAt(const Offset(10,10));await tester.pumpAndSettle();
     expect(find.textContaining('Sporenvormende onderzijde'),findsWidgets);
     expect(find.text('Hoed + steel'),findsNothing);
+  });
+
+
+  testWidgets('detail key UI preserves source-backed uncertainty', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: DetailKeyPage(keyData: galerinaDetailKey),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Bronprofiel'), findsOneWidget);
+    expect(find.text('Andere groeiplaats'), findsOneWidget);
+
+    await tester.tap(find.text('Andere groeiplaats'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Galerina-kandidaat; ecologie niet doorslaggevend'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('microscopie, chemische kenmerken of DNA'),
+      findsOneWidget,
+    );
+    expect(find.text('Waarneming opnieuw beoordelen'), findsOneWidget);
   });
 
 }
