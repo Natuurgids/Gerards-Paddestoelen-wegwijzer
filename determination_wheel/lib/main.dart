@@ -342,8 +342,50 @@ Widget _optionCard(WheelOption o)=>Padding(
   ),
 );
 }
-class DetailKeyPage extends StatefulWidget{const DetailKeyPage({super.key,required this.keyData,this.initialAnswer});final DetailKey keyData;final String? initialAnswer;@override State<DetailKeyPage> createState()=>_DetailKeyPageState();}
-class _DetailKeyPageState extends State<DetailKeyPage>{late String stepId;String? result;SourceTaxonCatalog? get catalog=>sourceCatalogs[widget.keyData.id];@override void initState(){super.initState();stepId=widget.keyData.start;if(widget.initialAnswer!=null){final step=widget.keyData.steps[stepId]!;for(final o in step.options){if(o.label==widget.initialAnswer&&o.result!=null)result=o.result;}}}void pick(DetailOption o)=>setState((){if(o.result!=null)result=o.result;if(o.next!=null)stepId=o.next!;});@override Widget build(BuildContext context){final step=widget.keyData.steps[stepId]!,cat=catalog;return Scaffold(appBar:AppBar(title:Text(widget.keyData.title)),body:ListView(padding:const EdgeInsets.all(20),children:[Text(widget.keyData.sourceNote,style:Theme.of(context).textTheme.bodySmall),if(cat!=null)...[const SizedBox(height:12),Card(child:ExpansionTile(initiallyExpanded:true,title:Text('Bronprofiel — ${cat.group}'),children:[for(final p in cat.profile)ListTile(dense:true,leading:const Icon(Icons.check_circle_outline,size:18),title:Text(p)),if(cat.taxa.isNotEmpty)...[const Divider(),ListTile(leading:const Icon(Icons.filter_alt_outlined),title:Text('${cat.taxa.length} nog mogelijke soort${cat.taxa.length==1?'':'en'} uit de aangeleverde bron',style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Deze namen blijven mogelijk binnen de overgebleven groep; ze zijn niet bevestigd.')),Padding(padding:const EdgeInsets.fromLTRB(16,0,16,12),child:Wrap(spacing:6,runSpacing:6,children:[for(final taxon in cat.taxa)Chip(avatar:const Icon(Icons.help_outline,size:16),label:Text(taxon))]))],if(cat.possibilityCaveat!=null)Padding(padding:const EdgeInsets.fromLTRB(16,0,16,12),child:Text(cat.possibilityCaveat!,style:Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle:FontStyle.italic))),if(cat.nextEvidence.isNotEmpty)...[const Divider(),const ListTile(title:Text('Wat kan verder onderscheid geven?',style:TextStyle(fontWeight:FontWeight.bold))),for(final evidence in cat.nextEvidence)ListTile(dense:true,leading:const Icon(Icons.biotech_outlined,size:18),title:Text(evidence))],Padding(padding:const EdgeInsets.all(12),child:Text(cat.note,style:Theme.of(context).textTheme.bodySmall))]))],const SizedBox(height:20),if(result==null)...[Text(step.title,style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:8),Text(step.help),const SizedBox(height:16),...step.options.map((o)=>Card(child:ListTile(leading:DiagnosticIllustration(art:artFor(o.label),size:58),title:Text(o.label),trailing:const Icon(Icons.chevron_right),onTap:()=>pick(o)))),],if(result!=null)...[const Icon(Icons.account_tree_outlined,size:64),const SizedBox(height:12),Text(result!,textAlign:TextAlign.center,style:Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:12),const Text('Dit is het diepste niveau dat de momenteel gecodeerde broncriteria ondersteunen. Genoemde soorten blijven mogelijke referenties; een macroscopische sleutel kan niet altijd verder scheiden. Waar nodig moet verdere bevestiging met microscopie, chemische kenmerken of DNA gebeuren.',textAlign:TextAlign.center),const SizedBox(height:20),OutlinedButton(onPressed:()=>setState(()=>result=null),child:const Text('Waarneming opnieuw beoordelen'))]]));}}
+class DetailKeyPage extends StatefulWidget {
+  const DetailKeyPage({
+    super.key,
+    required this.keyData,
+    this.initialAnswer,
+  });
+
+  final DetailKey keyData;
+  final String? initialAnswer;
+
+  @override
+  State<DetailKeyPage> createState() => _DetailKeyPageState();
+}
+
+class _DetailKeyPageState extends State<DetailKeyPage> {
+  late String stepId;
+  String? result;
+
+  SourceTaxonCatalog? get catalog => sourceCatalogs[widget.keyData.id];
+
+  @override
+  void initState() {
+    super.initState();
+    stepId = widget.keyData.start;
+    if (widget.initialAnswer == null) return;
+
+    final step = widget.keyData.steps[stepId]!;
+    for (final option in step.options) {
+      if (option.label == widget.initialAnswer && option.result != null) {
+        result = option.result;
+      }
+    }
+  }
+
+  void pick(DetailOption option) => setState(() {
+    if (option.result != null) {
+      result = option.result;
+    }
+    if (option.next != null) {
+      stepId = option.next!;
+    }
+  });
+
+  @override Widget build(BuildContext context){final step=widget.keyData.steps[stepId]!,cat=catalog;return Scaffold(appBar:AppBar(title:Text(widget.keyData.title)),body:ListView(padding:const EdgeInsets.all(20),children:[Text(widget.keyData.sourceNote,style:Theme.of(context).textTheme.bodySmall),if(cat!=null)...[const SizedBox(height:12),Card(child:ExpansionTile(initiallyExpanded:true,title:Text('Bronprofiel — ${cat.group}'),children:[for(final p in cat.profile)ListTile(dense:true,leading:const Icon(Icons.check_circle_outline,size:18),title:Text(p)),if(cat.taxa.isNotEmpty)...[const Divider(),ListTile(leading:const Icon(Icons.filter_alt_outlined),title:Text('${cat.taxa.length} nog mogelijke soort${cat.taxa.length==1?'':'en'} uit de aangeleverde bron',style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Deze namen blijven mogelijk binnen de overgebleven groep; ze zijn niet bevestigd.')),Padding(padding:const EdgeInsets.fromLTRB(16,0,16,12),child:Wrap(spacing:6,runSpacing:6,children:[for(final taxon in cat.taxa)Chip(avatar:const Icon(Icons.help_outline,size:16),label:Text(taxon))]))],if(cat.possibilityCaveat!=null)Padding(padding:const EdgeInsets.fromLTRB(16,0,16,12),child:Text(cat.possibilityCaveat!,style:Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle:FontStyle.italic))),if(cat.nextEvidence.isNotEmpty)...[const Divider(),const ListTile(title:Text('Wat kan verder onderscheid geven?',style:TextStyle(fontWeight:FontWeight.bold))),for(final evidence in cat.nextEvidence)ListTile(dense:true,leading:const Icon(Icons.biotech_outlined,size:18),title:Text(evidence))],Padding(padding:const EdgeInsets.all(12),child:Text(cat.note,style:Theme.of(context).textTheme.bodySmall))]))],const SizedBox(height:20),if(result==null)...[Text(step.title,style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:8),Text(step.help),const SizedBox(height:16),...step.options.map((o)=>Card(child:ListTile(leading:DiagnosticIllustration(art:artFor(o.label),size:58),title:Text(o.label),trailing:const Icon(Icons.chevron_right),onTap:()=>pick(o)))),],if(result!=null)...[const Icon(Icons.account_tree_outlined,size:64),const SizedBox(height:12),Text(result!,textAlign:TextAlign.center,style:Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:12),const Text('Dit is het diepste niveau dat de momenteel gecodeerde broncriteria ondersteunen. Genoemde soorten blijven mogelijke referenties; een macroscopische sleutel kan niet altijd verder scheiden. Waar nodig moet verdere bevestiging met microscopie, chemische kenmerken of DNA gebeuren.',textAlign:TextAlign.center),const SizedBox(height:20),OutlinedButton(onPressed:()=>setState(()=>result=null),child:const Text('Waarneming opnieuw beoordelen'))]]));}}
 class _WheelPainter extends CustomPainter{
   _WheelPainter(this.completed,this.ended);
   final int completed;
