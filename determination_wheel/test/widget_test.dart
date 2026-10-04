@@ -540,7 +540,11 @@ void main(){
 
     expect(find.textContaining('Bronprofiel'), findsOneWidget);
     final otherHabitat = find.text('Andere groeiplaats');
-    await tester.ensureVisible(otherHabitat);
+    await tester.scrollUntilVisible(
+      otherHabitat,
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(otherHabitat, findsOneWidget);
 
     await tester.tap(otherHabitat);
