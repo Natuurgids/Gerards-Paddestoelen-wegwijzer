@@ -10,7 +10,46 @@ class App extends StatelessWidget{const App({super.key,this.skipSplash=false});f
 class _WheelSplash extends StatefulWidget{const _WheelSplash();@override State<_WheelSplash> createState()=>_WheelSplashState();}
 class _WheelSplashState extends State<_WheelSplash>{String? version;bool done=false;@override void initState(){super.initState();_start();}Future<void> _start()async{final info=await PackageInfo.fromPlatform();if(!mounted)return;setState(()=>version='v${info.version}');await Future<void>.delayed(const Duration(milliseconds:1400));if(mounted)setState(()=>done=true);}@override Widget build(BuildContext context)=>AnimatedSwitcher(duration:const Duration(milliseconds:300),child:done?const Wheel(key:ValueKey('wheel')):Scaffold(key:const ValueKey('splash'),backgroundColor:const Color(0xff173d2b),body:GestureDetector(onTap:()=>setState(()=>done=true),child:Stack(fit:StackFit.expand,children:[Image.asset('assets/splash.png',fit:BoxFit.cover,errorBuilder:(_,__,___)=>const SizedBox()),Align(alignment:const Alignment(0,.88),child:SafeArea(minimum:const EdgeInsets.all(18),child:DecoratedBox(decoration:BoxDecoration(color:const Color(0xff173d2b).withValues(alpha:.72),borderRadius:BorderRadius.circular(18)),child:Padding(padding:const EdgeInsets.symmetric(horizontal:24,vertical:10),child:Column(mainAxisSize:MainAxisSize.min,children:[const Text('Wiel',style:TextStyle(color:Colors.white,fontSize:30,fontWeight:FontWeight.w800)),if(version!=null)Text(version!,style:const TextStyle(color:Colors.white,fontSize:16))])))))]))));}
 class Wheel extends StatefulWidget{const Wheel({super.key});@override State<Wheel> createState()=>_WheelState();}
-class _WheelState extends State<Wheel>{int step=1;bool ended=false,showExcluded=false;final answers=<int,String>{};final route=<String>[];final history=<int>[];DeterminationResult get result=>determine(answers);void choose(WheelOption o)=>setState((){history.add(step);answers[step]=o.label;route.add('${wheelSteps[step]!.title}: ${o.label}');ended=o.end;if(o.next!=null)step=o.next!;});void back()=>setState((){if(history.isEmpty)return;final previous=history.removeLast();answers.remove(previous);if(route.isNotEmpty)route.removeLast();step=previous;ended=false;showExcluded=false;});void reset()=>setState((){step=1;ended=false;showExcluded=false;answers.clear();route.clear();history.clear();});
+class _WheelState extends State<Wheel> {
+  int step = 1;
+  bool ended = false;
+  bool showExcluded = false;
+  final answers = <int, String>{};
+  final route = <String>[];
+  final history = <int>[];
+
+  DeterminationResult get result => determine(answers);
+
+  void choose(WheelOption option) => setState(() {
+    history.add(step);
+    answers[step] = option.label;
+    route.add('${wheelSteps[step]!.title}: ${option.label}');
+    ended = option.end;
+    if (option.next != null) {
+      step = option.next!;
+    }
+  });
+
+  void back() => setState(() {
+    if (history.isEmpty) return;
+    final previous = history.removeLast();
+    answers.remove(previous);
+    if (route.isNotEmpty) {
+      route.removeLast();
+    }
+    step = previous;
+    ended = false;
+    showExcluded = false;
+  });
+
+  void reset() => setState(() {
+    step = 1;
+    ended = false;
+    showExcluded = false;
+    answers.clear();
+    route.clear();
+    history.clear();
+  });
 void _selectObservation(int picked)=>setState((){
   final index=history.indexOf(picked);
   if(index>=0){
