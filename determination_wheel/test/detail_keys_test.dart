@@ -40,8 +40,14 @@ void main(){
     for(final key in keys){
       expect(key.steps.containsKey(key.start),isTrue,reason:'${key.id} start step');
       for(final step in key.steps.values){
+        expect(step.options,isNotEmpty,reason:'${key.id}/${step.id} options');
         for(final option in step.options){
-          expect(option.result!=null || (option.next!=null && key.steps.containsKey(option.next)),isTrue,reason:'${key.id}/${step.id}/${option.label}');
+          final hasResult=option.result!=null;
+          final hasNext=option.next!=null;
+          expect(hasResult ^ hasNext,isTrue,reason:'${key.id}/${step.id}/${option.label} path');
+          if(hasNext){
+            expect(key.steps.containsKey(option.next),isTrue,reason:'${key.id}/${step.id}/${option.label} next');
+          }
         }
       }
     }
