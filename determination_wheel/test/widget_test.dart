@@ -559,7 +559,17 @@ void main(){
       find.textContaining('microscopie, chemische kenmerken of DNA'),
       findsOneWidget,
     );
+    expect(
+      find.text('Niet gebruiken als bewijs van eetbaarheid. Bevestig een determinatie onafhankelijk.'),
+      findsOneWidget,
+    );
+
     final reassess = find.text('Waarneming opnieuw beoordelen');
+    await tester.scrollUntilVisible(
+      reassess,
+      180,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(reassess, findsOneWidget);
 
     await tester.tap(reassess);
