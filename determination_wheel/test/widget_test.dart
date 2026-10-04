@@ -539,9 +539,11 @@ void main(){
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Bronprofiel'), findsOneWidget);
-    expect(find.text('Andere groeiplaats'), findsOneWidget);
+    final otherHabitat = find.text('Andere groeiplaats');
+    await tester.ensureVisible(otherHabitat);
+    expect(otherHabitat, findsOneWidget);
 
-    await tester.tap(find.text('Andere groeiplaats'));
+    await tester.tap(otherHabitat);
     await tester.pumpAndSettle();
 
     expect(
