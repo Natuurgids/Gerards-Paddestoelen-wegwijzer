@@ -582,4 +582,20 @@ void main(){
     expect(find.text('Waar groeit het exemplaar?'), findsOneWidget);
   });
 
+  testWidgets('uncertain observation keeps live possibilities open', (tester) async {
+    await openWheel(tester);
+    await tester.tap(find.text('Hoed + steel'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Plaatjes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Glad'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Onzeker'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('mogelijkheden'), findsWidgets);
+    expect(find.text('Nieuwe determinatie'), findsNothing);
+    expect(find.text('Velum'), findsWidgets);
+  });
+
 }
