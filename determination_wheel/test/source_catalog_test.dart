@@ -38,4 +38,17 @@ void main(){
     expect(c.possibilityCaveat,contains('geen gesloten'));
   });
 
+  test('all source catalogs contain usable reviewed guidance',(){
+    for(final entry in sourceCatalogs.entries){
+      final catalog=entry.value;
+      expect(catalog.group.trim(),isNotEmpty,reason:'${entry.key} group');
+      expect(catalog.profile,isNotEmpty,reason:'${entry.key} profile');
+      expect(catalog.profile.every((item)=>item.trim().isNotEmpty),isTrue,reason:'${entry.key} profile items');
+      expect(catalog.note.trim(),isNotEmpty,reason:'${entry.key} note');
+      expect(catalog.nextEvidence,isNotEmpty,reason:'${entry.key} next evidence');
+      expect(catalog.nextEvidence.every((item)=>item.trim().isNotEmpty),isTrue,reason:'${entry.key} evidence items');
+      expect(catalog.taxa.every((item)=>item.trim().isNotEmpty),isTrue,reason:'${entry.key} taxa');
+    }
+  });
+
 }
