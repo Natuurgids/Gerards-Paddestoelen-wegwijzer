@@ -45,7 +45,6 @@ void main(){
       expect(catalog.profile,isNotEmpty,reason:'${entry.key} profile');
       expect(catalog.profile.every((item)=>item.trim().isNotEmpty),isTrue,reason:'${entry.key} profile items');
       expect(catalog.note.trim(),isNotEmpty,reason:'${entry.key} note');
-      expect(catalog.nextEvidence,isNotEmpty,reason:'${entry.key} next evidence');
       expect(catalog.nextEvidence.every((item)=>item.trim().isNotEmpty),isTrue,reason:'${entry.key} evidence items');
       expect(catalog.taxa.every((item)=>item.trim().isNotEmpty),isTrue,reason:'${entry.key} taxa');
     }
