@@ -35,4 +35,16 @@ void main(){
     expect(shellDetailKey.sourceNote,contains('geen harde groepsfilter'));
   });
 
+  test('all detail-key options terminate or point to an existing step',(){
+    final keys=[russulaceaeDetailKey,shellDetailKey,pleurotusDetailKey,pluteusDetailKey,galerinaDetailKey,hebelomaDetailKey,agrocybeDetailKey,parasolDetailKey,laccariaDetailKey,waxcapDetailKey,funnelDetailKey,toughshankDetailKey,pholiotaDetailKey,strophariaDetailKey,paxillusDetailKey,cantharellusDetailKey];
+    for(final key in keys){
+      expect(key.steps.containsKey(key.start),isTrue,reason:'${key.id} start step');
+      for(final step in key.steps.values){
+        for(final option in step.options){
+          expect(option.result!=null || (option.next!=null && key.steps.containsKey(option.next)),isTrue,reason:'${key.id}/${step.id}/${option.label}');
+        }
+      }
+    }
+  });
+
 }
