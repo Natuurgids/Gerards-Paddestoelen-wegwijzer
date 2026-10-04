@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mushroom_determination_wheel/detail_keys.dart';
+import 'package:mushroom_determination_wheel/source_catalog.dart';
 
 void main(){
   test('single supported candidates receive a source-backed detail key',(){
@@ -37,6 +38,8 @@ void main(){
 
   test('all detail-key options terminate or point to an existing step',(){
     final keys=[russulaceaeDetailKey,shellDetailKey,pleurotusDetailKey,pluteusDetailKey,galerinaDetailKey,hebelomaDetailKey,agrocybeDetailKey,parasolDetailKey,laccariaDetailKey,waxcapDetailKey,funnelDetailKey,toughshankDetailKey,pholiotaDetailKey,strophariaDetailKey,paxillusDetailKey,cantharellusDetailKey];
+    expect(keys.map((key)=>key.id).toSet().length,keys.length,reason:'detail key ids must be unique');
+    expect(sourceCatalogs.keys.toSet().difference(keys.map((key)=>key.id).toSet()),isEmpty,reason:'source catalogs must belong to a detail key');
     for(final key in keys){
       expect(key.steps.containsKey(key.start),isTrue,reason:'${key.id} start step');
       for(final step in key.steps.values){
