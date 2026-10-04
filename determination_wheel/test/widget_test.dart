@@ -583,15 +583,24 @@ void main(){
   });
 
   testWidgets('uncertain observation keeps live possibilities open', (tester) async {
+    tester.view.physicalSize=const Size(1200,1600);
+    tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await openWheel(tester);
-    await tester.tap(find.text('Hoed + steel'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Plaatjes'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Glad'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Onzeker'));
-    await tester.pumpAndSettle();
+    Future<void> pick(String label)async{
+      final target=find.text(label);
+      if(target.evaluate().isEmpty){
+        await tester.scrollUntilVisible(target,180,scrollable:find.byType(Scrollable).last);
+      }
+      await tester.ensureVisible(target.first);
+      await tester.tap(target.first);
+      await tester.pumpAndSettle();
+    }
+    await pick('Hoed + steel');
+    await pick('Plaatjes');
+    await pick('Glad');
+    await pick('Onzeker');
 
     expect(find.textContaining('mogelijkheden'), findsWidgets);
     expect(find.text('Nieuwe determinatie'), findsNothing);
