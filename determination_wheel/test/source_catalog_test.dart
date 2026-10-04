@@ -47,6 +47,9 @@ void main(){
       expect(catalog.note.trim(),isNotEmpty,reason:'${entry.key} note');
       expect(catalog.nextEvidence.every((item)=>item.trim().isNotEmpty),isTrue,reason:'${entry.key} evidence items');
       expect(catalog.taxa.every((item)=>item.trim().isNotEmpty),isTrue,reason:'${entry.key} taxa');
+      expect(catalog.profile.toSet().length,catalog.profile.length,reason:'${entry.key} duplicate profile');
+      expect(catalog.nextEvidence.toSet().length,catalog.nextEvidence.length,reason:'${entry.key} duplicate evidence');
+      expect(catalog.taxa.toSet().length,catalog.taxa.length,reason:'${entry.key} duplicate taxa');
     }
   });
 
