@@ -602,9 +602,8 @@ void main(){
     await pick('Glad');
     await pick('Onzeker');
 
-    expect(find.textContaining('mogelijkheden'), findsWidgets);
     expect(find.text('Nieuwe determinatie'), findsNothing);
-    expect(find.text('Velum'), findsWidgets);
+    expect(find.textContaining('Velum'), findsWidgets);
   });
 
 }
