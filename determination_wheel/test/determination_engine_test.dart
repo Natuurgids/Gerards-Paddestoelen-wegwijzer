@@ -202,6 +202,30 @@ void main(){
       expect(result.genusHint,isNull);
     });
   });
+  test('candidate evidence values exist in their wheel observations',(){
+    Set<String> optionsFor(int step)=>wheelSteps[step]!.options.map((option)=>option.label).toSet();
+    void expectKnown(int step,Set<String>? values,String candidate,String field){
+      if(values==null)return;
+      expect(optionsFor(step),containsAll(values),reason:'$candidate $field');
+    }
+    for(final candidate in candidates){
+      expectKnown(1,candidate.form,candidate.name,'form');
+      expectKnown(4,candidate.underside,candidate.name,'underside');
+      expectKnown(5,candidate.surface,candidate.name,'surface');
+      expectKnown(6,candidate.gill,candidate.name,'gill');
+      expectKnown(7,candidate.velum,candidate.name,'velum');
+      expectKnown(8,candidate.hygro,candidate.name,'hygro');
+      expectKnown(9,candidate.spore,candidate.name,'spore');
+      expectKnown(17,candidate.substrate,candidate.name,'substrate');
+      expectKnown(19,candidate.size,candidate.name,'size');
+      expectKnown(23,candidate.trama,candidate.name,'trama');
+      for(final entry in candidate.typical.entries){
+        expect(wheelSteps.containsKey(entry.key),isTrue,reason:'${candidate.name} typical step ${entry.key}');
+        expect(optionsFor(entry.key),containsAll(entry.value),reason:'${candidate.name} typical step ${entry.key}');
+      }
+    }
+  });
+
   test('match score uses assessed evidence and ignores unknown answers',(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
     final score=pluteus.score({4:'Plaatjes',6:'Vrij',7:'Onzeker',9:'Roze'});
