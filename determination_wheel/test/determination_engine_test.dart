@@ -196,6 +196,11 @@ void main(){
       expect(result.remaining.map((c)=>c.name),isNot(contains('Russulaceae · Russula/Lactarius')));
       expect(result.genusHint,isNull);
     });
+    test('uncertain milk observation does not narrow Russulaceae to a genus',(){
+      final result=determine({9:'Wit / crème',17:'Bodem / strooisel',22:'Onzeker'});
+      expect(result.remaining.map((c)=>c.name),contains('Russulaceae · Russula/Lactarius'));
+      expect(result.genusHint,isNull);
+    });
   });
   test('match score uses assessed evidence and ignores unknown answers',(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
