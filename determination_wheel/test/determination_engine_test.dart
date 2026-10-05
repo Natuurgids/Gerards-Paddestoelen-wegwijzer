@@ -202,6 +202,23 @@ void main(){
       expect(result.genusHint,isNull);
     });
   });
+  test('wheel route graph has valid targets and no orphaned observations',(){
+    final reachable=<int>{1};
+    final pending=<int>[1];
+    while(pending.isNotEmpty){
+      final stepId=pending.removeLast();
+      final step=wheelSteps[stepId]!;
+      for(final option in step.options){
+        if(option.next!=null){
+          expect(wheelSteps.containsKey(option.next),isTrue,reason:'step $stepId / ${option.label}');
+          if(reachable.add(option.next!))pending.add(option.next!);
+        }
+        expect(option.end || option.next!=null,isTrue,reason:'step $stepId / ${option.label} must continue or end');
+      }
+    }
+    expect(reachable,wheelSteps.keys.toSet());
+  });
+
   test('candidate evidence values exist in their wheel observations',(){
     Set<String> optionsFor(int step)=>wheelSteps[step]!.options.map((option)=>option.label).toSet();
     void expectKnown(int step,Set<String>? values,String candidate,String field){
