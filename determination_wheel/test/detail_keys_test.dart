@@ -39,6 +39,16 @@ void main(){
       expect(detailKeyFor(candidateNames:[entry.key])?.id,entry.value,reason:entry.key);
     }
   });
+  test('unsupported single candidates do not receive a detail key',(){
+    const unsupported=[
+      'Boleten',
+      'Amanieten · Amanita',
+      'Honingzwammen · Armillaria',
+    ];
+    for(final name in unsupported){
+      expect(detailKeyFor(candidateNames:[name]),isNull,reason:name);
+    }
+  });
   test('Galerina detail key does not exclude another substrate',(){
     final step=galerinaDetailKey.steps['substrate']!;
     final option=step.options.firstWhere((o)=>o.label=='Andere groeiplaats');
