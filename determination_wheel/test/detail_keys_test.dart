@@ -17,6 +17,28 @@ void main(){
     expect(detailKeyFor(candidateNames:['Krulzomen · Paxillus/Tapinella'])?.id,'paxillus');
     expect(detailKeyFor(candidateNames:['Cantharellen · Cantharellus'])?.id,'cantharellus');
   });
+  test('every supported single candidate maps to its intended detail key',(){
+    const expected=<String,String>{
+      'Schelpzwammen':'shell',
+      'Oesterzwammen · Pleurotus':'pleurotus',
+      'Krulzomen · Paxillus/Tapinella':'paxillus',
+      'Cantharellen · Cantharellus':'cantharellus',
+      'Parasolzwammen (+)':'parasol',
+      'Fopzwammen · Laccaria':'laccaria',
+      'Wasplaten / Slijmkoppen':'waxcaps',
+      'Trechtertjes · Omphalina/Rickenella':'funnel',
+      'Taailingen (+)':'toughshanks',
+      'Hertenzwammen · Pluteus':'pluteus',
+      'Bundelzwammen (+) · Pholiota/Kuehneromyces':'pholiota',
+      'Kaalkopjes / Stropharia (+)':'stropharia',
+      'Mosklokjes · Galerina':'galerina',
+      'Vaalhoeden · Hebeloma':'hebeloma',
+      'Leemhoeden · Agrocybe':'agrocybe',
+    };
+    for(final entry in expected.entries){
+      expect(detailKeyFor(candidateNames:[entry.key])?.id,entry.value,reason:entry.key);
+    }
+  });
   test('Galerina detail key does not exclude another substrate',(){
     final step=galerinaDetailKey.steps['substrate']!;
     final option=step.options.firstWhere((o)=>o.label=='Andere groeiplaats');
