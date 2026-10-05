@@ -219,6 +219,22 @@ void main(){
     expect(reachable,wheelSteps.keys.toSet());
   });
 
+  test('wheel route graph is acyclic',(){
+    final visiting=<int>{};
+    final visited=<int>{};
+    void visit(int stepId){
+      expect(visiting.add(stepId),isTrue,reason:'cycle reaches step $stepId');
+      for(final option in wheelSteps[stepId]!.options){
+        final next=option.next;
+        if(next!=null&&!visited.contains(next))visit(next);
+      }
+      visiting.remove(stepId);
+      visited.add(stepId);
+    }
+    visit(1);
+    expect(visited,wheelSteps.keys.toSet());
+  });
+
   test('candidate evidence values exist in their wheel observations',(){
     Set<String> optionsFor(int step)=>wheelSteps[step]!.options.map((option)=>option.label).toSet();
     void expectKnown(int step,Set<String>? values,String candidate,String field){
