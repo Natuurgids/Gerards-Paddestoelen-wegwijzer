@@ -28,6 +28,10 @@ void main(){
   test('Russulaceae genus hint takes precedence',(){
     expect(detailKeyFor(genusHint:'Lactarius',candidateNames:['Russulaceae · Russula/Lactarius'])?.id,'russulaceae');
   });
+  test('Russulaceae detail key requires an explicit supported genus hint',(){
+    expect(detailKeyFor(candidateNames:['Russulaceae · Russula/Lactarius']),isNull);
+    expect(detailKeyFor(genusHint:'Onzeker',candidateNames:['Russulaceae · Russula/Lactarius']),isNull);
+  });
   test('Schelpzwammen follow-up uses stem attachment, not underside exclusion',(){
     final step=shellDetailKey.steps['stem']!;
     expect(step.options.firstWhere((o)=>o.label=='Steel vrijwel afwezig').result,'Schelpzwammen — kandidaatgroep');
