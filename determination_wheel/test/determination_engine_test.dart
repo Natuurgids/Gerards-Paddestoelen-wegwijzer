@@ -479,6 +479,16 @@ void main(){
     }
   });
 
+  test('current explicit not-assessed labels remain neutral evidence',(){
+    final pluteus=candidates.firstWhere((candidate)=>candidate.name.contains('Pluteus'));
+    for(final value in ['Niet gemeten / onzeker','Niet beoordeeld']){
+      final score=pluteus.score({19:value});
+      expect(score.observed,0,reason:value);
+      expect(score.unknown,1,reason:value);
+      expect(score.percent,isNull,reason:value);
+    }
+  });
+
   test('unknown typical evidence does not change candidate ranking',(){
     final baseline=determine({4:'Plaatjes'}).remaining.map((candidate)=>candidate.name).toList();
     final uncertain=determine({4:'Plaatjes',7:'Onzeker',15:'Onzeker',17:'Onzeker',20:'Onzeker',23:'Onzeker'}).remaining.map((candidate)=>candidate.name).toList();
