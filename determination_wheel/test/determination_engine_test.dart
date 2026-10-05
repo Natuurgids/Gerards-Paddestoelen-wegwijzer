@@ -467,4 +467,11 @@ void main(){
     }
   });
 
+  test('unknown typical observations do not add supporting evidence',(){
+    for(final candidate in candidates){
+      expect(candidate.typicalSupporting({7:'Onzeker',15:'Onzeker',17:'Onzeker',20:'Onzeker',23:'Onzeker'}),isEmpty,reason:candidate.name);
+      expect(candidate.typicalMatchCount({7:'Onzeker',15:'Onzeker',17:'Onzeker',20:'Onzeker',23:'Onzeker'}),0,reason:candidate.name);
+    }
+  });
+
 }
