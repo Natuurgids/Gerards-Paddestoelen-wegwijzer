@@ -304,6 +304,14 @@ void main(){
     expect(result.remaining.first.score({1:'Hoed + steel',4:'Plaatjes',6:'Vrij',7:'Geen zichtbaar',9:'Roze'}).percent,100);
   });
 
+  test('fully tied candidates use deterministic name ordering',(){
+    const alpha=Candidate('Alpha',spore:{'Roze'});
+    const beta=Candidate('Beta',spore:{'Roze'});
+    final ranked=<Candidate>[beta,alpha];
+    rankCandidates(ranked,{9:'Roze'});
+    expect(ranked.map((candidate)=>candidate.name).toList(),['Alpha','Beta']);
+  });
+
   test('explicit uncertainty is distinct from an unanswered criterion',(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
     final score=pluteus.score({4:'Plaatjes',6:'Onzeker'});
