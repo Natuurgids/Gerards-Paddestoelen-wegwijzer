@@ -37,21 +37,22 @@ const cantharellusDetailKey=DetailKey(id:'cantharellus',title:'Cantharellen — 
 DetailKey? detailKeyFor({String? genusHint,Iterable<String> candidateNames=const []}){
   if(genusHint=='Lactarius'||genusHint=='Russula') return russulaceaeDetailKey;
   if(candidateNames.length!=1) return null;
-  final name=candidateNames.first;
-  if(name.contains('Schelpzwammen')) return shellDetailKey;
-  if(name.contains('Parasolzwammen')) return parasolDetailKey;
-  if(name.contains('Laccaria')) return laccariaDetailKey;
-  if(name.contains('Pleurotus')) return pleurotusDetailKey;
-  if(name.contains('Pluteus')) return pluteusDetailKey;
-  if(name.contains('Galerina')) return galerinaDetailKey;
-  if(name.contains('Hebeloma')) return hebelomaDetailKey;
-  if(name.contains('Agrocybe')) return agrocybeDetailKey;
-  if(name.contains('Wasplaten')) return waxcapDetailKey;
-  if(name.contains('Omphalina')) return funnelDetailKey;
-  if(name.contains('Taailingen')) return toughshankDetailKey;
-  if(name.contains('Pholiota')) return pholiotaDetailKey;
-  if(name.contains('Stropharia')) return strophariaDetailKey;
-  if(name.contains('Paxillus')) return paxillusDetailKey;
-  if(name.contains('Cantharellus')) return cantharellusDetailKey;
-  return null;
+  const supported=<String,DetailKey>{
+    'Schelpzwammen':shellDetailKey,
+    'Oesterzwammen · Pleurotus':pleurotusDetailKey,
+    'Krulzomen · Paxillus/Tapinella':paxillusDetailKey,
+    'Cantharellen · Cantharellus':cantharellusDetailKey,
+    'Parasolzwammen (+)':parasolDetailKey,
+    'Fopzwammen · Laccaria':laccariaDetailKey,
+    'Wasplaten / Slijmkoppen':waxcapDetailKey,
+    'Trechtertjes · Omphalina/Rickenella':funnelDetailKey,
+    'Taailingen (+)':toughshankDetailKey,
+    'Hertenzwammen · Pluteus':pluteusDetailKey,
+    'Bundelzwammen (+) · Pholiota/Kuehneromyces':pholiotaDetailKey,
+    'Kaalkopjes / Stropharia (+)':strophariaDetailKey,
+    'Mosklokjes · Galerina':galerinaDetailKey,
+    'Vaalhoeden · Hebeloma':hebelomaDetailKey,
+    'Leemhoeden · Agrocybe':agrocybeDetailKey,
+  };
+  return supported[candidateNames.first];
 }
