@@ -235,6 +235,20 @@ void main(){
     expect(visited,wheelSteps.keys.toSet());
   });
 
+  test('every wheel observation can still reach an end result',(){
+    final memo=<int,bool>{};
+    bool reachesEnd(int stepId){
+      final cached=memo[stepId];
+      if(cached!=null)return cached;
+      final result=wheelSteps[stepId]!.options.any((option)=>option.end||(option.next!=null&&reachesEnd(option.next!)));
+      memo[stepId]=result;
+      return result;
+    }
+    for(final stepId in wheelSteps.keys){
+      expect(reachesEnd(stepId),isTrue,reason:'step $stepId');
+    }
+  });
+
   test('candidate evidence values exist in their wheel observations',(){
     Set<String> optionsFor(int step)=>wheelSteps[step]!.options.map((option)=>option.label).toSet();
     void expectKnown(int step,Set<String>? values,String candidate,String field){
