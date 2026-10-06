@@ -49,6 +49,10 @@ void main(){
       expect(detailKeyFor(candidateNames:[name]),isNull,reason:name);
     }
   });
+  test('detail keys require an exact supported candidate identity',(){
+    expect(detailKeyFor(candidateNames:['Andere groep · Galerina-achtig']),isNull);
+    expect(detailKeyFor(candidateNames:['Pleurotus look-alike']),isNull);
+  });
   test('Galerina detail key does not exclude another substrate',(){
     final step=galerinaDetailKey.steps['substrate']!;
     final option=step.options.firstWhere((o)=>o.label=='Andere groeiplaats');
