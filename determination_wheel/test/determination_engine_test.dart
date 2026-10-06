@@ -349,6 +349,23 @@ void main(){
     expect(pluteus.score({4:'Plaatjes',6:'Vrij',9:'Roze'}).complete,isFalse);
   });
 
+  test('fully uncertain coded evidence can be complete without a match percent',(){
+    final pluteus=candidates.firstWhere((candidate)=>candidate.name.contains('Pluteus'));
+    final score=pluteus.score({
+      4:'Onzeker',
+      6:'Onzeker',
+      7:'Onzeker',
+      9:'Onzeker',
+      19:'Niet gemeten / onzeker',
+    });
+    expect(score.complete,isTrue);
+    expect(score.coverage,1);
+    expect(score.observed,0);
+    expect(score.unknown,score.relevant);
+    expect(score.percent,isNull);
+    expect(score.label,startsWith('Nog geen passende beoordeelde bronkenmerken'));
+  });
+
   test('Agrocybe keeps categorical smooth cap and gilled underside',(){
     final possible=determine({4:'Plaatjes',5:'Glad',9:'Bruin / roest'});
     expect(possible.remaining.map((c)=>c.name),contains('Leemhoeden · Agrocybe'));
