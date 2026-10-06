@@ -273,6 +273,13 @@ void main(){
     }
   });
 
+  test('candidate identities are unique so possibility counts stay truthful',(){
+    final names=candidates.map((candidate)=>candidate.name).toList();
+    expect(names.toSet().length,names.length);
+    final initial=determine({});
+    expect(initial.remaining.map((candidate)=>candidate.name).toSet().length,initial.remaining.length);
+  });
+
   test('match score uses assessed evidence and ignores unknown answers',(){
     final pluteus=candidates.firstWhere((c)=>c.name.contains('Pluteus'));
     final score=pluteus.score({4:'Plaatjes',6:'Vrij',7:'Onzeker',9:'Roze'});
