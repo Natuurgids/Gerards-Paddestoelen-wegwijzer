@@ -249,6 +249,16 @@ void main(){
     }
   });
 
+  test('every route-level unknown answer stays non-excluding',(){
+    for(final entry in wheelSteps.entries){
+      for(final option in entry.value.options.where((option)=>isUnknown(option.label))){
+        final result=determine({entry.key:option.label});
+        expect(result.excluded,isEmpty,reason:'step ${entry.key} / ${option.label}');
+        expect(result.remaining.length,candidates.length,reason:'step ${entry.key} / ${option.label}');
+      }
+    }
+  });
+
   test('candidate evidence values exist in their wheel observations',(){
     Set<String> optionsFor(int step)=>wheelSteps[step]!.options.map((option)=>option.label).toSet();
     void expectKnown(int step,Set<String>? values,String candidate,String field){
