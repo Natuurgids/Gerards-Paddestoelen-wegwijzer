@@ -52,6 +52,33 @@ void main(){
       expect(detailKeyFor(candidateNames:[name]),isNull,reason:name);
     }
   });
+  test('every production candidate has an explicit detail-key policy',(){
+    const supported={
+      'Schelpzwammen',
+      'Oesterzwammen · Pleurotus',
+      'Krulzomen · Paxillus/Tapinella',
+      'Cantharellen · Cantharellus',
+      'Parasolzwammen (+)',
+      'Fopzwammen · Laccaria',
+      'Wasplaten / Slijmkoppen',
+      'Trechtertjes · Omphalina/Rickenella',
+      'Taailingen (+)',
+      'Hertenzwammen · Pluteus',
+      'Bundelzwammen (+) · Pholiota/Kuehneromyces',
+      'Kaalkopjes / Stropharia (+)',
+      'Mosklokjes · Galerina',
+      'Vaalhoeden · Hebeloma',
+      'Leemhoeden · Agrocybe',
+    };
+    const unsupported={
+      'Boleten',
+      'Amanieten · Amanita',
+      'Honingzwammen · Armillaria',
+    };
+    const genusSplit={'Russulaceae · Russula/Lactarius'};
+    final classified={...supported,...unsupported,...genusSplit};
+    expect(candidates.map((candidate)=>candidate.name).toSet(),classified);
+  });
   test('detail keys require an exact supported candidate identity',(){
     expect(detailKeyFor(candidateNames:['Andere groep · Galerina-achtig']),isNull);
     expect(detailKeyFor(candidateNames:['Pleurotus look-alike']),isNull);
