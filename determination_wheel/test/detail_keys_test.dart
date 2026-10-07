@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mushroom_determination_wheel/detail_keys.dart';
+import 'package:mushroom_determination_wheel/determination_engine.dart';
 import 'package:mushroom_determination_wheel/source_catalog.dart';
 
 void main(){
@@ -35,7 +36,9 @@ void main(){
       'Vaalhoeden · Hebeloma':'hebeloma',
       'Leemhoeden · Agrocybe':'agrocybe',
     };
+    final candidateNames=candidates.map((candidate)=>candidate.name).toSet();
     for(final entry in expected.entries){
+      expect(candidateNames,contains(entry.key),reason:'supported detail-key candidate must exist in production catalog');
       expect(detailKeyFor(candidateNames:[entry.key])?.id,entry.value,reason:entry.key);
     }
   });
