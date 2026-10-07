@@ -255,6 +255,12 @@ void main(){
         final result=determine({entry.key:option.label});
         expect(result.excluded,isEmpty,reason:'step ${entry.key} / ${option.label}');
         expect(result.remaining.length,candidates.length,reason:'step ${entry.key} / ${option.label}');
+        expect(result.genusHint,isNull,reason:'step ${entry.key} / ${option.label} genus hint');
+        for(final candidate in candidates){
+          final answers={entry.key:option.label};
+          expect(candidate.supporting(answers),isEmpty,reason:'${candidate.name} hard support at step ${entry.key}');
+          expect(candidate.typicalSupporting(answers),isEmpty,reason:'${candidate.name} typical support at step ${entry.key}');
+        }
       }
     }
   });
