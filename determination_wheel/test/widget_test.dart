@@ -1,9 +1,31 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mushroom_determination_wheel/detail_keys.dart';
 import 'package:mushroom_determination_wheel/main.dart';
 
 void main(){
+  testWidgets('capture actual phone screen and stem swipe opens selector', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final captureKey = GlobalKey();
+    await tester.pumpWidget(RepaintBoundary(key:captureKey,child:const App(skipSplash:true)));
+    await tester.pumpAndSettle();
+    final boundary = captureKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    final image = await boundary.toImage(pixelRatio:2);
+    final bytes = await image.toByteData(format:ui.ImageByteFormat.png);
+    await File('build/phone-screen-390x844.png').create(recursive:true);
+    await File('build/phone-screen-390x844.png').writeAsBytes(bytes!.buffer.asUint8List());
+    await tester.drag(find.byKey(const ValueKey('stem-wheel-0')),const Offset(-100,0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('observation-wheel')),findsOneWidget);
+    expect(find.textContaining('Eén bereikte observatie'),findsOneWidget);
+  });
+
   Future<void> openWheel(WidgetTester tester) async {
     await tester.pumpWidget(const App(skipSplash: true));
     await tester.pump();
