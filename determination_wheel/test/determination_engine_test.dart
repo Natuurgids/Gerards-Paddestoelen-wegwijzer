@@ -257,6 +257,11 @@ void main(){
         expect(result.remaining.length,candidates.length,reason:'step ${entry.key} / ${option.label}');
         expect(result.genusHint,isNull,reason:'step ${entry.key} / ${option.label} genus hint');
         for(final candidate in candidates){
+          final score=candidate.score({entry.key:option.label});
+          expect(score.observed,0,reason:'${candidate.name} observed at step ${entry.key}');
+          expect(score.percent,isNull,reason:'${candidate.name} percent at step ${entry.key}');
+        }
+        for(final candidate in candidates){
           final answers={entry.key:option.label};
           expect(candidate.supporting(answers),isEmpty,reason:'${candidate.name} hard support at step ${entry.key}');
           expect(candidate.typicalSupporting(answers),isEmpty,reason:'${candidate.name} typical support at step ${entry.key}');
