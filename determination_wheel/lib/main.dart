@@ -163,7 +163,7 @@ Widget _mushroomInstrument(WheelStep current){
   return SizedBox(height:274,child:Stack(alignment:Alignment.topCenter,clipBehavior:Clip.none,children:[
     Positioned.fill(child:ClipRRect(borderRadius:BorderRadius.circular(22),child:IgnorePointer(child:Image.asset('assets/splash.png',fit:BoxFit.cover,alignment:Alignment.center)))),
     Positioned.fill(child:IgnorePointer(child:DecoratedBox(decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Colors.black.withValues(alpha:.18),Colors.transparent,Colors.black.withValues(alpha:.22)]))))),
-    Positioned(top:4,left:2,right:2,height:126,child:CustomPaint(painter:_MushroomCapPainter())),
+    Positioned(top:4,left:2,right:2,height:126,child:IgnorePointer(child:ClipPath(clipper:_MushroomCapClipper(),child:Image.asset('assets/app_icon.png',fit:BoxFit.cover)))),
     Positioned(top:22,left:44,right:44,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[
       _capDots(),const SizedBox(height:7),
       Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Color(0xffffe8d6),fontSize:11,fontWeight:FontWeight.w800,letterSpacing:.35)),
@@ -612,4 +612,9 @@ class _MushroomCapPainter extends CustomPainter{
     final rim=Paint()..color=const Color(0xff7f211f).withValues(alpha:.42)..style=PaintingStyle.stroke..strokeWidth=1.4;c.drawPath(path,rim);
   }
   @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
+}
+
+class _MushroomCapClipper extends CustomClipper<Path>{
+  @override Path getClip(Size z)=>Path()..moveTo(z.width*.025,z.height*.88)..cubicTo(z.width*.08,z.height*.29,z.width*.27,z.height*.045,z.width*.50,z.height*.035)..cubicTo(z.width*.74,z.height*.04,z.width*.92,z.height*.30,z.width*.975,z.height*.88)..cubicTo(z.width*.82,z.height*.77,z.width*.67,z.height*.75,z.width*.50,z.height*.81)..cubicTo(z.width*.33,z.height*.75,z.width*.18,z.height*.77,z.width*.025,z.height*.88);
+  @override bool shouldReclip(covariant CustomClipper<Path> oldClipper)=>false;
 }
