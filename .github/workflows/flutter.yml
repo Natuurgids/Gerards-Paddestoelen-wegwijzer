@@ -87,6 +87,15 @@ jobs:
       - name: Test determination wheel
         working-directory: determination_wheel
         run: flutter test
+      - name: Upload actual Flutter phone screenshot
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: determination-wheel-phone-screenshot
+          path: determination_wheel/build/phone-screen-390x844.png
+          if-no-files-found: warn
+          retention-days: 14
       - name: Generate determination wheel Android scaffolding
         working-directory: determination_wheel
         run: flutter create . --platforms=android,ios --project-name mushroom_determination_wheel --org nl.natuurgids
