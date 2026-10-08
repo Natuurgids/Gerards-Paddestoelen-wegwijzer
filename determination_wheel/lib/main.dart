@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'determination_engine.dart';
 import 'detail_keys.dart';
@@ -161,7 +162,8 @@ Widget _mobilePanel(WheelStep current){return Column(children:[_mushroomInstrume
 Widget _mushroomInstrument(WheelStep current){
   final answered=answers.length,possibilities=result.remaining.length;
   return SizedBox(height:274,child:Stack(alignment:Alignment.topCenter,clipBehavior:Clip.none,children:[
-    Positioned(top:4,left:2,right:2,height:126,child:CustomPaint(painter:_MushroomCapPainter())),
+    Positioned.fill(child:IgnorePointer(child:SvgPicture.asset('assets/illustrations/forest_scene.svg',fit:BoxFit.cover))),
+    Positioned(top:4,left:2,right:2,height:126,child:IgnorePointer(child:SvgPicture.asset('assets/illustrations/amanita_cap.svg',fit:BoxFit.fill))),
     Positioned(top:22,left:44,right:44,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[
       _capDots(),const SizedBox(height:7),
       Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Color(0xffffe8d6),fontSize:11,fontWeight:FontWeight.w800,letterSpacing:.35)),
