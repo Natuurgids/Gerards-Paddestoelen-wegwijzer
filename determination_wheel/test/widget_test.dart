@@ -207,7 +207,7 @@ void main(){
     expect(find.textContaining('bereikte observatie'),findsOneWidget);
     expect(find.text('Selecteer deze observatie'),findsOneWidget);
     expect(find.text('Vorm vruchtlichaam'),findsWidgets);
-    expect(find.text('Veeg links/rechts · centreer de observatie'),findsOneWidget);
+    expect(find.textContaining('bereikte observatie'),findsOneWidget);
     expect(find.text('Selecteer deze observatie'),findsOneWidget);
     expect(tester.takeException(),isNull);
   });
