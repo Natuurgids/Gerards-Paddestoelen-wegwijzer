@@ -4,6 +4,11 @@ import 'package:mushroom_determination_wheel/detail_keys.dart';
 import 'package:mushroom_determination_wheel/main.dart';
 
 void main(){
+  Future<void> openWheel(WidgetTester tester) async {
+    await tester.pumpWidget(const App(skipSplash: true));
+    await tester.pump();
+  }
+
   testWidgets('stem swipe opens the reachable observation selector', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
