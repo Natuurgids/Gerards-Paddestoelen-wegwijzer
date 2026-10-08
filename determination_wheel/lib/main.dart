@@ -213,6 +213,7 @@ Widget _wheelStack(int answered){
                 key:ValueKey('stem-wheel-$i'),
                 behavior:HitTestBehavior.opaque,
                 onTap:!reachable?null:()=>_openGroup(i),
+                onHorizontalDragEnd:reachable?(details)=>_openGroup(i):null,
                 child:AnimatedOpacity(
                   duration:const Duration(milliseconds:220),
                   opacity:reachable?1:.38,
@@ -382,7 +383,7 @@ Widget _panel(WheelStep current,{bool compact=false}){
           const SizedBox(height:10),
         ],
         if(answers.containsKey(4))...[_candidatePanel(r),const Divider(height:20)],
-        if(ended)_resultPanel(r)else...current.options.map(_optionCard),
+        if(ended)_resultPanel(r)else if(compact) LayoutBuilder(builder:(context,limits)=>GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:9,mainAxisSpacing:9,childAspectRatio:limits.maxWidth<350?1.05:1.18),itemCount:current.options.length,itemBuilder:(context,i)=>_compactOptionCard(current.options[i]))) else...current.options.map(_optionCard),
         if(route.isNotEmpty)...[
           const Divider(height:28),
           Row(children:[const Expanded(child:Text('Gevolgde route',style:TextStyle(fontWeight:FontWeight.bold))),if(history.isNotEmpty)TextButton.icon(onPressed:back,icon:const Icon(Icons.undo),label:const Text('Vorige'))]),
@@ -395,6 +396,7 @@ Widget _panel(WheelStep current,{bool compact=false}){
 Widget _candidatePanel(DeterminationResult r)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(children:[Expanded(child:Text('Mogelijke groepen: ${r.remaining.length} · beste overeenkomst eerst',style:const TextStyle(fontWeight:FontWeight.bold))),TextButton.icon(onPressed:()=>setState(()=>showExcluded=!showExcluded),icon:Icon(showExcluded?Icons.expand_less:Icons.expand_more),label:Text('${r.excluded.length} uitgesloten'))]),Wrap(spacing:6,runSpacing:4,children:r.remaining.map((x){final score=x.score(answers),hard=x.supporting(answers),soft=x.typicalSupporting(answers);final evidence=<String>[if(hard.isNotEmpty)'Hard: ${hard.join(' • ')}',if(soft.isNotEmpty)'Aanvullend, niet uitsluitend: ${soft.join(' • ')}'];return Tooltip(message:evidence.isEmpty?'Nog geen specifiek bevestigend bronkenmerk vastgelegd':evidence.join('\n'),child:Chip(avatar:Icon(score.complete?Icons.task_alt:Icons.pending_outlined,size:16),label:Text('${x.name} · ${score.percent==null?'—':'${score.percent}%'} · ${(score.coverage*100).round()}% dekking')));}).toList()),if(showExcluded)...r.excluded.entries.map((e)=>ListTile(dense:true,leading:const Icon(Icons.block,size:18),title:Text(e.key.name),subtitle:Text(e.value)))]);
 Widget _resultPanel(DeterminationResult r){final key=detailKeyFor(genusHint:r.genusHint,candidateNames:r.remaining.map((x)=>x.name));return Column(children:[const Icon(Icons.fact_check_outlined,size:48),if(r.remaining.length>1)const Padding(padding:EdgeInsets.only(bottom:8),child:Text('Gerangschikt op overeenkomst met harde bronkenmerken; aanvullende bronkenmerken breken alleen gelijke scores en sluiten nooit uit. Dit is geen waarschijnlijkheidsrangschikking.',textAlign:TextAlign.center)),if(r.genusHint!=null)ListTile(leading:const Icon(Icons.call_split),title:Text('Bronondersteunde geslachtssplitsing: ${r.genusHint}')),...r.remaining.map((x)=>ListTile(leading:const Icon(Icons.eco_outlined),title:Text(x.name),subtitle:Text('${x.score(answers).label}\n${x.supporting(answers).isEmpty?'Niet uitgesloten door de ingevoerde harde kenmerken':'Ondersteund door: ${x.supporting(answers).join(' • ')}'}${x.typicalSupporting(answers).isEmpty?'':'\nAanvullend bronkenmerk (niet uitsluitend): ${x.typicalSupporting(answers).join(' • ')}'}'))),if(key!=null)Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[Text(key.title,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:6),Text(key.sourceNote,textAlign:TextAlign.center),const SizedBox(height:10),FilledButton.icon(onPressed:()=>_openDetailKey(key),icon:const Icon(Icons.account_tree_outlined),label:const Text('Open detailsleutel'))])))else const Text('Voor deze kandidaat bevat de huidige bronset nog geen eenduidige gecodeerde detailsleutel. Vul geen soortnaam in op basis van aannames.',textAlign:TextAlign.center),const SizedBox(height:12),const Text('De matchscore is géén kans dat de determinatie juist is: hij geeft alleen aan welk deel van de voor die kandidaat gecodeerde, beoordeelde kenmerken overeenkomt. Onbekende kenmerken tellen niet als fout. Sommige taxa vragen microscopie, chemische kenmerken of DNA voor verdere bevestiging.',textAlign:TextAlign.center),const SizedBox(height:12),Card(color:Theme.of(context).colorScheme.errorContainer,child:const Padding(padding:EdgeInsets.all(12),child:Text(determinationSafetyWarning))),FilledButton.icon(onPressed:reset,icon:const Icon(Icons.restart_alt),label:const Text('Nieuwe determinatie'))]);}
 void _openDetailKey(DetailKey key){String? initial;if(key.id=='russulaceae')initial=answers[22];if(key.id=='galerina')initial=answers[17];Navigator.of(context).push(MaterialPageRoute(builder:(_)=>DetailKeyPage(keyData:key,initialAnswer:initial)));}
+Widget _compactOptionCard(WheelOption o)=>Semantics(button:true,label:'Kies ${o.label}',child:Material(color:Colors.transparent,child:InkWell(onTap:()=>choose(o),borderRadius:BorderRadius.circular(18),child:Ink(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Colors.white,Color(0xfffff5df)]),borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xffd9bd82)),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.07),blurRadius:8,offset:const Offset(0,3))]),child:Padding(padding:const EdgeInsets.all(8),child:Column(children:[Expanded(child:DiagnosticIllustration(art:artFor(o.label),size:82)),Text(o.label,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xff372e20))),const Icon(Icons.chevron_right_rounded,size:18,color:Color(0xff315d35))])))));
 Widget _optionCard(WheelOption o)=>Padding(
   padding:const EdgeInsets.only(bottom:10),
   child:Semantics(
@@ -533,7 +535,7 @@ class _WheelSelectorSheetState extends State<_WheelSelectorSheet>{
       const SizedBox(height:11),
       Text(widget.title.toUpperCase(),style:Theme.of(context).textTheme.labelLarge?.copyWith(color:const Color(0xff315d35),fontWeight:FontWeight.w900,letterSpacing:1.1)),
       const SizedBox(height:3),
-      Text('Veeg links/rechts · centreer de observatie',style:Theme.of(context).textTheme.bodySmall?.copyWith(color:const Color(0xff6c604c),fontWeight:FontWeight.w600)),
+      Text(widget.available.length==1?'Eén bereikte observatie · tik op bevestigen':'Veeg links/rechts · centreer de observatie',style:Theme.of(context).textTheme.bodySmall?.copyWith(color:const Color(0xff6c604c),fontWeight:FontWeight.w600)),
       const SizedBox(height:7),
       Expanded(child:PageView.builder(
         key:const ValueKey('observation-wheel'),
@@ -603,6 +605,8 @@ class _MushroomCapPainter extends CustomPainter{
     c.save();c.translate(0,4);c.drawPath(path,shadow);c.restore();
     final fill=Paint()..shader=const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xffd95243),Color(0xffa82d28)]).createShader(Offset.zero&z);c.drawPath(path,fill);
     final highlight=Paint()..color=Colors.white.withValues(alpha:.09);c.drawOval(Rect.fromCenter(center:Offset(z.width*.38,z.height*.31),width:z.width*.28,height:z.height*.18),highlight);
+    final spots=Paint()..color=const Color(0xfffff3d8);
+    for(final spot in const <(double,double,double)>[(.19,.66,.025),(.28,.38,.018),(.40,.22,.022),(.61,.18,.015),(.72,.36,.024),(.84,.63,.018),(.51,.47,.016),(.34,.64,.013),(.65,.62,.014)]){c.drawOval(Rect.fromCenter(center:Offset(z.width*spot.$1,z.height*spot.$2),width:z.width*spot.$3*2,height:z.width*spot.$3),spots);}
     final rim=Paint()..color=const Color(0xff7f211f).withValues(alpha:.42)..style=PaintingStyle.stroke..strokeWidth=1.4;c.drawPath(path,rim);
   }
   @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
