@@ -63,3 +63,11 @@ This app is an identification aid, not an edibility guarantee. A candidate ident
 The intended flow is **observations → possible groups → possible genera → possible species → additional evidence needed → confirmation**. A result may legitimately end with several possibilities. Named species are shown only when the supplied source names them; a source statement such as “5 species” is not expanded into invented names.
 
 Candidate ordering is deterministic rather than probabilistic: hard-trait match percentage first, then the number of matching hard traits, then additional non-exclusive evidence only as a tie-break. Coverage is displayed separately and never changes the ranking.
+
+## Android beta build
+
+The repository's **Flutter CI** workflow tests and analyzes this nested application, generates its Android platform scaffolding and launcher icon from the supplied artwork, builds a release APK, and uploads the artifact named `paddenstoelen-determinatiewiel-android-apk`. Download that artifact from a **successful main-branch workflow run** on GitHub Actions, extract the ZIP, and install `app-release.apk` on an Android device. This APK is the determination wheel; the separate root-app AAB artifact is **not** this application.
+
+The APK is currently a **field-testing beta**, not a validated species identification or edibility product. During device testing, check cap-spot and stem-disc reachability, swipe/centre/explicit-select behavior, reopening earlier observations, recalculation after changed answers, the live possibilities view, text scaling, screen-reader labels, and the exact safety warning on results. Record the device/Android version and the full observation route for any defect. Unknown answers must not exclude or positively support candidates.
+
+The generated platform scaffolding and CI signing configuration are not a production release-signing plan. Before distribution beyond testers, establish a stable Android application ID, persistent signing credentials, versioning, privacy disclosures where applicable, and an actual device acceptance pass. Do not claim species-level coverage until source-backed detail criteria have been reviewed and encoded.
