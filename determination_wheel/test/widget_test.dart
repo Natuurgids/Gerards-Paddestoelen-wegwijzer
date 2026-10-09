@@ -63,6 +63,20 @@ void main(){
     expect(find.textContaining('Vorm vruchtlichaam'),findsWidgets);
   });
 
+  testWidgets('mushroom instrument supports horizontal swipe navigation',(tester)async{
+    tester.view.physicalSize=const Size(390,844);
+    tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await openWheel(tester);
+    await tester.tap(find.text('Hoed + steel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Plaatjes'),findsOneWidget);
+    await tester.fling(find.byKey(const ValueKey('swipeable-mushroom-wheel')),const Offset(280,0),950);
+    await tester.pumpAndSettle();
+    expect(find.text('Hoed + steel'),findsOneWidget);
+  });
+
   testWidgets('live possibilities expose match and evidence coverage',(tester)async{
     await openWheel(tester);
     await tester.tap(find.text('Hoed + steel'));
