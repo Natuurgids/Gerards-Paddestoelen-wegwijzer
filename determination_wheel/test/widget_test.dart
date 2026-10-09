@@ -22,7 +22,11 @@ void main(){
     expect(find.textContaining('Eén bereikte observatie'),findsOneWidget);
   });
 
-  testWidgets('standalone wheel shows supplied in-app mascot', (tester) async {
+  testWidgets('mobile wheel renders bundled photographic mushroom artwork', (tester) async {
+    tester.view.physicalSize=const Size(390,844);
+    tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await openWheel(tester);
 
     final mascot = tester.widget<Image>(
