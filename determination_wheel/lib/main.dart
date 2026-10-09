@@ -479,11 +479,7 @@ String? _photographFor(String label){
 Widget _optionPhotograph(WheelOption o,{double size=82}){
   final path=_photographFor(o.label);
   if(path==null)return DiagnosticIllustration(art:artFor(o.label),size:size);
-  return ClipRRect(borderRadius:BorderRadius.circular(12),child:Stack(fit:StackFit.expand,children:[
-    Image.asset(path,fit:BoxFit.cover,semanticLabel:'Fotografische referentie voor ${o.label}'),
-    if(const {'Onzeker','Anders / onzeker','Niet beoordeeld','Niet gemeten / onzeker','Geen opvallende geur','Melksap aanwezig','Geen melksap','Ja','Nee'}.contains(o.label))
-      Positioned(right:5,top:5,child:Container(padding:const EdgeInsets.symmetric(horizontal:6,vertical:3),decoration:BoxDecoration(color:const Color(0xee173c27),borderRadius:BorderRadius.circular(8)),child:Text(o.label,style:const TextStyle(color:Colors.white,fontSize:10,fontWeight:FontWeight.bold)))),
-  ]));
+  return ClipRRect(borderRadius:BorderRadius.circular(12),child:Image.asset(path,fit:BoxFit.cover,width:double.infinity,height:double.infinity,semanticLabel:'Fotografische referentie voor ${o.label}'));
 }
 Widget _compactOptionCard(WheelOption o)=>Semantics(button:true,label:'Kies ${o.label}',child:Material(color:Colors.transparent,child:InkWell(onTap:()=>choose(o),borderRadius:BorderRadius.circular(18),child:Ink(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Colors.white,Color(0xfffff5df)]),borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xffd9bd82)),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.07),blurRadius:8,offset:const Offset(0,3))]),child:Padding(padding:const EdgeInsets.all(8),child:Column(children:[Expanded(child:_optionPhotograph(o)),Text(o.label,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xff372e20))),const Icon(Icons.chevron_right_rounded,size:18,color:Color(0xff315d35))]))))));
 Widget _optionCard(WheelOption o)=>Padding(
