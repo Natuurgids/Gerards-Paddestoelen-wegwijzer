@@ -166,17 +166,6 @@ void _swipeObservation(DragEndDetails details){
   if(options.length==1)choose(options.first);
   else _openWheelSelector(wheelSteps[step]!.title,[step]);
 }
-void _swipeWheelGroup(int index,DragEndDetails details){
-  final speed=details.primaryVelocity??0;
-  if(speed.abs()<180)return;
-  final direction=speed<0?1:-1;
-  var next=index+direction;
-  while(next>=0&&next<_wheelGroups.length){
-    if(_groupReachable(next)){_openGroup(next);return;}
-    next+=direction;
-  }
-  _openGroup(index);
-}
 Widget _mobilePanel(WheelStep current){return Column(children:[
   GestureDetector(key:const ValueKey('swipeable-mushroom-wheel'),behavior:HitTestBehavior.translucent,onHorizontalDragEnd:_swipeObservation,child:_mushroomInstrument(current)),
   const SizedBox(height:6),Expanded(child:_panel(current,compact:true))]);}
@@ -237,7 +226,7 @@ Widget _wheelStack(int answered){
                 key:ValueKey('stem-wheel-$i'),
                 behavior:HitTestBehavior.opaque,
                 onTap:!reachable?null:()=>_openGroup(i),
-                onHorizontalDragEnd:reachable?(details)=>_swipeWheelGroup(i,details):null,
+                onHorizontalDragEnd:reachable?(_)=>_openGroup(i):null,
                 child:AnimatedOpacity(
                   duration:const Duration(milliseconds:220),
                   opacity:reachable?1:.38,
@@ -593,8 +582,6 @@ class _WheelPainter extends CustomPainter{
     final center=Offset(z.width/2,z.height/2),radius=z.shortestSide*.48;
     final base=Paint()..style=PaintingStyle.stroke..strokeWidth=z.shortestSide*.11..strokeCap=StrokeCap.round..color=const Color(0xffdde8d7);
     c.drawCircle(center,radius*.86,base);
-    // The source sections are not a fixed sequential determination scale.
-    // Only show a completed ring when the observation route has ended.
     if(ended){
         final progress=Paint()..style=PaintingStyle.stroke..strokeWidth=z.shortestSide*.11..strokeCap=StrokeCap.round..color=const Color(0xff315d35);
         c.drawCircle(center,radius*.86,progress);
@@ -606,8 +593,6 @@ class _WheelPainter extends CustomPainter{
   }
   @override bool shouldRepaint(covariant _WheelPainter old)=>old.completed!=completed||old.ended!=ended;
 }
-
-
 class _WheelGroup {
   const _WheelGroup(this.title,this.steps);
   final String title;
@@ -718,7 +703,6 @@ class _MushroomCapPainter extends CustomPainter{
   }
   @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
 }
-
 class _MushroomCapClipper extends CustomClipper<Path>{
   @override Path getClip(Size z)=>Path()..moveTo(z.width*.025,z.height*.88)..cubicTo(z.width*.08,z.height*.29,z.width*.27,z.height*.045,z.width*.50,z.height*.035)..cubicTo(z.width*.74,z.height*.04,z.width*.92,z.height*.30,z.width*.975,z.height*.88)..cubicTo(z.width*.82,z.height*.77,z.width*.67,z.height*.75,z.width*.50,z.height*.81)..cubicTo(z.width*.33,z.height*.75,z.width*.18,z.height*.77,z.width*.025,z.height*.88);
   @override bool shouldReclip(covariant CustomClipper<Path> oldClipper)=>false;
