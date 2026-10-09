@@ -157,7 +157,29 @@ void _openGroup(int index){
   final group=_wheelGroups[index];
   _openWheelSelector(group.title,group.steps);
 }@override Widget build(BuildContext context){final current=wheelSteps[step]!;return Scaffold(backgroundColor:const Color(0xfff6f8f1),appBar:AppBar(backgroundColor:Colors.white,surfaceTintColor:Colors.transparent,titleSpacing:14,title:Row(children:[ClipRRect(borderRadius:BorderRadius.circular(11),child:Image.asset('assets/app_icon.png',width:42,height:42,fit:BoxFit.cover)),const SizedBox(width:12),Text('Wiel',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.w800,color:const Color(0xff315d35)))]),actions:[IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt_rounded)),const SizedBox(width:4)]),body:SafeArea(child:LayoutBuilder(builder:(context,b){final mobile=b.maxWidth<850;return Padding(padding:EdgeInsets.fromLTRB(mobile?12:24,12,mobile?12:24,12),child:mobile?_mobilePanel(current):Row(children:[Expanded(flex:4,child:_wheel(current)),const SizedBox(width:24),Expanded(flex:6,child:_panel(current))]));})));}
-Widget _mobilePanel(WheelStep current){return Column(children:[_mushroomInstrument(current),const SizedBox(height:6),Expanded(child:_panel(current,compact:true))]);}
+void _swipeObservation(DragEndDetails details){
+  final speed=details.primaryVelocity??0;
+  if(speed.abs()<180)return;
+  if(speed>0){if(history.isNotEmpty)back();return;}
+  if(ended)return;
+  final options=wheelSteps[step]!.options;
+  if(options.length==1)choose(options.first);
+  else _openWheelSelector(wheelSteps[step]!.title,[step]);
+}
+void _swipeWheelGroup(int index,DragEndDetails details){
+  final speed=details.primaryVelocity??0;
+  if(speed.abs()<180)return;
+  final direction=speed<0?1:-1;
+  var next=index+direction;
+  while(next>=0&&next<_wheelGroups.length){
+    if(_groupReachable(next)){_openGroup(next);return;}
+    next+=direction;
+  }
+  _openGroup(index);
+}
+Widget _mobilePanel(WheelStep current){return Column(children:[
+  GestureDetector(key:const ValueKey('swipeable-mushroom-wheel'),behavior:HitTestBehavior.translucent,onHorizontalDragEnd:_swipeObservation,child:_mushroomInstrument(current)),
+  const SizedBox(height:6),Expanded(child:_panel(current,compact:true))]);}
 Widget _mushroomInstrument(WheelStep current){
   final answered=answers.length,possibilities=result.remaining.length;
   return SizedBox(height:274,child:Stack(alignment:Alignment.topCenter,clipBehavior:Clip.none,children:[
@@ -215,7 +237,7 @@ Widget _wheelStack(int answered){
                 key:ValueKey('stem-wheel-$i'),
                 behavior:HitTestBehavior.opaque,
                 onTap:!reachable?null:()=>_openGroup(i),
-                onHorizontalDragEnd:reachable?(details)=>_openGroup(i):null,
+                onHorizontalDragEnd:reachable?(details)=>_swipeWheelGroup(i,details):null,
                 child:AnimatedOpacity(
                   duration:const Duration(milliseconds:220),
                   opacity:reachable?1:.38,
