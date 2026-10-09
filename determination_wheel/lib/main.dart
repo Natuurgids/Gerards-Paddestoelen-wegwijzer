@@ -161,9 +161,9 @@ Widget _mobilePanel(WheelStep current){return Column(children:[_mushroomInstrume
 Widget _mushroomInstrument(WheelStep current){
   final answered=answers.length,possibilities=result.remaining.length;
   return SizedBox(height:274,child:Stack(alignment:Alignment.topCenter,clipBehavior:Clip.none,children:[
-    Positioned.fill(child:ClipRRect(borderRadius:BorderRadius.circular(22),child:IgnorePointer(child:Image.asset('assets/splash.png',fit:BoxFit.cover,alignment:Alignment.center)))),
-    Positioned.fill(child:IgnorePointer(child:DecoratedBox(decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Colors.black.withValues(alpha:.18),Colors.transparent,Colors.black.withValues(alpha:.22)]))))),
-    Positioned(top:4,left:2,right:2,height:126,child:IgnorePointer(child:ClipPath(clipper:_MushroomCapClipper(),child:Image.asset('assets/app_icon.png',fit:BoxFit.cover)))),
+    Positioned.fill(child:ClipRRect(borderRadius:BorderRadius.circular(22),child:IgnorePointer(child:Image.asset('assets/photographs/growth_position_terrestrial.png',fit:BoxFit.cover,alignment:Alignment.center)))),
+    Positioned.fill(child:IgnorePointer(child:DecoratedBox(decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Colors.black.withValues(alpha:.42),Colors.black.withValues(alpha:.10),Colors.black.withValues(alpha:.48)]))))),
+    Positioned(top:4,left:2,right:2,height:126,child:IgnorePointer(child:ClipPath(clipper:_MushroomCapClipper(),child:Image.asset('assets/photographs/fruitbody_form_cap_stem.png',fit:BoxFit.cover)))),
     Positioned(top:22,left:44,right:44,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[
       _capDots(),const SizedBox(height:7),
       Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Color(0xffffe8d6),fontSize:11,fontWeight:FontWeight.w800,letterSpacing:.35)),
@@ -420,6 +420,17 @@ String? _photographFor(String label){
     'Bodem / strooisel':'growth_position_terrestrial',
     'Naaldboom':'habitat_tree_group_conifers',
     'Plaatjes':'gill_spacing_crowded',
+    'Opvallende geur':'fruitbody_form_cap_stem',
+    'Geen opvallende geur':'cap_surface_smooth',
+    'Niet beoordeeld':'fruitbody_form_coral',
+    'Bos':'growth_position_terrestrial',
+    'Loofboom':'habitat_tree_group_conifers',
+    'Schubbig / gestippeld':'cap_surface_scaly',
+    'Glad / anders':'cap_surface_smooth',
+    'Ring':'fruitbody_form_cap_stem',
+    'Geen zichtbaar':'fruitbody_form_cap_stem',
+    'Wit / crème':'cap_color_brown',
+    'Rood':'cap_color_red',
   };
   final name=photos[label];
   return name==null?null:'assets/photographs/$name.png';
