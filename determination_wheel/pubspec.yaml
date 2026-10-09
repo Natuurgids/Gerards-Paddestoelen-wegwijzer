@@ -30,4 +30,5 @@ flutter:
     - assets/app_icon.png
     - assets/splash.png
     - assets/illustrations/
+    - assets/photographs/
     - assets/data/
