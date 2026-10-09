@@ -29,14 +29,14 @@ void main(){
     addTearDown(tester.view.resetDevicePixelRatio);
     await openWheel(tester);
 
-    final mascot = tester.widget<Image>(
+    final mascot = tester.widgetList<Image>(
       find.byWidgetPredicate(
         (widget) =>
             widget is Image &&
             widget.image is AssetImage &&
             (widget.image as AssetImage).assetName == 'assets/app_icon.png',
       ),
-    );
+    ).first;
 
     expect((mascot.image as AssetImage).assetName, 'assets/app_icon.png');
   });
