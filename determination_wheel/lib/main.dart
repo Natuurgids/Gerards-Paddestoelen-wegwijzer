@@ -420,16 +420,9 @@ String? _photographFor(String label){
     'Bodem / strooisel':'growth_position_terrestrial',
     'Naaldboom':'habitat_tree_group_conifers',
     'Plaatjes':'gill_spacing_crowded',
-    'Opvallende geur':'fruitbody_form_cap_stem',
-    'Geen opvallende geur':'cap_surface_smooth',
-    'Niet beoordeeld':'fruitbody_form_coral',
     'Bos':'growth_position_terrestrial',
-    'Loofboom':'habitat_tree_group_conifers',
     'Schubbig / gestippeld':'cap_surface_scaly',
     'Glad / anders':'cap_surface_smooth',
-    'Ring':'fruitbody_form_cap_stem',
-    'Geen zichtbaar':'fruitbody_form_cap_stem',
-    'Wit / crème':'cap_color_brown',
     'Rood':'cap_color_red',
   };
   final name=photos[label];
