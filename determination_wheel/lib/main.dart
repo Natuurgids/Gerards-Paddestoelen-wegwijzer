@@ -168,7 +168,7 @@ void _swipeObservation(DragEndDetails details){
 }
 void _swipeWheelGroup(int index,DragEndDetails details){
   final speed=details.primaryVelocity??0;
-  if(speed.abs()<180)return;
+  if(speed.abs()<180){_openGroup(index);return;}
   final direction=speed<0?1:-1;
   var next=index+direction;
   while(next>=0&&next<_wheelGroups.length){
