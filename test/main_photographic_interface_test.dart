@@ -18,7 +18,7 @@ Widget app() => MaterialApp(
   locale: const Locale('nl'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
-  home: IdentifyScreen(locale: const Locale('nl'),
+  home: IdentifyScreen(initialKey: false, locale: const Locale('nl'),
     repository: _PreloadedRepository(),
     fieldDataRepository: _EmptyFieldRepository()),
 );

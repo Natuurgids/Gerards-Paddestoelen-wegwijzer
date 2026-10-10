@@ -23,7 +23,9 @@ jobs:
           channel: stable
           cache: true
       - name: Validate shared determination catalogue
-        run: python3 tool/validate_determination_catalogue.py
+        run: |
+          python3 tool/validate_determination_catalogue.py
+          python3 tool/validate_determination_keys.py
       - name: Generate main app platform scaffolding
         run: flutter create . --platforms=android,ios --project-name gerards_paddestoelen_wegwijzer --org nl.natuurgids
       - name: Configure release platform floors

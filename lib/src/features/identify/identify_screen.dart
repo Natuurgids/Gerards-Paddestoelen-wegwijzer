@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'determination_key.dart';
+import 'determination_key_view.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
@@ -20,12 +23,16 @@ class IdentifyScreen extends StatefulWidget {
     this.repository,
     this.fieldDataRepository,
     this.initialWheel = true,
+    this.initialKey = true,
+    this.keyBook,
   });
 
   final Locale locale;
   final IdentificationRepository? repository;
   final FieldDataRepository? fieldDataRepository;
   final bool initialWheel;
+  final bool initialKey;
+  final DeterminationKeyBook? keyBook;
 
   @override
   State<IdentifyScreen> createState() => _IdentifyScreenState();
@@ -48,6 +55,9 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
   MeasurementInputStatus? _stemDiameterError;
   bool _seasonMonthMissing = false;
   late bool _rotary;
+  late bool _keyMode;
+  late Future<DeterminationKeyBook> _book;
+  DeterminationKeySession? _keySession;
   int _wheelRevision = 0;
   IdentificationCoverage? _coverage;
   String _text(String nl, String en, String de) =>
@@ -57,6 +67,8 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
   void initState() {
     super.initState();
     _rotary = widget.initialWheel;
+    _keyMode = widget.initialKey && widget.initialWheel;
+    _book = widget.keyBook == null ? DeterminationKeyBook.load() : SynchronousFuture(widget.keyBook!);
     _repo = widget.repository ?? ResilientIdentificationRepository();
     _fieldRepo = widget.fieldDataRepository ?? FieldDataRepository();
     _choices = _repo.choices(widget.locale.languageCode);
@@ -646,18 +658,31 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l.identifyTitle), actions: [
         IconButton(tooltip: _text('Wis observaties', 'Clear observations', 'Beobachtungen löschen'),
-          onPressed: () => setState(() { _selected.clear(); _results = null; _coverage = null; _wheelRevision++; }),
+          onPressed: () => setState(() { _selected.clear(); _results = null; _coverage = null; _wheelRevision++; _keySession?.reset(); }),
           icon: const Icon(Icons.restart_alt)),
+        IconButton(key: const ValueKey('toggle-key-mode'),
+          tooltip: _text('Determinatiesleutel / observaties', 'Key / observations', 'Schlüssel / Beobachtungen'),
+          onPressed: () => setState(() => _keyMode = !_keyMode),
+          icon: Icon(_keyMode ? Icons.edit_note : Icons.alt_route)),
         IconButton(key: const ValueKey('toggle-trait-view'),
           tooltip: _text('Wiel / overzicht', 'Wheel / overview', 'Rad / Übersicht'),
-          onPressed: () => setState(() => _rotary = !_rotary),
+          onPressed: () => setState(() { _keyMode = false; _rotary = !_rotary; }),
           icon: Icon(_rotary ? Icons.view_list : Icons.rotate_right)),
       ]),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
-              child: FutureBuilder<List<TraitChoice>>(
+              child: _keyMode ? FutureBuilder<DeterminationKeyBook>(
+                future: _book, builder: (context, snapshot) {
+                  if (snapshot.hasError) return Center(child: TextButton(
+                    onPressed: () => setState(() => _book = DeterminationKeyBook.load()),
+                    child: Text(_text('Sleutel opnieuw laden', 'Reload key', 'Schlüssel neu laden'))));
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  _keySession ??= DeterminationKeySession(snapshot.data!);
+                  return DeterminationKeyView(key: ValueKey('key-$_wheelRevision'),
+                    session: _keySession!, locale: widget.locale);
+                }) : FutureBuilder<List<TraitChoice>>(
                 future: _choices,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {

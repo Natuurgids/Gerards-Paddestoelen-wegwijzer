@@ -26,7 +26,7 @@ class DutchIdentificationScope {
   /// Species-rank binomial only; no fuzzy, genus or synonym inference.
   /// Authorship varies between the curated descriptions and the checklist.
   static String? canonicalSpeciesName(String name) {
-    final match = RegExp(r'^([A-Z][a-zA-Z-]+)\s+([a-z][a-z-]+)(?:\s|$)')
+    final match = RegExp(r'^([A-Z][a-zA-Zëïéäöü-]+)\s+([a-z][a-zëïéäöü-]+)(?:\s|$)')
         .firstMatch(name.trim());
     if (match == null) return null;
     final tail = name.substring(match.end).trim();
