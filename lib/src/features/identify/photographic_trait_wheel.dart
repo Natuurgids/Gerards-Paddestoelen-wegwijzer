@@ -78,8 +78,9 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
           style: const TextStyle(color: _gold)))),
       Flexible(child: TextButton.icon(onPressed: widget.onResults,
         icon: const Icon(Icons.eco, color: _gold, size: 18),
-        label: Text(text('Nederlandse soorten', 'Dutch species', 'Niederländische Arten'),
-          style: const TextStyle(color: _gold)))),
+        label: FittedBox(fit: BoxFit.scaleDown, child: Text(
+          text('Nederlandse soorten', 'Dutch species', 'Niederländische Arten'),
+          maxLines: 1, style: const TextStyle(color: _gold))))),
     ]),
     Text(text('Foto’s zijn voorbeelden; fijne varianten kunnen een groepsfoto delen.',
       'Photos are examples; fine variants may share a group photo.',
@@ -109,11 +110,11 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
             child: InkWell(key: const ValueKey('open-trait-group'),
               onTap: () => open(groupPreview),
               child: Center(child: Padding(padding: const EdgeInsets.all(6),
-                child: Text('${text('Open', 'Open', 'Öffnen')}\n${groupPreview + 1}/${widget.groups.length}',
+                child: FittedBox(fit: BoxFit.scaleDown, child: Text('${text('Open', 'Open', 'Öffnen')}\n${groupPreview + 1}/${widget.groups.length}',
                   maxLines: 3, textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: _gold, fontSize: 11,
-                    fontWeight: FontWeight.bold)))))))),
+                    fontWeight: FontWeight.bold))))))))),
         Positioned(top: 0, child: IgnorePointer(child:
           Icon(Icons.arrow_drop_down, color: _gold, size: size * .1))),
         Positioned(top: size * .22, child: const IgnorePointer(child:

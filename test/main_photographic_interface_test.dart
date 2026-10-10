@@ -48,6 +48,9 @@ void main() {
       await tester.pumpWidget(RepaintBoundary(key: boundary, child: app()));
       await tester.pumpAndSettle();
       await tester.runAsync(() async {
+        await precacheImage(const AssetImage(
+          'determination_wheel/assets/interface/woodland-background.png'),
+          boundary.currentContext!);
         for (final image in tester.widgetList<Image>(find.byType(Image))) {
           await precacheImage(image.image, boundary.currentContext!);
         }
