@@ -78,8 +78,10 @@ class DeterminationKeyBook {
       final s = raw as Map<String, dynamic>;
       if (s['source_id'] != DutchIdentificationScope.sourceId) continue;
       final name = taxa[s['taxon_id'] as int];
-      if (name != null) index.putIfAbsent(name, () => []).add(
-        KeyChecklistSpecies(s['id'] as int, name, s['source_record_id'] as String));
+      if (name != null) {
+        index.putIfAbsent(name, () => []).add(
+          KeyChecklistSpecies(s['id'] as int, name, s['source_record_id'] as String));
+      }
     }
     return index;
   }

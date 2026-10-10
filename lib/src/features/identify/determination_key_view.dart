@@ -64,7 +64,7 @@ class _DeterminationKeyViewState extends State<DeterminationKeyView> {
                 child: FittedBox(fit: BoxFit.scaleDown, child: Text(
                   '${text('Stap', 'Step', 'Schritt')} ${selectedHistory + 1}\n${text('Open', 'Open', 'Öffnen')}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: _gold, fontWeight: FontWeight.bold)))))))),
+                  style: const TextStyle(color: _gold, fontWeight: FontWeight.bold))))))))),
         Positioned(top: 0, child: IgnorePointer(child: Icon(Icons.arrow_drop_down,
           color: _gold, size: size * .1))),
         Positioned(top: size * .22, child: const IgnorePointer(child:

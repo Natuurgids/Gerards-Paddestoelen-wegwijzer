@@ -675,9 +675,9 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
             Expanded(
               child: _keyMode ? FutureBuilder<DeterminationKeyBook>(
                 future: _book, builder: (context, snapshot) {
-                  if (snapshot.hasError) return Center(child: TextButton(
+                  if (snapshot.hasError) { return Center(child: TextButton(
                     onPressed: () => setState(() => _book = DeterminationKeyBook.load()),
-                    child: Text(_text('Sleutel opnieuw laden', 'Reload key', 'Schlüssel neu laden'))));
+                    child: Text(_text('Sleutel opnieuw laden', 'Reload key', 'Schlüssel neu laden')))); }
                   if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                   _keySession ??= DeterminationKeySession(snapshot.data!);
                   return DeterminationKeyView(key: ValueKey('key-$_wheelRevision'),
