@@ -2,10 +2,17 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mushroom_determination_wheel/main.dart';
 
 void main() {
+  setUpAll(() async {
+    final text=FontLoader('FieldSans')..addFont(rootBundle.load('assets/fonts/Roboto-Regular.ttf'));
+    await text.load();
+    final icons=FontLoader('MaterialIcons')..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+    await icons.load();
+  });
   for(final spec in <(String,Size,double)>[
     ('phone',const Size(390,844),1),
     ('small-phone',const Size(320,568),1),

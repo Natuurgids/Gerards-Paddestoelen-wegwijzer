@@ -7,7 +7,7 @@ import 'source_catalog.dart';
 import 'wheel_steps.dart';
 const determinationSafetyWarning='Niet gebruiken als bewijs van eetbaarheid. Bevestig een determinatie onafhankelijk.';
 void main()=>runApp(const App());
-class App extends StatelessWidget{const App({super.key,this.skipSplash=false});final bool skipSplash;@override Widget build(BuildContext context)=>MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xff315d35)),scaffoldBackgroundColor:const Color(0xfffaf5e8),cardTheme:const CardThemeData(color:Color(0xfffffbf1),surfaceTintColor:Colors.transparent),useMaterial3:true),home:skipSplash?const Wheel():const _WheelSplash());}
+class App extends StatelessWidget{const App({super.key,this.skipSplash=false});final bool skipSplash;@override Widget build(BuildContext context)=>MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData(fontFamily:'FieldSans',colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xff315d35)),scaffoldBackgroundColor:const Color(0xfffaf5e8),cardTheme:const CardThemeData(color:Color(0xfffffbf1),surfaceTintColor:Colors.transparent),useMaterial3:true),home:skipSplash?const Wheel():const _WheelSplash());}
 class _WheelSplash extends StatefulWidget{const _WheelSplash();@override State<_WheelSplash> createState()=>_WheelSplashState();}
 class _WheelSplashState extends State<_WheelSplash> {
   String? version;

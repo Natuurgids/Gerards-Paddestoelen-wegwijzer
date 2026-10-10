@@ -33,3 +33,7 @@ flutter:
     - assets/interface/
     - assets/photographs/
     - assets/data/
+  fonts:
+    - family: FieldSans
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
