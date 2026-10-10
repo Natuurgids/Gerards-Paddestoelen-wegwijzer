@@ -58,7 +58,7 @@ void main() {
       expect(find.byKey(const ValueKey('trait-group-dial')), findsOneWidget);
       expect(find.byType(TraitVisual), findsNothing,
         reason: 'All visible choices must use their real photographs.');
-      expect(find.textContaining('/23'), findsOneWidget);
+      expect(find.textContaining('0/23 · 341'), findsOneWidget);
       await tester.runAsync(() async {
         final render = boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
         final image = await render.toImage();
@@ -72,26 +72,26 @@ void main() {
   testWidgets('rotating previews, confirming records, editing preserves other observations', (tester) async {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
-    expect(find.textContaining('0/23'), findsOneWidget);
+    expect(find.textContaining('0/23 ·'), findsOneWidget);
     final semantics = tester.ensureSemantics();
     final choice = tester.getSemantics(find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Keuzeschijf'));
     choice.owner!.performAction(choice.id, ui.SemanticsAction.increase);
     await tester.pump();
-    expect(find.textContaining('0/23'), findsOneWidget);
+    expect(find.textContaining('0/23 ·'), findsOneWidget);
     expect(tester.widget<PhotographicChoiceDial>(find.byKey(const ValueKey('trait-choice-dial'))).selected, 1);
     await tester.tap(find.byKey(const ValueKey('confirm-trait')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('1/23'), findsOneWidget);
+    expect(find.textContaining('1/23 ·'), findsOneWidget);
     final group = tester.getSemantics(find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Observatieschijf'));
     group.owner!.performAction(group.id, ui.SemanticsAction.decrease);
     await tester.pump();
-    expect(find.textContaining('1/23'), findsOneWidget);
+    expect(find.textContaining('1/23 ·'), findsOneWidget);
     expect(tester.widget<PhotographicChoiceDial>(find.byKey(const ValueKey('trait-group-dial'))).selected, 0);
     await tester.tap(find.byKey(const ValueKey('open-trait-group')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('confirm-trait')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('1/23'), findsOneWidget);
+    expect(find.textContaining('1/23 ·'), findsOneWidget);
     semantics.dispose();
     await tester.tap(find.byKey(const ValueKey('toggle-trait-view')));
     await tester.pumpAndSettle();
@@ -108,7 +108,7 @@ void main() {
     await gesture.moveTo(rect.center + Offset(0, -rect.height * .4));
     await gesture.up();
     await tester.pumpAndSettle();
-    expect(find.textContaining('0/23'), findsOneWidget);
+    expect(find.textContaining('0/23 ·'), findsOneWidget);
     expect(tester.widget<PhotographicChoiceDial>(find.byKey(const ValueKey('trait-choice-dial'))).selected, isNot(0));
     expect(tester.takeException(), isNull);
   });
