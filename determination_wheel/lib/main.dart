@@ -187,7 +187,7 @@ Widget _mushroomInstrument(WheelStep current){
     Positioned(top:139,width:188,height:182,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.centerLeft,end:Alignment.centerRight,colors:[Color(0xffb89d6c),Color(0xfffff5d9),Color(0xffe9d4a7),Color(0xffa98a5c)]),borderRadius:const BorderRadius.only(topLeft:Radius.circular(18),topRight:Radius.circular(18),bottomLeft:Radius.circular(55),bottomRight:Radius.circular(55)),border:Border.all(color:const Color(0xffa78250),width:1.5),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.30),blurRadius:15,offset:const Offset(0,6))]))),
     Positioned(top:140,width:213,height:20,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xffbda075),Color(0xfffff8e6),Color(0xffd7b77f),Color(0xffad8b5c)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:const Color(0xffa5804c),width:1.5)))),
     Positioned(top:155,left:12,right:12,height:155,child:_wheelStack(answers.length)),
-    Positioned(bottom:7,left:0,right:0,child:Center(child:Text('VEeg OVER DE RINGEN  •  TIK OM TE KIEZEN',style:TextStyle(fontSize:9,fontWeight:FontWeight.w800,letterSpacing:.6,color:Colors.white.withValues(alpha:.9))))),
+    Positioned(bottom:7,left:0,right:0,child:Center(child:Text('VEEG OVER DE RINGEN  •  TIK OM TE KIEZEN',style:TextStyle(fontSize:9,fontWeight:FontWeight.w800,letterSpacing:.6,color:Colors.white.withValues(alpha:.9))))),
   ]));
 }
 Widget _capDots(){
