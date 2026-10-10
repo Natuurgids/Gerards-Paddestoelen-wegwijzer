@@ -222,7 +222,7 @@ Widget _mobilePanel(WheelStep current)=>LayoutBuilder(builder:(context,limits){
   ]);
 });
 Widget _mushroomInstrument(WheelStep current,{double height=460}) {
-  return SizedBox(height:height,child:LayoutBuilder(builder:(context,limits)=>Stack(alignment:Alignment.topCenter,children:[
+  return SizedBox(height:height,child:ClipRRect(borderRadius:BorderRadius.circular(24),child:LayoutBuilder(builder:(context,limits)=>Stack(alignment:Alignment.topCenter,children:[
     Positioned.fill(child:ExcludeSemantics(child:Image.asset(mushroomInstrumentAsset,fit:BoxFit.fill))),
     const Positioned.fill(child:IgnorePointer(child:DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,stops:[0,.40,.62,1],colors:[Color(0x400e1e0d),Color(0x180e1e0d),Colors.transparent,Color(0x200e1e0d)]))))),
     Positioned(top:0,left:0,right:0,height:height*.43,child:GestureDetector(key:const ValueKey('swipeable-mushroom-wheel'),behavior:HitTestBehavior.translucent,onHorizontalDragEnd:_swipeObservation,child:Padding(padding:const EdgeInsets.fromLTRB(8,8,8,0),child:FittedBox(fit:BoxFit.scaleDown,alignment:Alignment.topCenter,child:SizedBox(width:limits.maxWidth-16,child:Column(mainAxisSize:MainAxisSize.min,children:[
@@ -231,13 +231,13 @@ Widget _mushroomInstrument(WheelStep current,{double height=460}) {
       GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.opaque,onTap:_showPossibilities,child:Semantics(button:true,label:'Bekijk de levende mogelijkheden',child:Column(children:[
         Text(ended?'Determinatie voltooid':'Observatie ${route.length+1}',style:const TextStyle(color:Color(0xfffff4de),fontSize:10,fontWeight:FontWeight.w800,letterSpacing:1)),
         const SizedBox(height:3),
-        Text('${result.remaining.length} mogelijkheden · ${current.title}',textAlign:TextAlign.center,maxLines:2,style:const TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black,blurRadius:10)])),
+        Text.rich(TextSpan(children:[TextSpan(text:'${result.remaining.length} mogelijkheden · ',style:const TextStyle(fontSize:11,fontWeight:FontWeight.w500)),TextSpan(text:current.title)]),textAlign:TextAlign.center,maxLines:2,style:const TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black,blurRadius:10)])),
 
       ]))),
     ])))))),
     Positioned(top:height*.43,left:12,right:12,bottom:height*.07,child:_wheelStack(answers.length)),
     Positioned(bottom:5,left:8,right:8,child:Text('VEEG OVER DE RINGEN · TIK OM TE KIEZEN',textAlign:TextAlign.center,style:TextStyle(fontSize:9,fontWeight:FontWeight.w700,letterSpacing:.5,color:Colors.white,shadows:[Shadow(color:Colors.black,blurRadius:5)]))),
-  ])));
+  ]))));
 }
 Widget _capDots(){
   final groups=_wheelGroups;
@@ -284,7 +284,7 @@ Widget _wheelStack(int answered){
                 onHorizontalDragEnd:reachable?(_)=>_openGroup(i):null,
                 child:AnimatedOpacity(
                   duration:const Duration(milliseconds:220),
-                  opacity:reachable?1:.38,
+                  opacity:reachable?1:.88,
                   child:AnimatedContainer(
                     duration:const Duration(milliseconds:220),
                     curve:Curves.easeOutCubic,
