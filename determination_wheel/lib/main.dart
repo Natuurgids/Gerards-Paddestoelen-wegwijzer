@@ -157,7 +157,11 @@ void _openGroup(int index){
   if(!_groupReachable(index))return;
   final group=_wheelGroups[index];
   _openWheelSelector(group.title,group.steps);
-}@override Widget build(BuildContext context){final current=wheelSteps[step]!;return Scaffold(backgroundColor:const Color(0xfff6f8f1),appBar:AppBar(backgroundColor:Colors.white,surfaceTintColor:Colors.transparent,titleSpacing:14,title:Row(children:[ClipRRect(borderRadius:BorderRadius.circular(11),child:Image.asset('assets/app_icon.png',width:42,height:42,fit:BoxFit.cover)),const SizedBox(width:12),Flexible(child:Text('Gerards Paddestoelen Wegwijzer',maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w900,color:const Color(0xff315d35))))]),actions:[IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt_rounded)),const SizedBox(width:4)]),body:SafeArea(child:LayoutBuilder(builder:(context,b){final mobile=b.maxWidth<850;return Padding(padding:EdgeInsets.fromLTRB(mobile?12:24,12,mobile?12:24,12),child:mobile?_mobilePanel(current):Row(children:[Expanded(flex:4,child:_wheel(current)),const SizedBox(width:24),Expanded(flex:6,child:_panel(current))]));})));}
+}@override Widget build(BuildContext context){final current=wheelSteps[step]!;return Scaffold(backgroundColor:const Color(0xfff6f8f1),appBar:AppBar(backgroundColor:const Color(0xfff9edcf),surfaceTintColor:Colors.transparent,titleSpacing:14,title:Row(children:[ClipRRect(borderRadius:BorderRadius.circular(11),child:Image.asset('assets/app_icon.png',width:42,height:42,fit:BoxFit.cover)),const SizedBox(width:12),Flexible(child:Text('Gerards Paddestoelen Wegwijzer',maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w900,color:const Color(0xff315d35))))]),actions:[IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt_rounded)),const SizedBox(width:4)]),body:Stack(children:[
+  Positioned.fill(child:IgnorePointer(child:ImageFiltered(imageFilter:ImageFilter.blur(sigmaX:8,sigmaY:8),child:Image.asset('assets/photographs/habitat_tree_group_mixed_woodland.png',fit:BoxFit.cover,errorBuilder:(_,__,___)=>Image.asset('assets/photographs/growth_position_terrestrial.png',fit:BoxFit.cover))))),
+  Positioned.fill(child:IgnorePointer(child:DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[const Color(0xff09200e).withValues(alpha:.35),const Color(0xff0d2614).withValues(alpha:.70)]))))),
+  SafeArea(child:LayoutBuilder(builder:(context,b){final mobile=b.maxWidth<850;return Padding(padding:EdgeInsets.fromLTRB(mobile?8:24,8,mobile?8:24,8),child:mobile?_mobilePanel(current):Row(children:[Expanded(flex:4,child:_wheel(current)),const SizedBox(width:24),Expanded(flex:6,child:_panel(current))]));}))
+]);}
 void _swipeObservation(DragEndDetails details){
   final speed=details.primaryVelocity??0;
   if(speed.abs()<180)return;
@@ -382,9 +386,9 @@ Widget _panel(WheelStep current,{bool compact=false}){
   return Card(
     elevation:compact?0:1,
     margin:EdgeInsets.zero,
-    color:compact?const Color(0xfffff5df):null,
+    color:compact?const Color(0xfff8edce):const Color(0xfff8edce),
     shape:RoundedRectangleBorder(
-      borderRadius:BorderRadius.circular(compact?26:22),
+      borderRadius:BorderRadius.circular(compact?30:22),
       side:BorderSide(color:compact?const Color(0xffd7bd89):Theme.of(context).colorScheme.outlineVariant.withValues(alpha:.45)),
     ),
     child:Padding(
@@ -500,7 +504,7 @@ Widget _optionPhotograph(WheelOption o,{double size=82}){
     DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Colors.transparent,Colors.black.withValues(alpha:.08)]))),
   ]));
 }
-Widget _compactOptionCard(WheelOption o)=>Semantics(button:true,label:'Kies ${o.label}',child:Material(color:Colors.transparent,child:InkWell(onTap:()=>choose(o),borderRadius:BorderRadius.circular(18),child:Ink(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xfffffdf5),Color(0xffe9d6ad)]),borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xffd9bd82)),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.07),blurRadius:8,offset:const Offset(0,3))]),child:Padding(padding:const EdgeInsets.all(8),child:Column(children:[Expanded(child:_optionPhotograph(o)),const SizedBox(height:6),Text(o.label,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xff372e20))),const Icon(Icons.chevron_right_rounded,size:18,color:Color(0xff315d35))]))))));
+Widget _compactOptionCard(WheelOption o)=>Semantics(button:true,label:'Kies ${o.label}',child:Material(color:Colors.transparent,child:InkWell(onTap:()=>choose(o),borderRadius:BorderRadius.circular(18),child:Ink(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xfffffdf5),Color(0xffe9d6ad)]),borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xffd9bd82)),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.07),blurRadius:8,offset:const Offset(0,3))]),child:Padding(padding:const EdgeInsets.all(6),child:Column(children:[Expanded(child:_optionPhotograph(o)),const SizedBox(height:6),Text(o.label,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xff372e20))),const Icon(Icons.chevron_right_rounded,size:18,color:Color(0xff315d35))]))))));
 Widget _optionCard(WheelOption o)=>Padding(
   padding:const EdgeInsets.only(bottom:10),
   child:Semantics(
