@@ -168,22 +168,26 @@ void _swipeObservation(DragEndDetails details){
 }
 Widget _mobilePanel(WheelStep current){return Column(children:[
   GestureDetector(key:const ValueKey('swipeable-mushroom-wheel'),behavior:HitTestBehavior.translucent,onHorizontalDragEnd:_swipeObservation,child:_mushroomInstrument(current)),
-  const SizedBox(height:6),Expanded(child:_panel(current,compact:true))]);}
+  const SizedBox(height:8),Expanded(child:_panel(current,compact:true))]);}
 Widget _mushroomInstrument(WheelStep current){
-  final answered=answers.length,possibilities=result.remaining.length;
-  return SizedBox(height:274,child:Stack(alignment:Alignment.topCenter,clipBehavior:Clip.none,children:[
-    Positioned.fill(child:ClipRRect(borderRadius:BorderRadius.circular(22),child:IgnorePointer(child:Image.asset('assets/photographs/growth_position_terrestrial.png',fit:BoxFit.cover,alignment:Alignment.center)))),
-    Positioned.fill(child:IgnorePointer(child:DecoratedBox(decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Colors.black.withValues(alpha:.22),Colors.black.withValues(alpha:.04),Colors.black.withValues(alpha:.52)]))))),
-    Positioned(top:4,left:2,right:2,height:126,child:IgnorePointer(child:ClipPath(clipper:_MushroomCapClipper(),child:ColorFiltered(colorFilter:const ColorFilter.mode(Color(0xffbc4835),BlendMode.modulate),child:Image.asset('assets/photographs/fruitbody_form_cap_stem.png',fit:BoxFit.cover))))),
-    Positioned(top:22,left:44,right:44,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[
-      _capDots(),const SizedBox(height:7),
-      Text(ended?'Mogelijkheden':'Observatie ${route.length+1}',style:const TextStyle(color:Color(0xffffe8d6),fontSize:11,fontWeight:FontWeight.w800,letterSpacing:.35)),
-      const SizedBox(height:3),
-      Text(ended?'$possibilities mogelijkheden':'$possibilities mogelijkheden · ${current.title}',textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900,height:1.02)),
+  final possibilities=result.remaining.length;
+  return SizedBox(height:330,child:Stack(alignment:Alignment.topCenter,clipBehavior:Clip.none,children:[
+    Positioned.fill(child:ClipRRect(borderRadius:BorderRadius.circular(24),child:Image.asset('assets/photographs/habitat_tree_group_mixed_woodland.png',fit:BoxFit.cover,errorBuilder:(_,__,___)=>Image.asset('assets/photographs/growth_position_terrestrial.png',fit:BoxFit.cover)))),
+    Positioned.fill(child:DecoratedBox(decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[const Color(0xff09200d).withValues(alpha:.40),const Color(0xff19391e).withValues(alpha:.15),const Color(0xff07140a).withValues(alpha:.73)])))),
+    Positioned(top:5,left:16,right:16,height:150,child:IgnorePointer(child:Stack(fit:StackFit.expand,children:[
+      ClipPath(clipper:_MushroomCapClipper(),child:ColorFiltered(colorFilter:const ColorFilter.mode(Color(0xffe66b4e),BlendMode.modulate),child:Image.asset('assets/photographs/cap_color_red.png',fit:BoxFit.cover,errorBuilder:(_,__,___)=>Image.asset('assets/photographs/fruitbody_form_cap_stem.png',fit:BoxFit.cover)))),
+      CustomPaint(painter:_CapSpotsPainter()),
     ]))),
-    Positioned(top:105,width:156,height:158,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xfffff6df),Color(0xffead3a5)]),borderRadius:const BorderRadius.only(topLeft:Radius.circular(20),topRight:Radius.circular(20),bottomLeft:Radius.circular(48),bottomRight:Radius.circular(48)),border:Border.all(color:const Color(0xffcaa96d),width:1.4),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.10),blurRadius:10,offset:const Offset(0,5))]))),
-    Positioned(top:108,width:180,height:19,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xfffff2d4),Color(0xffd2ad6b),Color(0xfffff2d4)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:const Color(0xffb98f51)),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.08),blurRadius:4,offset:const Offset(0,2))]))),
-    Positioned(top:118,left:16,right:16,height:136,child:_wheelStack(answered)),
+    Positioned(top:28,left:40,right:40,child:GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.translucent,onTap:_showPossibilities,child:Column(children:[
+      _capDots(),const SizedBox(height:12),
+      Text(ended?'DETERMINATIE VOLTOOID':'OBSERVATIE ${route.length+1} VAN 5',style:const TextStyle(color:Color(0xfffff3d9),fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.3)),
+      const SizedBox(height:5),
+      Text('$possibilities mogelijkheden',textAlign:TextAlign.center,style:Theme.of(context).textTheme.titleLarge?.copyWith(color:Colors.white,fontWeight:FontWeight.w900,shadows:[const Shadow(color:Colors.black87,blurRadius:8)])),
+    ]))),
+    Positioned(top:139,width:188,height:182,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.centerLeft,end:Alignment.centerRight,colors:[Color(0xffb89d6c),Color(0xfffff5d9),Color(0xffe9d4a7),Color(0xffa98a5c)]),borderRadius:const BorderRadius.only(topLeft:Radius.circular(18),topRight:Radius.circular(18),bottomLeft:Radius.circular(55),bottomRight:Radius.circular(55)),border:Border.all(color:const Color(0xffa78250),width:1.5),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.30),blurRadius:15,offset:const Offset(0,6))]))),
+    Positioned(top:140,width:213,height:20,child:DecoratedBox(decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xffbda075),Color(0xfffff8e6),Color(0xffd7b77f),Color(0xffad8b5c)]),borderRadius:BorderRadius.circular(50),border:Border.all(color:const Color(0xffa5804c),width:1.5)))),
+    Positioned(top:155,left:12,right:12,height:155,child:_wheelStack(answers.length)),
+    Positioned(bottom:7,left:0,right:0,child:Center(child:Text('VEeg OVER DE RINGEN  •  TIK OM TE KIEZEN',style:TextStyle(fontSize:9,fontWeight:FontWeight.w800,letterSpacing:.6,color:Colors.white.withValues(alpha:.9))))),
   ]));
 }
 Widget _capDots(){
@@ -214,7 +218,7 @@ Widget _wheelStack(int answered){
                       :reachable
                           ?'beschikbaar'
                           :'niet bereikbaar';
-          final width=isActive?218.0:184.0-i*6;
+          final width=isActive?244.0:208.0-i*6;
           return Semantics(
             key:ValueKey('stem-wheel-semantics-$i'),
             label:'${groups[i].title} — $state',
@@ -234,21 +238,21 @@ Widget _wheelStack(int answered){
                     duration:const Duration(milliseconds:220),
                     curve:Curves.easeOutCubic,
                     margin:const EdgeInsets.symmetric(vertical:1.5),
-                    height:isActive?27:20,
+                    height:isActive?32:23,
                     width:width,
                     decoration:BoxDecoration(
                       gradient:LinearGradient(
                         begin:Alignment.topCenter,
                         end:Alignment.bottomCenter,
                         colors:isActive
-                            ?[const Color(0xff477748),const Color(0xff274f31)]
+                            ?[const Color(0xffe9c776),const Color(0xffa77730),const Color(0xfff7db95)]
                             :complete
-                                ?[const Color(0xffe4c98d),const Color(0xffb78e4e)]
-                                :[const Color(0xffffedc8),const Color(0xffcfad70)],
+                                ?[const Color(0xfff9e9c3),const Color(0xffcba66d),const Color(0xfff4e0b0)]
+                                :[const Color(0xfffff7e5),const Color(0xffd7b98c),const Color(0xffffedca)],
                       ),
                       borderRadius:BorderRadius.circular(50),
                       border:Border.all(
-                        color:isActive?const Color(0xff204126):const Color(0xffb89255),
+                        color:isActive?const Color(0xff84591f):const Color(0xffb89255),
                         width:isActive?1.4:1,
                       ),
                       boxShadow:[
@@ -268,12 +272,12 @@ Widget _wheelStack(int answered){
                       child:Row(
                         mainAxisSize:MainAxisSize.min,
                         children:[
-                          if(isActive)const Icon(Icons.chevron_left_rounded,size:16,color:Colors.white),
+                          if(isActive)const Icon(Icons.chevron_left_rounded,size:16,color:Color(0xff513817)),
                           Text(
                             groups[i].title,
                             style:TextStyle(
-                              color:isActive?Colors.white:const Color(0xff4b3820),
-                              fontSize:isActive?12.5:11.5,
+                              color:const Color(0xff47321b),
+                              fontSize:isActive?13:12,
                               fontWeight:FontWeight.w800,
                               letterSpacing:.15,
                             ),
@@ -377,7 +381,7 @@ Widget _panel(WheelStep current,{bool compact=false}){
   return Card(
     elevation:compact?0:1,
     margin:EdgeInsets.zero,
-    color:compact?const Color(0xfffffcf5):null,
+    color:compact?const Color(0xfffff5df):null,
     shape:RoundedRectangleBorder(
       borderRadius:BorderRadius.circular(compact?26:22),
       side:BorderSide(color:compact?const Color(0xffd7bd89):Theme.of(context).colorScheme.outlineVariant.withValues(alpha:.45)),
@@ -396,7 +400,7 @@ Widget _panel(WheelStep current,{bool compact=false}){
           const SizedBox(height:10),
         ],
         if(answers.containsKey(4))...[_candidatePanel(r),const Divider(height:20)],
-        if(ended)_resultPanel(r)else if(compact&&MediaQuery.sizeOf(context).height>=700) LayoutBuilder(builder:(context,limits)=>GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:9,mainAxisSpacing:9,childAspectRatio:limits.maxWidth<350?1.05:1.18),itemCount:current.options.length,itemBuilder:(context,i)=>_compactOptionCard(current.options[i]))) else...current.options.map(_optionCard),
+        if(ended)_resultPanel(r)else if(compact&&MediaQuery.sizeOf(context).height>=700) LayoutBuilder(builder:(context,limits)=>GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:9,mainAxisSpacing:9,childAspectRatio:limits.maxWidth<350?.91:1.02),itemCount:current.options.length,itemBuilder:(context,i)=>_compactOptionCard(current.options[i]))) else...current.options.map(_optionCard),
         if(route.isNotEmpty)...[
           const Divider(height:28),
           Row(children:[const Expanded(child:Text('Gevolgde route',style:TextStyle(fontWeight:FontWeight.bold))),if(history.isNotEmpty)TextButton.icon(onPressed:back,icon:const Icon(Icons.undo),label:const Text('Vorige'))]),
@@ -492,7 +496,7 @@ Widget _optionPhotograph(WheelOption o,{double size=82}){
   if(path==null)return DiagnosticIllustration(art:artFor(o.label),size:size);
   return ClipRRect(borderRadius:BorderRadius.circular(12),child:Image.asset(path,fit:BoxFit.cover,width:double.infinity,height:double.infinity,semanticLabel:'Fotografische referentie voor ${o.label}'));
 }
-Widget _compactOptionCard(WheelOption o)=>Semantics(button:true,label:'Kies ${o.label}',child:Material(color:Colors.transparent,child:InkWell(onTap:()=>choose(o),borderRadius:BorderRadius.circular(18),child:Ink(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Colors.white,Color(0xfffff5df)]),borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xffd9bd82)),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.07),blurRadius:8,offset:const Offset(0,3))]),child:Padding(padding:const EdgeInsets.all(8),child:Column(children:[Expanded(child:_optionPhotograph(o)),Text(o.label,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xff372e20))),const Icon(Icons.chevron_right_rounded,size:18,color:Color(0xff315d35))]))))));
+Widget _compactOptionCard(WheelOption o)=>Semantics(button:true,label:'Kies ${o.label}',child:Material(color:Colors.transparent,child:InkWell(onTap:()=>choose(o),borderRadius:BorderRadius.circular(18),child:Ink(decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xfffffdf5),Color(0xffe9d6ad)]),borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xffd9bd82)),boxShadow:[BoxShadow(color:Colors.black.withValues(alpha:.07),blurRadius:8,offset:const Offset(0,3))]),child:Padding(padding:const EdgeInsets.all(8),child:Column(children:[Expanded(child:_optionPhotograph(o)),const SizedBox(height:6),Text(o.label,textAlign:TextAlign.center,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xff372e20))),const Icon(Icons.chevron_right_rounded,size:18,color:Color(0xff315d35))]))))));
 Widget _optionCard(WheelOption o)=>Padding(
   padding:const EdgeInsets.only(bottom:10),
   child:Semantics(
@@ -706,4 +710,16 @@ class _MushroomCapPainter extends CustomPainter{
 class _MushroomCapClipper extends CustomClipper<Path>{
   @override Path getClip(Size z)=>Path()..moveTo(z.width*.025,z.height*.88)..cubicTo(z.width*.08,z.height*.29,z.width*.27,z.height*.045,z.width*.50,z.height*.035)..cubicTo(z.width*.74,z.height*.04,z.width*.92,z.height*.30,z.width*.975,z.height*.88)..cubicTo(z.width*.82,z.height*.77,z.width*.67,z.height*.75,z.width*.50,z.height*.81)..cubicTo(z.width*.33,z.height*.75,z.width*.18,z.height*.77,z.width*.025,z.height*.88);
   @override bool shouldReclip(covariant CustomClipper<Path> oldClipper)=>false;
+}
+
+class _CapSpotsPainter extends CustomPainter {
+  @override void paint(Canvas canvas,Size size){
+    final spots=<Offset>[Offset(.23,.48),Offset(.35,.23),Offset(.49,.38),Offset(.65,.21),Offset(.78,.49),Offset(.43,.64),Offset(.59,.63),Offset(.16,.72),Offset(.85,.70)];
+    final paint=Paint()..color=const Color(0xfffff6d8).withValues(alpha:.90)..style=PaintingStyle.fill;
+    for(var i=0;i<spots.length;i++){
+      final p=spots[i];canvas.save();canvas.translate(size.width*p.dx,size.height*p.dy);canvas.rotate(i.isEven?.32:-.24);
+      canvas.drawOval(Rect.fromCenter(center:Offset.zero,width:i.isEven?13:9,height:i.isEven?6:5),paint);canvas.restore();
+    }
+  }
+  @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
 }
