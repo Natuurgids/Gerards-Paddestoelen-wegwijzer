@@ -17,6 +17,8 @@ class _DeterminationKeyViewState extends State<DeterminationKeyView> {
   DeterminationKeySession get session => widget.session;
   String text(String nl, String en, String de) =>
     widget.locale.languageCode == 'nl' ? nl : widget.locale.languageCode == 'de' ? de : en;
+  String sourceLine(String source, int page) =>
+    '${session.book.sources[source]}${page == 0 ? '' : ' · PDF $page'}';
   void change(VoidCallback action) => setState(() {
     action(); preview = 0; historyPreview = session.steps.length;
   });
@@ -29,7 +31,7 @@ class _DeterminationKeyViewState extends State<DeterminationKeyView> {
         ...q.choices.map((c) => Card(child: Padding(padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('${q.couplet}.${c.id} · ${c.text}'),
-            Text('${session.book.sources[q.source]} · PDF ${c.page}'),
+            Text(sourceLine(q.source, c.page)),
             TextButton(onPressed: () { Navigator.pop(context); change(() => session.choose(q.choices.indexOf(c))); },
               child: Text(text('Kies dit alternatief', 'Choose this alternative', 'Dieses Merkmal wählen'))),
           ])))),
@@ -110,7 +112,7 @@ class _DeterminationKeyViewState extends State<DeterminationKeyView> {
           Text(endpoint.name, key: const ValueKey('key-endpoint'),
             style: Theme.of(context).textTheme.headlineSmall),
           if (endpoint.detail != endpoint.name) Text(endpoint.detail),
-          Text('${session.book.sources[endpoint.source]} · PDF ${endpoint.page}'),
+          Text(sourceLine(endpoint.source, endpoint.page)),
           const SizedBox(height: 12),
           Text(species != null
             ? text('Soort gekoppeld aan de Nederlandse GBIF-checklist.', 'Species linked to the Dutch GBIF checklist.', 'Art mit der niederländischen GBIF-Checkliste verknüpft.')
@@ -135,7 +137,7 @@ class _DeterminationKeyViewState extends State<DeterminationKeyView> {
         final q = session.book.questions[s.question]!;
         final c = q.choices[s.choice];
         return Card(child: ListTile(title: Text('${q.couplet}.${c.id} · ${c.text}'),
-          subtitle: Text('${session.book.sources[q.source]} · PDF ${c.page}'),
+          subtitle: Text(sourceLine(q.source, c.page)),
           onTap: () => change(() => session.revisit(session.steps.indexOf(s)))));
       }),
       FilledButton(onPressed: () => change(session.back), child: Text(text('Terug', 'Back', 'Zurück'))),

@@ -193,6 +193,10 @@ class _PhotographicChoiceDialState extends State<PhotographicChoiceDial> {
               -math.pi / 2 + slot * slice + fraction - slice / 2, slice, widget.inner),
               child: GestureDetector(onTap: () => widget.onChanged((top + (slot <= slots ~/ 2 ? slot : slot - slots)) % widget.count),
                 child: Stack(fit: StackFit.expand, children: [
+                  if (slots <= 2)
+                    Positioned.fill(child: widget.imageBuilder(
+                      (top + (slot <= slots ~/ 2 ? slot : slot - slots)) % widget.count))
+                  else
                   Positioned(left: radius + math.cos(-math.pi / 2 + slot * slice + fraction) * radius * .77 - size * .3,
                     top: radius + math.sin(-math.pi / 2 + slot * slice + fraction) * radius * .77 - size * .3,
                     width: size * .6, height: size * .6,
