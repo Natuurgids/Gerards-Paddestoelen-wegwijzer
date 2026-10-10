@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,16 +12,18 @@ import 'package:gerards_paddestoelen_wegwijzer/src/data/repositories.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/identify_screen.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/photographic_trait_wheel.dart';
 
+late List<TraitChoice> _realChoices;
 Widget app() => MaterialApp(
   locale: const Locale('nl'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: IdentifyScreen(locale: const Locale('nl'),
+    repository: _PreloadedRepository(),
     fieldDataRepository: _EmptyFieldRepository()),
 );
 void main() {
   setUpAll(() async {
-    await ReferenceAssetStore.instance.traitChoices('nl');
+    _realChoices = await ReferenceAssetStore.instance.traitChoices('nl');
     await (FontLoader('Roboto')..addFont(rootBundle.load(
       'determination_wheel/assets/fonts/Roboto-Regular.ttf'))).load();
     await (FontLoader('MaterialIcons')..addFont(rootBundle.load(
@@ -107,4 +110,10 @@ void main() {
 class _EmptyFieldRepository extends FieldDataRepository {
   @override
   Future<List<SeasonRegionOption>> seasonRegions(String languageCode) async => [];
+}
+
+// Real bundled catalogue with synchronous delivery inside the widget-test clock.
+class _PreloadedRepository extends IdentificationRepository {
+  @override
+  Future<List<TraitChoice>> choices(String languageCode) => SynchronousFuture(_realChoices);
 }

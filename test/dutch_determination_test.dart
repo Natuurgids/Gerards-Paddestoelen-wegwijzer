@@ -36,7 +36,11 @@ void main() {
   test('national link uses exact species names and retains the source record', () async {
     final links = await DutchIdentificationScope.instance.links;
     expect(links[1]?.recordId, '486787300');
-    expect(links.values.map((link) => link.speciesId).toSet().length, 12509);
+    final catalog = await ReferenceAssetStore.instance.speciesCatalog;
+    final dutchCount = (catalog['species'] as List<dynamic>)
+      .cast<Map<String, dynamic>>()
+      .where((species) => species['source_id'] == DutchIdentificationScope.sourceId).length;
+    expect(links.values.map((link) => link.speciesId).toSet().length, dutchCount);
     expect(DutchIdentificationScope.canonicalSpeciesName('Amanita muscaria (L.:Fr.) Hook.'),
       'Amanita muscaria');
     expect(DutchIdentificationScope.canonicalSpeciesName('Amanita muscaria var. alba'), isNull);
@@ -77,7 +81,8 @@ void main() {
   });
   test('coverage does not present checklist-only taxa as assessed', () async {
     final coverage = await ResilientIdentificationRepository().coverage({1: 1});
-    expect(coverage.total, 12509);
+    final links = await DutchIdentificationScope.instance.links;
+    expect(coverage.total, links.values.map((link) => link.speciesId).toSet().length);
     expect(coverage.mapped, 16);
     expect(coverage.assessable, lessThanOrEqualTo(16));
     expect(coverage.unassessed, greaterThan(12000));
