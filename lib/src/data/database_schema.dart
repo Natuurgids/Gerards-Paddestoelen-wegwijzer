@@ -127,6 +127,8 @@ class DatabaseSchema {
     if (oldVersion < 10) {
       await _addColumnIfMissing(db, 'trait', 'is_active', 'INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1))');
       await _addColumnIfMissing(db, 'trait', 'sort_order', 'INTEGER NOT NULL DEFAULT 0');
+      await _addColumnIfMissing(db, 'trait_option', 'image_asset', 'TEXT');
+      await _addColumnIfMissing(db, 'trait_option', 'image_scope', 'TEXT');
     }
     if (oldVersion < 9) {
       await db.execute(_conservationStatusTableSql);
@@ -225,6 +227,8 @@ class DatabaseSchema {
       id INTEGER PRIMARY KEY,
       trait_id INTEGER NOT NULL REFERENCES trait(id) ON DELETE CASCADE,
       code TEXT NOT NULL,
+      image_asset TEXT,
+      image_scope TEXT,
       sort_order INTEGER NOT NULL DEFAULT 0,
       UNIQUE(trait_id, code)
     )''',

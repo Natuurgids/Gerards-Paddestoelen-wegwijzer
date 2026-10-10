@@ -236,6 +236,8 @@ class ReferenceAssetStore {
             traitCode: traitCode,
             traitLabel: traitLabel,
             optionId: option['id'] as int,
+            imagePath: option['image'] as String?,
+            imageScope: option['image_scope'] as String?,
             optionLabel: _localized(
               option['labels'] as Map<String, dynamic>?,
               languageCode,

@@ -148,7 +148,7 @@ class IdentificationRepository {
     final db = await _databaseProvider();
     final rows = await db.rawQuery(
       '''SELECT tr.id trait_id, tr.code trait_code, COALESCE(tt.label, tr.category) trait_label,
-      o.id option_id, txt.label option_label FROM trait tr JOIN trait_option o ON o.trait_id=tr.id
+      o.id option_id, o.image_asset, o.image_scope, txt.label option_label FROM trait tr JOIN trait_option o ON o.trait_id=tr.id
       JOIN trait_option_text txt ON txt.option_id=o.id AND txt.language_code=? LEFT JOIN trait_text tt ON tt.trait_id=tr.id AND tt.language_code=?
       WHERE tr.value_type='choice' AND tr.is_active=1 ORDER BY tr.sort_order, tr.id, o.sort_order''',
       [languageCode, languageCode],
@@ -161,6 +161,8 @@ class IdentificationRepository {
             traitLabel: r['trait_label'] as String,
             optionId: r['option_id'] as int,
             optionLabel: r['option_label'] as String,
+            imagePath: r['image_asset'] as String?,
+            imageScope: r['image_scope'] as String?,
           ),
         )
         .toList();

@@ -280,6 +280,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                         DeterminationOptionVisual(
                           traitCode: choice.traitCode,
                           optionId: choice.optionId,
+                          imagePath: choice.imagePath,
                           optionLabel: choice.optionLabel,
                           size: 64,
                         ),
@@ -773,7 +774,10 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                 },
               ),
             ),
-            const SafetyNotice(),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .22),
+              child: const SingleChildScrollView(child: SafetyNotice()),
+            ),
           ],
         ),
       ),

@@ -18,12 +18,14 @@ class DeterminationOptionVisual extends StatelessWidget {
     required this.optionId,
     required this.optionLabel,
     this.size = 72,
+    this.imagePath,
   });
 
   final String traitCode;
   final int optionId;
   final String optionLabel;
   final double size;
+  final String? imagePath;
 
   static final Future<Map<String, String>> _optionCodes = _loadOptionCodes();
 
@@ -61,43 +63,29 @@ class DeterminationOptionVisual extends StatelessWidget {
         size: size,
       );
 
+  Widget _photograph(BuildContext context, String assetPath) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(label: optionLabel, image: true,
+      child: SizedBox.square(dimension: size,
+        child: ClipRRect(borderRadius: BorderRadius.circular(10),
+          child: DecoratedBox(decoration: BoxDecoration(
+            color: scheme.surfaceContainerLowest,
+            border: Border.all(color: scheme.outlineVariant),
+            borderRadius: BorderRadius.circular(10)),
+            child: Image.asset(assetPath, width: size, height: size,
+              fit: BoxFit.cover, cacheWidth: 512,
+              filterQuality: FilterQuality.medium,
+              errorBuilder: (context, error, stackTrace) => _fallback())))));
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (imagePath != null) return _photograph(context, imagePath!);
     return FutureBuilder<Map<String, String>>(
       future: _optionCodes,
       builder: (context, snapshot) {
-        final optionCode = snapshot.data?['$traitCode:$optionId'];
-        if (optionCode == null) return _fallback();
-
-        final assetPath = optionCode;
-        final scheme = Theme.of(context).colorScheme;
-
-        return Semantics(
-          label: optionLabel,
-          image: true,
-          child: SizedBox.square(
-            dimension: size,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerLowest,
-                  border: Border.all(color: scheme.outlineVariant),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Image.asset(
-                  assetPath,
-                  width: size,
-                  height: size,
-                  fit: BoxFit.cover,
-                  filterQuality: FilterQuality.medium,
-                  errorBuilder: (context, error, stackTrace) => _fallback(),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
+        final path = snapshot.data?['$traitCode:$optionId'];
+        return path == null ? _fallback() : _photograph(context, path);
+      });
   }
 }

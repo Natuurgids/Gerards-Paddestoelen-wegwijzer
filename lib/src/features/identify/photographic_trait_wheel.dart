@@ -41,7 +41,7 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
   }
   Widget visual(TraitChoice item, double size) => DeterminationOptionVisual(
     traitCode: item.traitCode, optionId: item.optionId,
-    optionLabel: item.optionLabel, size: size);
+    optionLabel: item.optionLabel, imagePath: item.imagePath, size: size);
   Widget heading() => Column(mainAxisSize: MainAxisSize.min, children: [
     Text('${widget.selected.length}/${widget.groups.length} · '
       '${widget.groups.fold<int>(0, (n, g) => n + g.length)} '
@@ -109,7 +109,7 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
             child: InkWell(key: const ValueKey('open-trait-group'),
               onTap: () => open(groupPreview),
               child: Center(child: Padding(padding: const EdgeInsets.all(6),
-                child: Text(widget.groups[groupPreview].first.traitLabel,
+                child: Text('${text('Open', 'Open', 'Öffnen')}\n${groupPreview + 1}/${widget.groups.length}',
                   maxLines: 3, textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: _gold, fontSize: 11,
@@ -126,7 +126,8 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
       image: AssetImage(_forestPhoto), fit: BoxFit.cover)),
     child: ColoredBox(color: const Color(0x88313c25),
       child: LayoutBuilder(builder: (context, bounds) {
-        final wide = bounds.maxWidth > bounds.maxHeight * 1.2;
+        final wide = MediaQuery.orientationOf(context) == Orientation.landscape
+            && bounds.maxWidth > bounds.maxHeight * 1.2;
         return Padding(padding: const EdgeInsets.all(10), child: wide
           ? Row(children: [Expanded(flex: 6, child: wheel()),
             Expanded(flex: 4, child: SingleChildScrollView(child: Column(

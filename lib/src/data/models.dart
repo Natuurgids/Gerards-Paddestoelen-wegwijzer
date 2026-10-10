@@ -51,12 +51,14 @@ class SeasonRegionOption {
 }
 
 class TraitChoice {
-  const TraitChoice({required this.traitId, required this.traitCode, required this.traitLabel, required this.optionId, required this.optionLabel});
+  const TraitChoice({required this.traitId, required this.traitCode, required this.traitLabel, required this.optionId, required this.optionLabel, this.imagePath, this.imageScope});
   final int traitId;
   final String traitCode;
   final String traitLabel;
   final int optionId;
   final String optionLabel;
+  final String? imagePath;
+  final String? imageScope;
 }
 
 class IdentificationCandidate {

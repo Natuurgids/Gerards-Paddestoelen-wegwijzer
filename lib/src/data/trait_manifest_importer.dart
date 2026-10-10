@@ -81,6 +81,8 @@ class TraitManifestImporter {
           'id': optionId,
           'trait_id': traitId,
           'code': option['code'] as String,
+          'image_asset': option['image'] as String?,
+          'image_scope': option['image_scope'] as String?,
           'sort_order': option['sort_order'] as int? ?? 0,
         });
 

@@ -11,6 +11,7 @@ import 'package:gerards_paddestoelen_wegwijzer/src/data/reference_asset_store.da
 import 'package:gerards_paddestoelen_wegwijzer/src/data/repositories.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/identify_screen.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/photographic_trait_wheel.dart';
+import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/trait_visual.dart';
 
 late List<TraitChoice> _realChoices;
 Widget app() => MaterialApp(
@@ -55,6 +56,8 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byKey(const ValueKey('trait-choice-dial')), findsOneWidget);
       expect(find.byKey(const ValueKey('trait-group-dial')), findsOneWidget);
+      expect(find.byType(TraitVisual), findsNothing,
+        reason: 'All visible choices must use their real photographs.');
       expect(find.textContaining('/23'), findsOneWidget);
       await tester.runAsync(() async {
         final render = boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
