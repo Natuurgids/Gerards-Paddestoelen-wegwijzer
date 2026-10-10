@@ -50,8 +50,8 @@ jobs:
           path: determination_wheel/build/interface-verification/
           if-no-files-found: warn
           retention-days: 14
-      - name: Generate Android scaffolding
-        run: flutter create . --platforms=android --project-name mushroom_determination_wheel --org nl.natuurgids
+      - name: Generate platform scaffolding for existing icon configuration
+        run: flutter create . --platforms=android,ios --project-name mushroom_determination_wheel --org nl.natuurgids
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
       - name: Build release APK
