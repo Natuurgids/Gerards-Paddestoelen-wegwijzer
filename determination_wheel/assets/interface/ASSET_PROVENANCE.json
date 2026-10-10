@@ -1,0 +1,97 @@
+{
+  "woodland-background.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Portrait forest-floor photograph for a Flutter app background. Moss, brown oak leaves at bottom, tall tree trunks in softly defocused woodland, warm golden sunlight and beautiful green bokeh, no mushrooms in foreground. No UI, no words."
+  },
+  "stem-ring-texture.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Production seamless photographic texture, wide horizontal rectangle. Ivory mushroom stem flesh, subtle vertical fibers, creamy parchment surface, realistic light from upper left, no objects, no writing, no buttons, no borders. Uniform softly lit neutral surface."
+  },
+  "form-puffball.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Macro editorial photograph of a round mature white puffball fungus, completely spherical fruitbody without a cap or stalk, natural tiny textured scales, sits on moss, soft woodland bokeh. Entire puffball visible. Correct puffball anatomy, no gills."
+  },
+  "form-bracket.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Macro woodland photograph of three overlapping Trametes versicolor shelf fungi on dead wood, fan-shaped thin brackets with concentric brown orange cream bands, no stalk, moss. Show entire group sharply."
+  },
+  "underside-pores.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic close-up photograph of a bolete mushroom underside. Dense tiny yellow round pores in a sponge-like hymenium around a thick central stem. Underside facing camera, sharp macro. No lamellae or radial gills."
+  },
+  "underside-teeth.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic macro photo of Hydnum repandum underside, cream pointed pendant tiny toothlike spines over the underside and near the stem, absolutely no gills or pores. Sharp detail, natural brown green woodland bokeh."
+  },
+  "underside-folds.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic macro photograph of a golden chanterelle underside. Thick shallow branching blunt folds that run down its stem, not thin regular gills, sharp realistic diagnostic macro, woodland bokeh."
+  },
+  "milk-present.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic extreme macro photograph of white milky latex droplets exuding from cut cream Lactarius gills. A few visibly white opaque droplets on cut gill edges and flesh. Clear educational illustration of released latex, no blood, no hands, no text."
+  },
+  "milk-absent.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic close-up photo of a white Russula cap broken in half showing dry pale gills and crumbly chalklike flesh at the fracture, no liquid drops, natural forest setting."
+  },
+  "hygrophanous.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic educational comparison photo of two matching brown mushroom caps of the same species side by side: left wet dark brown translucent cap, right same cap dried pale buff with a receding dark central wet patch. Same cap shape and size, no text or labels, cream natural background."
+  },
+  "stable-cap.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic comparison photo of two matching brown mushroom caps of the same species side by side, left moist and right dry, both equally brown with unchanged colour. Same shape and size, no text or labels, cream natural background."
+  },
+  "growth-group.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic photograph of a loose group of five separate brown capped mushrooms growing near each other among moss and oak leaves. Separate bases and distinct individual stems, no fused cluster, woodland warm sunlight."
+  },
+  "growth-cluster.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic woodland macro photograph of tightly clustered honey mushrooms, many brown caps and pale stems fused at their bases growing from a decaying stump. Clear dense tufted growth, realistic natural colours."
+  },
+  "growth-ring.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic field photograph of a fairy ring of small pale capped mushrooms on short green meadow grass. Circular arrangement, wide slightly elevated view showing whole circle, forest at distance."
+  },
+  "smell-observation.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Natural editorial photograph of an adult field mycologist gently holding a mushroom near their nose to smell it, lips closed, no mouth contact or tasting. Close side profile with mushroom and nose visible, blurred woodland. No text."
+  },
+  "velum-both.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic diagnostic close-up photo of entire pale Amanita mushroom stem showing BOTH a distinct pendant skirt ring below the cap and a separate loose white sacklike volva around the basal bulb. Fully exposed basal sack above forest soil, no obscured base."
+  },
+  "size-observation.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic field-guide photograph of a medium brown mushroom laid on cream paper next to a simple wooden metric ruler with visible evenly spaced millimetre marks. Entire stem and cap visible. Natural macro daylight, no UI, no words."
+  },
+  "field-notebook.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Photorealistic woodland still life of an open blank cream paper field notebook, hand lens and one brown mushroom on moss and autumn leaves, warm golden sunlight. No writing or text, no phone. Production card image for uncertain and confirmation choices."
+  },
+  "mushroom-instrument.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Interface illustration; never determination evidence",
+    "prompt": "Square photographic Amanita muscaria instrument, broad red cap above a short pale thick stem, golden woodland moss and leaves, no UI or lettering."
+  }
+}

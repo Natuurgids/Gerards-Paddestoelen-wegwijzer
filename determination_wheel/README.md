@@ -32,7 +32,7 @@ The supplied app icon and splash artwork under `assets/` are product artwork and
 
 ## Illustrations
 
-The current answer cards use schematic diagnostic symbols. These illustrations are explanatory UI aids, not determination evidence; any future diagnostic plate intended to carry evidential meaning must be purpose-made and reviewed. Useful illustration coverage includes:
+All wheel and detail-key choices now have bundled photographic examples. Unknown, unmeasured and confirmation choices use field-notebook imagery, with a question badge for unassessed observations. The images are illustrative examples, not independent determination evidence. The current answer cards use photographic examples. These illustrations are explanatory UI aids, not determination evidence; any future diagnostic plate intended to carry evidential meaning must be purpose-made and reviewed. Useful illustration coverage includes:
 
 - fruitbody forms
 - gills / pores / teeth / folds
@@ -66,8 +66,14 @@ Candidate ordering is deterministic rather than probabilistic: hard-trait match 
 
 ## Android beta build
 
-The repository's **Flutter CI** workflow tests and analyzes this nested application, generates its Android platform scaffolding and launcher icon from the supplied artwork, builds a release APK, and uploads the artifact named `paddenstoelen-determinatiewiel-android-apk`. Download that artifact from a **successful main-branch workflow run** on GitHub Actions, extract the ZIP, and install `app-release.apk` on an Android device. This APK is the determination wheel; the separate root-app AAB artifact is **not** this application.
+The repository's **Flutter CI** workflow tests and analyzes this nested application, generates its Android platform scaffolding and launcher icon from the supplied artwork, builds a release APK, and uploads the artifact named `paddenstoelen-determinatiewiel-android-apk`. The dedicated **Determination wheel APK** workflow analyzes, tests, checks exhaustive image coverage, renders phone/small-phone/large-text/tablet/landscape screenshots, and builds this nested app independently of catalogue enrichment. Download that artifact from a **successful Determination wheel APK workflow run** on GitHub Actions, extract the ZIP, and install `app-release.apk` on an Android device. This APK is the determination wheel; the separate root-app AAB artifact is **not** this application.
 
 The APK is currently a **field-testing beta**, not a validated species identification or edibility product. During device testing, check cap-spot and stem-disc reachability, swipe/centre/explicit-select behavior, reopening earlier observations, recalculation after changed answers, the live possibilities view, text scaling, screen-reader labels, and the exact safety warning on results. Record the device/Android version and the full observation route for any defect. Unknown answers must not exclude or positively support candidates.
 
 The generated platform scaffolding and CI signing configuration are not a production release-signing plan. Before distribution beyond testers, establish a stable Android application ID, persistent signing credentials, versioning, privacy disclosures where applicable, and an actual device acceptance pass. Do not claim species-level coverage until source-backed detail criteria have been reviewed and encoded.
+
+## Photographic interface
+
+The supplied design references inform the woodland backdrop, real photographic mushroom instrument, five textured cream stem rings, gold active state, and cream photographic choice cards. The supplied app icon and splash artwork remain byte-for-byte unchanged. `assets/interface/ASSET_PROVENANCE.json` records the prompts and illustrative role of the newly generated production assets; `lib/photographic_assets.dart` maps every encoded wheel and detail-key choice. Existing legacy diagnostic artwork remains available but is no longer the choice-card fallback.
+
+Run `python3 tool/validate_photographic_assets.py`, `flutter analyze --fatal-infos`, and `flutter test`. `test/interface_render_test.dart` saves actual Flutter screenshots under `build/interface-verification/`; CI uploads those for visual inspection. The APK archive also contains `COMMIT.txt` and `SHA256SUMS.txt`.

@@ -1,0 +1,72 @@
+name: Determination wheel APK
+
+on:
+  push:
+    branches: ['feature/photographic-wheel-apk-build']
+  pull_request:
+    branches: [main]
+    paths:
+      - 'determination_wheel/**'
+      - '.github/workflows/determination-wheel-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: determination-wheel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-and-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: determination_wheel
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Validate photographic choice coverage
+        run: python3 tool/validate_photographic_assets.py
+      - name: Analyze determination wheel
+        run: flutter analyze --fatal-infos
+      - name: Test determination wheel
+        run: flutter test --reporter expanded
+      - name: Upload rendered interface verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: determination-wheel-ui-verification
+          path: determination_wheel/build/interface-verification/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Generate Android scaffolding
+        run: flutter create . --platforms=android --project-name mushroom_determination_wheel --org nl.natuurgids
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
+      - name: Build release APK
+        run: flutter build apk --release
+      - name: Record APK checksum and commit
+        run: |
+          sha256sum build/app/outputs/flutter-apk/app-release.apk > build/app/outputs/flutter-apk/SHA256SUMS.txt
+          git rev-parse HEAD > build/app/outputs/flutter-apk/COMMIT.txt
+      - name: Upload verified APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: paddenstoelen-determinatiewiel-android-apk
+          path: |
+            determination_wheel/build/app/outputs/flutter-apk/app-release.apk
+            determination_wheel/build/app/outputs/flutter-apk/SHA256SUMS.txt
+            determination_wheel/build/app/outputs/flutter-apk/COMMIT.txt
+          if-no-files-found: error
+          retention-days: 14
