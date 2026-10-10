@@ -170,7 +170,7 @@ Widget build(BuildContext context) {
       title: Row(children:[
         ClipRRect(borderRadius:BorderRadius.circular(10),child:Image.asset('assets/app_icon.png',width:38,height:38,fit:BoxFit.cover)),
         const SizedBox(width:10),
-        const Expanded(child:Text('Gerards Paddestoelen Wegwijzer',maxLines:2,style:TextStyle(fontSize:15,fontWeight:FontWeight.w800))),
+        const Expanded(child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Wiel',style:TextStyle(fontSize:18,fontWeight:FontWeight.w800)),Text('Gerards Paddestoelen Wegwijzer',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:10))])),
       ]),
       actions:[
         IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),
@@ -225,16 +225,16 @@ Widget _mushroomInstrument(WheelStep current,{double height=460}) {
   return SizedBox(height:height,child:LayoutBuilder(builder:(context,limits)=>Stack(alignment:Alignment.topCenter,children:[
     Positioned.fill(child:ExcludeSemantics(child:Image.asset(mushroomInstrumentAsset,fit:BoxFit.fill))),
     const Positioned.fill(child:IgnorePointer(child:DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,stops:[0,.40,.62,1],colors:[Color(0x400e1e0d),Color(0x180e1e0d),Colors.transparent,Color(0x200e1e0d)]))))),
-    Positioned(top:0,left:0,right:0,height:height*.43,child:GestureDetector(key:const ValueKey('swipeable-mushroom-wheel'),behavior:HitTestBehavior.translucent,onHorizontalDragEnd:_swipeObservation,child:Padding(padding:const EdgeInsets.fromLTRB(8,8,8,0),child:Column(children:[
+    Positioned(top:0,left:0,right:0,height:height*.43,child:GestureDetector(key:const ValueKey('swipeable-mushroom-wheel'),behavior:HitTestBehavior.translucent,onHorizontalDragEnd:_swipeObservation,child:Padding(padding:const EdgeInsets.fromLTRB(8,8,8,0),child:FittedBox(fit:BoxFit.scaleDown,alignment:Alignment.topCenter,child:SizedBox(width:limits.maxWidth-16,child:Column(mainAxisSize:MainAxisSize.min,children:[
       _capDots(),
       const SizedBox(height:5),
       GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.opaque,onTap:_showPossibilities,child:Semantics(button:true,label:'Bekijk de levende mogelijkheden',child:Column(children:[
-        Text(ended?'DETERMINATIE VOLTOOID':'OBSERVATIE ${route.length+1}',style:const TextStyle(color:Color(0xfffff4de),fontSize:10,fontWeight:FontWeight.w800,letterSpacing:1)),
+        Text(ended?'Determinatie voltooid':'Observatie ${route.length+1}',style:const TextStyle(color:Color(0xfffff4de),fontSize:10,fontWeight:FontWeight.w800,letterSpacing:1)),
         const SizedBox(height:3),
-        Text(current.title,textAlign:TextAlign.center,maxLines:2,style:const TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black,blurRadius:10)])),
-        Text('${result.remaining.length} mogelijkheden · ${current.title}',maxLines:1,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,style:const TextStyle(color:Color(0xfffff3d9),fontSize:10,shadows:[Shadow(color:Colors.black,blurRadius:6)])),
+        Text('${result.remaining.length} mogelijkheden · ${current.title}',textAlign:TextAlign.center,maxLines:2,style:const TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black,blurRadius:10)])),
+
       ]))),
-    ])))),
+    ])))))),
     Positioned(top:height*.43,left:12,right:12,bottom:height*.07,child:_wheelStack(answers.length)),
     Positioned(bottom:5,left:8,right:8,child:Text('VEEG OVER DE RINGEN · TIK OM TE KIEZEN',textAlign:TextAlign.center,style:TextStyle(fontSize:9,fontWeight:FontWeight.w700,letterSpacing:.5,color:Colors.white,shadows:[Shadow(color:Colors.black,blurRadius:5)]))),
   ])));
@@ -434,11 +434,15 @@ Widget _candidateTile(Candidate x,{bool evidence=false})=>Card(
 );
 Widget _candidatePanel(DeterminationResult r)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
   Row(children:[Expanded(child:Text('Mogelijke groepen: ${r.remaining.length} · beste overeenkomst eerst',style:const TextStyle(fontSize:12,fontWeight:FontWeight.bold))),TextButton(onPressed:()=>setState(()=>showExcluded=!showExcluded),child:Text('${r.excluded.length} uitgesloten'))]),
-  if(r.remaining.isNotEmpty)...[
-    Text(r.remaining.map((x)=>x.name).join(' · '),maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11)),
-    Text(r.remaining.first.score(answers).label,style:const TextStyle(fontSize:11,color:Color(0xff315d35))),
-    Align(alignment:Alignment.centerRight,child:TextButton.icon(onPressed:_showPossibilities,icon:const Icon(Icons.view_list_outlined,size:18),label:const Text('Bekijk mogelijkheden'))),
-  ],
+  SingleChildScrollView(scrollDirection:Axis.horizontal,child:Row(children:r.remaining.map((x){
+    final score=x.score(answers),hard=x.supporting(answers),soft=x.typicalSupporting(answers);
+    final evidence=<String>[if(hard.isNotEmpty)'Hard: ${hard.join(' • ')}',if(soft.isNotEmpty)'Aanvullend, niet uitsluitend: ${soft.join(' • ')}'];
+    return Padding(padding:const EdgeInsets.only(right:6),child:Tooltip(message:evidence.isEmpty?'Nog geen specifiek bevestigend bronkenmerk vastgelegd':evidence.join('\n'),child:Chip(
+      avatar:Icon(score.complete?Icons.task_alt:Icons.pending_outlined,size:16),
+      label:Text('${x.name} · ${score.percent==null?'—':'${score.percent}%'} · ${(score.coverage*100).round()}% dekking'),
+    )));
+  }).toList())),
+  Align(alignment:Alignment.centerRight,child:TextButton.icon(onPressed:_showPossibilities,icon:const Icon(Icons.view_list_outlined,size:18),label:const Text('Bekijk mogelijkheden'))),
   if(showExcluded)...r.excluded.entries.map((e)=>ListTile(dense:true,leading:const Icon(Icons.block,size:18),title:Text(e.key.name),subtitle:Text(e.value))),
 ]);
 Widget _resultPanel(DeterminationResult r){final key=detailKeyFor(genusHint:r.genusHint,candidateNames:r.remaining.map((x)=>x.name));return Column(children:[const Icon(Icons.fact_check_outlined,size:48),if(r.remaining.length>1)const Padding(padding:EdgeInsets.only(bottom:8),child:Text('Gerangschikt op overeenkomst met harde bronkenmerken; aanvullende bronkenmerken breken alleen gelijke scores en sluiten nooit uit. Dit is geen waarschijnlijkheidsrangschikking.',textAlign:TextAlign.center)),if(r.genusHint!=null)ListTile(leading:const Icon(Icons.call_split),title:Text('Bronondersteunde geslachtssplitsing: ${r.genusHint}')),...r.remaining.map((x)=>_candidateTile(x,evidence:true)),if(key!=null)Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[Text(key.title,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),const SizedBox(height:6),Text(key.sourceNote,textAlign:TextAlign.center),const SizedBox(height:10),FilledButton.icon(onPressed:()=>_openDetailKey(key),icon:const Icon(Icons.account_tree_outlined),label:const Text('Open detailsleutel'))])))else const Text('Voor deze kandidaat bevat de huidige bronset nog geen eenduidige gecodeerde detailsleutel. Vul geen soortnaam in op basis van aannames.',textAlign:TextAlign.center),const SizedBox(height:12),const Text('De matchscore is géén kans dat de determinatie juist is: hij geeft alleen aan welk deel van de voor die kandidaat gecodeerde, beoordeelde kenmerken overeenkomt. Onbekende kenmerken tellen niet als fout. Sommige taxa vragen microscopie, chemische kenmerken of DNA voor verdere bevestiging.',textAlign:TextAlign.center),const SizedBox(height:12),Card(color:Theme.of(context).colorScheme.errorContainer,child:const Padding(padding:EdgeInsets.all(12),child:Text(determinationSafetyWarning))),FilledButton.icon(onPressed:reset,icon:const Icon(Icons.restart_alt),label:const Text('Nieuwe determinatie'))]);}
