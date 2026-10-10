@@ -36,10 +36,9 @@ void main() {
       });
       await tester.pumpAndSettle();
       expect(tester.takeException(),isNull);
-      for(var i=0;i<5;i++) {
-        expect(find.byKey(ValueKey('cap-dot-$i')),findsOneWidget);
-        expect(find.byKey(ValueKey('stem-wheel-$i')),findsOneWidget);
-      }
+      expect(find.byKey(const ValueKey('choice-dial')),findsOneWidget);
+      expect(find.byKey(const ValueKey('observation-dial')),findsOneWidget);
+      expect(find.byKey(const ValueKey('confirm-top-choice')),findsOneWidget);
       await tester.runAsync(() async {
         final render=boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
         final image=await render.toImage();

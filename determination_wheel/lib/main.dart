@@ -5,6 +5,7 @@ import 'detail_keys.dart';
 import 'photographic_assets.dart';
 import 'source_catalog.dart';
 import 'wheel_steps.dart';
+import 'photographic_rotary_wheel.dart';
 const determinationSafetyWarning='Niet gebruiken als bewijs van eetbaarheid. Bevestig een determinatie onafhankelijk.';
 void main()=>runApp(const App());
 class App extends StatelessWidget{const App({super.key,this.skipSplash=false});final bool skipSplash;@override Widget build(BuildContext context)=>MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData(fontFamily:'FieldSans',colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xff315d35)),scaffoldBackgroundColor:const Color(0xfffaf5e8),cardTheme:const CardThemeData(color:Color(0xfffffbf1),surfaceTintColor:Colors.transparent),useMaterial3:true),home:skipSplash?const Wheel():const _WheelSplash());}
@@ -97,6 +98,7 @@ class Wheel extends StatefulWidget{const Wheel({super.key});@override State<Whee
 class _WheelState extends State<Wheel> {
   int step = 1;
   bool ended = false;
+  bool circularView = true;
   bool showExcluded = false;
   final answers = <int, String>{};
   final route = <String>[];
@@ -173,6 +175,7 @@ Widget build(BuildContext context) {
         const Expanded(child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Wiel',style:TextStyle(fontSize:18,fontWeight:FontWeight.w800)),Text('Gerards Paddestoelen Wegwijzer',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:10))])),
       ]),
       actions:[
+        IconButton(tooltip:circularView?'Routeoverzicht':'Cirkelweergave',onPressed:()=>setState(()=>circularView=!circularView),icon:Icon(circularView?Icons.view_list_outlined:Icons.donut_large)),
         IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),
         IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt_rounded)),
         IconButton(tooltip:'Hulp bij waarnemen',onPressed:_showObservationHelp,icon:const Icon(Icons.help_outline_rounded)),
@@ -181,6 +184,10 @@ Widget build(BuildContext context) {
     body:Stack(children:[
       const Positioned.fill(child:WoodlandBackground()),
       SafeArea(child:LayoutBuilder(builder:(context,b){
+        if(circularView&&!ended) return PhotographicRotaryWheel(
+          key:ValueKey('rotary-step-$step'),current:current,reached:[...history,step],
+          onChoose:choose,onObservation:_selectObservation,
+          onPossibilities:_showPossibilities,remaining:result.remaining.length);
         if(b.maxWidth<850&&b.maxWidth<=b.maxHeight*1.35) return _mobilePanel(current);
         return Padding(padding:const EdgeInsets.all(24),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
           Expanded(flex:4,child:Center(child:ConstrainedBox(constraints:const BoxConstraints(maxWidth:480),child:_mushroomInstrument(current,height:b.maxHeight>560?560:b.maxHeight)))),

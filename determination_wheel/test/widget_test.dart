@@ -7,6 +7,8 @@ void main(){
   Future<void> openWheel(WidgetTester tester) async {
     await tester.pumpWidget(const App(skipSplash: true));
     await tester.pump();
+    await tester.tap(find.byTooltip('Routeoverzicht'));
+    await tester.pumpAndSettle();
   }
 
   testWidgets('stem swipe opens the reachable observation selector', (tester) async {
@@ -16,6 +18,7 @@ void main(){
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const App(skipSplash:true));
     await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Routeoverzicht'));await tester.pumpAndSettle();
     await tester.drag(find.byKey(const ValueKey('stem-wheel-0')),const Offset(-100,0));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('observation-wheel')),findsOneWidget);
