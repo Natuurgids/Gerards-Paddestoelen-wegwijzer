@@ -1,3 +1,4 @@
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'determination_engine.dart';
@@ -156,7 +157,7 @@ void _openGroup(int index){
   if(!_groupReachable(index))return;
   final group=_wheelGroups[index];
   _openWheelSelector(group.title,group.steps);
-}@override Widget build(BuildContext context){final current=wheelSteps[step]!;return Scaffold(backgroundColor:const Color(0xfff6f8f1),appBar:AppBar(backgroundColor:Colors.white,surfaceTintColor:Colors.transparent,titleSpacing:14,title:Row(children:[ClipRRect(borderRadius:BorderRadius.circular(11),child:Image.asset('assets/app_icon.png',width:42,height:42,fit:BoxFit.cover)),const SizedBox(width:12),Text('Wiel',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.w800,color:const Color(0xff315d35)))]),actions:[IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt_rounded)),const SizedBox(width:4)]),body:SafeArea(child:LayoutBuilder(builder:(context,b){final mobile=b.maxWidth<850;return Padding(padding:EdgeInsets.fromLTRB(mobile?12:24,12,mobile?12:24,12),child:mobile?_mobilePanel(current):Row(children:[Expanded(flex:4,child:_wheel(current)),const SizedBox(width:24),Expanded(flex:6,child:_panel(current))]));})));}
+}@override Widget build(BuildContext context){final current=wheelSteps[step]!;return Scaffold(backgroundColor:const Color(0xfff6f8f1),appBar:AppBar(backgroundColor:Colors.white,surfaceTintColor:Colors.transparent,titleSpacing:14,title:Row(children:[ClipRRect(borderRadius:BorderRadius.circular(11),child:Image.asset('assets/app_icon.png',width:42,height:42,fit:BoxFit.cover)),const SizedBox(width:12),Flexible(child:Text('Gerards Paddestoelen Wegwijzer',maxLines:2,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w900,color:const Color(0xff315d35))))]),actions:[IconButton(tooltip:'Vorige observatie',onPressed:history.isEmpty?null:back,icon:const Icon(Icons.undo_rounded)),IconButton(tooltip:'Nieuwe determinatie',onPressed:reset,icon:const Icon(Icons.restart_alt_rounded)),const SizedBox(width:4)]),body:SafeArea(child:LayoutBuilder(builder:(context,b){final mobile=b.maxWidth<850;return Padding(padding:EdgeInsets.fromLTRB(mobile?12:24,12,mobile?12:24,12),child:mobile?_mobilePanel(current):Row(children:[Expanded(flex:4,child:_wheel(current)),const SizedBox(width:24),Expanded(flex:6,child:_panel(current))]));})));}
 void _swipeObservation(DragEndDetails details){
   final speed=details.primaryVelocity??0;
   if(speed.abs()<180)return;
@@ -172,7 +173,7 @@ Widget _mobilePanel(WheelStep current){return Column(children:[
 Widget _mushroomInstrument(WheelStep current){
   final possibilities=result.remaining.length;
   return SizedBox(height:330,child:Stack(alignment:Alignment.topCenter,clipBehavior:Clip.none,children:[
-    Positioned.fill(child:ClipRRect(borderRadius:BorderRadius.circular(24),child:Image.asset('assets/photographs/habitat_tree_group_mixed_woodland.png',fit:BoxFit.cover,errorBuilder:(_,__,___)=>Image.asset('assets/photographs/growth_position_terrestrial.png',fit:BoxFit.cover)))),
+    Positioned.fill(child:ClipRRect(borderRadius:BorderRadius.circular(24),child:ImageFiltered(imageFilter:ImageFilter.blur(sigmaX:2.5,sigmaY:2.5),child:Image.asset('assets/photographs/habitat_tree_group_mixed_woodland.png',fit:BoxFit.cover,errorBuilder:(_,__,___)=>Image.asset('assets/photographs/growth_position_terrestrial.png',fit:BoxFit.cover))))),
     Positioned.fill(child:DecoratedBox(decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[const Color(0xff09200d).withValues(alpha:.40),const Color(0xff19391e).withValues(alpha:.15),const Color(0xff07140a).withValues(alpha:.73)])))),
     Positioned(top:5,left:16,right:16,height:150,child:IgnorePointer(child:Stack(fit:StackFit.expand,children:[
       ClipPath(clipper:_MushroomCapClipper(),child:ColorFiltered(colorFilter:const ColorFilter.mode(Color(0xffe66b4e),BlendMode.modulate),child:Image.asset('assets/photographs/cap_color_red.png',fit:BoxFit.cover,errorBuilder:(_,__,___)=>Image.asset('assets/photographs/fruitbody_form_cap_stem.png',fit:BoxFit.cover)))),
