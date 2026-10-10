@@ -63,7 +63,7 @@ class ResilientIdentificationRepository extends IdentificationRepository {
             stemDiameterCm: stemDiameterCm,
           )
           .timeout(_databaseBudget);
-      return _inNetherlands(results);
+      return await _inNetherlands(results);
     } on Object {
       return _inNetherlands(await _identifyFromAssets(languageCode, selected));
     }
@@ -116,7 +116,9 @@ class ResilientIdentificationRepository extends IdentificationRepository {
       if (link == null) continue;
       mapped.add(link.speciesId);
       if (known.containsKey(relation['trait_id']) &&
-          recordedOptions.contains(known[relation['trait_id']])) assessable.add(link.speciesId);
+          recordedOptions.contains(known[relation['trait_id']])) {
+        assessable.add(link.speciesId);
+      }
     }
     return IdentificationCoverage(
       total: links.values.map((link) => link.speciesId).toSet().length,

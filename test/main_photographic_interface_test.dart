@@ -67,14 +67,14 @@ void main() {
     expect(find.textContaining('0/23'), findsOneWidget);
     final semantics = tester.ensureSemantics();
     final choice = tester.getSemantics(find.byKey(const ValueKey('trait-choice-dial')));
-    tester.binding.pipelineOwner.semanticsOwner!.performAction(choice.id, ui.SemanticsAction.increase);
+    choice.owner!.performAction(choice.id, ui.SemanticsAction.increase);
     await tester.pump();
     expect(find.textContaining('0/23'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('confirm-trait')));
     await tester.pumpAndSettle();
     expect(find.textContaining('1/23'), findsOneWidget);
     final group = tester.getSemantics(find.byKey(const ValueKey('trait-group-dial')));
-    tester.binding.pipelineOwner.semanticsOwner!.performAction(group.id, ui.SemanticsAction.decrease);
+    group.owner!.performAction(group.id, ui.SemanticsAction.decrease);
     await tester.pump();
     expect(find.textContaining('1/23'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('open-trait-group')));

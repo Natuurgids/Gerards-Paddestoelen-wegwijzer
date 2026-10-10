@@ -113,7 +113,7 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
                   maxLines: 3, textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: _gold, fontSize: 11,
-                    fontWeight: FontWeight.bold))))))),
+                    fontWeight: FontWeight.bold)))))))),
         Positioned(top: 0, child: IgnorePointer(child:
           Icon(Icons.arrow_drop_down, color: _gold, size: size * .1))),
         Positioned(top: size * .22, child: const IgnorePointer(child:
@@ -131,7 +131,7 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
           ? Row(children: [Expanded(flex: 6, child: wheel()),
             Expanded(flex: 4, child: SingleChildScrollView(child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [heading(), const SizedBox(height: 10), controls()]))])])
+              children: [heading(), const SizedBox(height: 10), controls()])))])
           : Column(children: [heading(), Expanded(child: wheel()), controls()]));
       })));
 }

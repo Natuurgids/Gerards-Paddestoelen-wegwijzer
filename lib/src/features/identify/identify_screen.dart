@@ -109,7 +109,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
     );
     IdentificationCoverage? coverage;
     if (_repo is ResilientIdentificationRepository) {
-      coverage = await (_repo as ResilientIdentificationRepository).coverage(_selected);
+      coverage = await _repo.coverage(_selected);
     }
     if (mounted) setState(() { _results = results; _coverage = coverage; });
   }
