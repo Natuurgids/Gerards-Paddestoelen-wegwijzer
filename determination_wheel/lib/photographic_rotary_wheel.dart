@@ -63,7 +63,7 @@ class _PhotographicRotaryWheelState extends State<PhotographicRotaryWheel> {
           onTap: widget.reached[observation] == widget.reached.last ? null : ()=>widget.onObservation(widget.reached[observation]),
           child: Center(child: Padding(padding: const EdgeInsets.all(6), child: Text(
             widget.reached[observation] == widget.reached.last ? 'Draai om\nte kijken' : 'Open\nobservatie',
-            maxLines: 3, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))))),
+            maxLines: 3, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)))))),
       ]))),
       Positioned(top: 0, child: IgnorePointer(child: Icon(Icons.arrow_drop_down, color: const Color(0xffffdda1), size: diameter*.11))),
       Positioned(top: diameter*.225, child: const IgnorePointer(child: Icon(Icons.arrow_drop_down, color: Color(0xffffdda1), size: 22))),
