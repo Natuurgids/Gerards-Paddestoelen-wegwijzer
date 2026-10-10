@@ -123,6 +123,8 @@ class _PhotoDialState extends State<_PhotoDial> {
     final radius=size/2;
     return Semantics(label: widget.small ? 'Observatieschijf' : 'Keuzeschijf',
       value: widget.labels[widget.selected],
+      increasedValue: widget.labels[(widget.selected+1)%widget.labels.length],
+      decreasedValue: widget.labels[(widget.selected-1)%widget.labels.length],
       onIncrease: ()=>widget.onSelected((widget.selected+1)%widget.labels.length),
       onDecrease: ()=>widget.onSelected((widget.selected-1)%widget.labels.length),
       child: GestureDetector(behavior: HitTestBehavior.opaque,
@@ -135,16 +137,16 @@ class _PhotoDialState extends State<_PhotoDial> {
               child: GestureDetector(onTap: ()=>widget.onSelected(i), child: Stack(fit: StackFit.expand, children: [
                 Image.asset(woodlandBackgroundAsset, fit: BoxFit.cover),
                 Positioned(
-                  left: radius+math.cos(-math.pi/2+rotation+i*slice)*radius*.76-size*.33,
-                  top: radius+math.sin(-math.pi/2+rotation+i*slice)*radius*.76-size*.33,
-                  width: size*.66, height: size*.66,
-                  child: Image.asset(widget.photos[i], fit: BoxFit.cover)),
+                  left: widget.labels.length==1 ? 0 : radius+math.cos(-math.pi/2+rotation+i*slice)*radius*.76-size*.33,
+                  top: widget.labels.length==1 ? 0 : radius+math.sin(-math.pi/2+rotation+i*slice)*radius*.76-size*.33,
+                  width: widget.labels.length==1 ? size : size*.66, height: widget.labels.length==1 ? size : size*.66,
+                  child: Image.asset(widget.photos[i], fit: BoxFit.cover, cacheWidth: widget.small ? 256 : 768)),
                 ColoredBox(color: i==widget.selected ? const Color(0x18322c1a) : const Color(0x55322c1a)),
               ])))),
             if(!widget.small || i==widget.selected) Positioned(
-              left: radius+math.cos(-math.pi/2+rotation+i*slice)*radius*(widget.small ? .77 : .76)-size*(widget.small ? .15 : .19),
-              top: radius+math.sin(-math.pi/2+rotation+i*slice)*radius*(widget.small ? .77 : .76)-size*(widget.small ? .07 : .06),
-              width: size*(widget.small ? .30 : .38),
+              left: radius+math.cos(-math.pi/2+rotation+i*slice)*radius*(widget.small ? .77 : .69)-size*(widget.small ? .15 : .14),
+              top: radius+math.sin(-math.pi/2+rotation+i*slice)*radius*(widget.small ? .77 : .69)-size*(widget.small ? .07 : .06),
+              width: size*(widget.small ? .30 : .28),
               child: GestureDetector(key: ValueKey('${widget.small ? 'observation' : 'choice'}-sector-$i'),
                 onTap: ()=>widget.onSelected(i),
                 child: Container(padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
@@ -153,7 +155,7 @@ class _PhotoDialState extends State<_PhotoDial> {
                     textScaler: TextScaler.linear(math.min(MediaQuery.textScalerOf(context).scale(1),1.3)),
                     style: TextStyle(color: const Color(0xfffff5de), fontSize: widget.small ? 8 : 12, fontWeight: FontWeight.w700))))),
           ],
-          Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _DialRim(widget.innerRatio)))),
+          Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _DialRim(widget.innerRatio,rotation,widget.labels.length)))),
         ])));
   });
 }
@@ -173,15 +175,21 @@ class _SectorClipper extends CustomClipper<Path> {
   bool shouldReclip(_SectorClipper old)=>angle!=old.angle||sweep!=old.sweep||inner!=old.inner;
 }
 class _DialRim extends CustomPainter {
-  const _DialRim(this.inner);
-  final double inner;
+  const _DialRim(this.inner,this.rotation,this.count);
+  final double inner,rotation;
+  final int count;
   @override
   void paint(Canvas canvas,Size size) {
     final paint=Paint()..color=const Color(0xffd8bb7e)..style=PaintingStyle.stroke..strokeWidth=3;
     final c=Offset(size.width/2,size.height/2);
     canvas.drawCircle(c,size.width/2-2,paint);
     canvas.drawCircle(c,size.width/2*inner,paint);
+    if(count>1) for(var i=0;i<count;i++) {
+      final a=-math.pi/2+rotation+(i-.5)*2*math.pi/count;
+      final unit=Offset(math.cos(a),math.sin(a));
+      canvas.drawLine(c+unit*(size.width/2*inner),c+unit*(size.width/2-2),paint..strokeWidth=1.5);
+    }
   }
   @override
-  bool shouldRepaint(_DialRim old)=>inner!=old.inner;
+  bool shouldRepaint(_DialRim old)=>inner!=old.inner||rotation!=old.rotation||count!=old.count;
 }
