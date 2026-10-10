@@ -217,7 +217,7 @@ void _swipeObservation(DragEndDetails details){
 Widget _mobilePanel(WheelStep current)=>LayoutBuilder(builder:(context,limits){
   final instrumentHeight=(limits.maxHeight*.48).clamp(270.0,410.0);
   return Column(children:[
-    GestureDetector(key:const ValueKey('swipeable-mushroom-wheel'),behavior:HitTestBehavior.translucent,onHorizontalDragEnd:_swipeObservation,child:_mushroomInstrument(current,height:instrumentHeight)),
+    _mushroomInstrument(current,height:instrumentHeight),
     Expanded(child:_panel(current,compact:true)),
   ]);
 });
@@ -225,7 +225,7 @@ Widget _mushroomInstrument(WheelStep current,{double height=460}) {
   return SizedBox(height:height,child:LayoutBuilder(builder:(context,limits)=>Stack(alignment:Alignment.topCenter,children:[
     Positioned.fill(child:ExcludeSemantics(child:Image.asset(mushroomInstrumentAsset,fit:BoxFit.fill))),
     const Positioned.fill(child:IgnorePointer(child:DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,stops:[0,.40,.62,1],colors:[Color(0x400e1e0d),Color(0x180e1e0d),Colors.transparent,Color(0x200e1e0d)]))))),
-    Positioned(top:8,left:8,right:8,child:Column(children:[
+    Positioned(top:0,left:0,right:0,height:height*.43,child:GestureDetector(key:const ValueKey('swipeable-mushroom-wheel'),behavior:HitTestBehavior.translucent,onHorizontalDragEnd:_swipeObservation,child:Padding(padding:const EdgeInsets.fromLTRB(8,8,8,0),child:Column(children:[
       _capDots(),
       const SizedBox(height:5),
       GestureDetector(key:const ValueKey('mushroom-cap'),behavior:HitTestBehavior.opaque,onTap:_showPossibilities,child:Semantics(button:true,label:'Bekijk de levende mogelijkheden',child:Column(children:[
@@ -234,7 +234,7 @@ Widget _mushroomInstrument(WheelStep current,{double height=460}) {
         Text(current.title,textAlign:TextAlign.center,maxLines:2,style:const TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black,blurRadius:10)])),
         Text('${result.remaining.length} mogelijkheden · ${current.title}',maxLines:1,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,style:const TextStyle(color:Color(0xfffff3d9),fontSize:10,shadows:[Shadow(color:Colors.black,blurRadius:6)])),
       ]))),
-    ])),
+    ])))),
     Positioned(top:height*.43,left:12,right:12,bottom:height*.07,child:_wheelStack(answers.length)),
     Positioned(bottom:5,left:8,right:8,child:Text('VEEG OVER DE RINGEN · TIK OM TE KIEZEN',textAlign:TextAlign.center,style:TextStyle(fontSize:9,fontWeight:FontWeight.w700,letterSpacing:.5,color:Colors.white,shadows:[Shadow(color:Colors.black,blurRadius:5)]))),
   ])));
@@ -405,7 +405,7 @@ Widget _panel(WheelStep current,{bool compact=false}){
           const SizedBox(height:10),
         ],
         if(answers.containsKey(4)&&!ended)...[_candidatePanel(r),const SizedBox(height:10)],
-        if(ended)_resultPanel(r)else if(compact&&MediaQuery.sizeOf(context).height>=700&&MediaQuery.textScalerOf(context).scale(12)<=16) LayoutBuilder(builder:(context,limits)=>GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:9,mainAxisSpacing:9,childAspectRatio:limits.maxWidth<350?.91:1.02),itemCount:current.options.length,itemBuilder:(context,i)=>_compactOptionCard(current.options[i]))) else...current.options.map(_optionCard),
+        if(ended)_resultPanel(r)else if(compact&&MediaQuery.sizeOf(context).height>=700&&MediaQuery.textScalerOf(context).scale(12)<=16) LayoutBuilder(builder:(context,limits)=>GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:9,mainAxisSpacing:9,childAspectRatio:limits.maxWidth < 350 ? 0.91 : 1.02),itemCount:current.options.length,itemBuilder:(context,i)=>_compactOptionCard(current.options[i]))) else...current.options.map(_optionCard),
         if(route.isNotEmpty)...[
           const Divider(height:28),
           Row(children:[const Expanded(child:Text('Gevolgde route',style:TextStyle(fontWeight:FontWeight.bold))),if(history.isNotEmpty)TextButton.icon(onPressed:back,icon:const Icon(Icons.undo),label:const Text('Vorige'))]),

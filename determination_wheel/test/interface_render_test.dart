@@ -16,11 +16,10 @@ void main() {
     testWidgets('Render ${spec.$1} with no layout or asset exceptions',(tester) async {
       tester.view.physicalSize=spec.$2;tester.view.devicePixelRatio=1;
       addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
+      tester.platformDispatcher.textScaleFactorTestValue=spec.$3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       final boundary=GlobalKey();
-      await tester.pumpWidget(RepaintBoundary(key:boundary,child:MaterialApp(
-        builder:(context,child)=>MediaQuery(data:MediaQuery.of(context).copyWith(textScaler:TextScaler.linear(spec.$3)),child:child!),
-        home:const Wheel(),
-      )));
+      await tester.pumpWidget(RepaintBoundary(key:boundary,child:const App(skipSplash:true)));
       await tester.pumpAndSettle();
       await tester.runAsync(() async {
         // Wait for all real asset decodes before capturing the rendered UI.
