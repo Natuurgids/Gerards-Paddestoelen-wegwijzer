@@ -69,3 +69,8 @@ SQLite v10 adds active-group and group-order metadata. Bundled content revision
 The main APK workflow analyzes and tests the main app, builds and validates the
 packaged SQLite database, renders five real Flutter layouts, and builds the
 main app APK with all offline assets. This is separate from the legacy wheel APK.
+
+The packaged catalogue also restores 118 global IUCN conservation-status records
+using the existing exact-name GBIF/IUCN importer, retrieved on 2026-10-10.
+These records do not provide morphology, national legal protection or edibility
+evidence. Dutch checklist membership and morphology counts are unchanged.
