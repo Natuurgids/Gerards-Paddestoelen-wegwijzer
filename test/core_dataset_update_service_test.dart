@@ -36,7 +36,7 @@ void main() {
     ).checkAndApply(db);
 
     expect(attempt.outcome, CoreDatasetUpdateAttemptOutcome.notConfigured);
-    expect(attempt.installedVersion, 1);
+    expect(attempt.installedVersion, bundledCoreDatasetVersion);
     expect(attempt.latestVersion, isNull);
     expect(bytes.requestedUris, isEmpty);
   });
@@ -48,7 +48,7 @@ void main() {
     ).checkAndApply(db);
 
     expect(attempt.outcome, CoreDatasetUpdateAttemptOutcome.unavailable);
-    expect(attempt.installedVersion, 1);
+    expect(attempt.installedVersion, bundledCoreDatasetVersion);
     expect(await db.query('species'), isEmpty);
     expect(
       await db.query(
@@ -63,13 +63,13 @@ void main() {
   test('configured verified update reports new installed version', () async {
     final manifestUri = Uri.parse('https://updates.example.org/latest.json');
     final packageUri = Uri.parse('https://updates.example.org/core-v2.json');
-    final packageBytes = _packageBytes(datasetVersion: 2);
+    final packageBytes = _packageBytes(datasetVersion: bundledCoreDatasetVersion + 1);
     final manifestBytes = Uint8List.fromList(
       utf8.encode(
         jsonEncode({
           'manifest_version': 1,
           'dataset_key': coreDatasetKey,
-          'dataset_version': 2,
+          'dataset_version': bundledCoreDatasetVersion + 1,
           'database_schema_version': DatabaseSchema.currentVersion,
           'published_at': '2026-09-05T07:30:00Z',
           'package_url': packageUri.toString(),
@@ -90,8 +90,8 @@ void main() {
     ).checkAndApply(db);
 
     expect(attempt.outcome, CoreDatasetUpdateAttemptOutcome.updated);
-    expect(attempt.installedVersion, 2);
-    expect(attempt.latestVersion, 2);
+    expect(attempt.installedVersion, bundledCoreDatasetVersion + 1);
+    expect(attempt.latestVersion, bundledCoreDatasetVersion + 1);
     expect(await db.query('species'), hasLength(1));
     expect(bytes.requestedUris, [manifestUri, packageUri]);
   });
@@ -107,14 +107,14 @@ void main() {
     ).checkAndApply(db);
 
     expect(attempt.outcome, CoreDatasetUpdateAttemptOutcome.rejected);
-    expect(attempt.installedVersion, 1);
+    expect(attempt.installedVersion, bundledCoreDatasetVersion);
     expect(await db.query('species'), isEmpty);
   });
 
   test('newer remote dataset prevents bundled reference overwrite', () async {
     await db.insert('bundled_content_state', {
       'content_key': coreDatasetKey,
-      'revision': 2,
+      'revision': bundledCoreDatasetVersion + 1,
       'synced_at': '2026-09-05T07:30:00Z',
     });
     var ranBundledSync = false;
@@ -139,7 +139,7 @@ void main() {
   test('bundled reference sync may run when remote version is not newer', () async {
     await db.insert('bundled_content_state', {
       'content_key': coreDatasetKey,
-      'revision': 1,
+      'revision': bundledCoreDatasetVersion,
       'synced_at': '2026-09-05T07:30:00Z',
     });
     var ranBundledSync = false;

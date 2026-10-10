@@ -26,11 +26,11 @@ void main() {
   });
 
   test('verified package downloads and applies newer dataset', () async {
-    final packageBytes = _packageBytes(datasetVersion: 2);
+    final packageBytes = _packageBytes(datasetVersion: bundledCoreDatasetVersion + 1);
     final packageUri = Uri.parse('https://updates.example.org/core-v2.json');
     final source = _FixedManifestSource(
       _manifest(
-        datasetVersion: 2,
+        datasetVersion: bundledCoreDatasetVersion + 1,
         packageUri: packageUri,
         packageBytes: packageBytes,
       ),
@@ -43,20 +43,20 @@ void main() {
     ).checkAndApply(db);
 
     expect(result.outcome, CoreDatasetUpdateOutcome.updated);
-    expect(result.installedBefore.datasetVersion, 1);
-    expect(result.installedAfter.datasetVersion, 2);
+    expect(result.installedBefore.datasetVersion, bundledCoreDatasetVersion);
+    expect(result.installedAfter.datasetVersion, bundledCoreDatasetVersion + 1);
     expect(await db.query('species'), hasLength(1));
     expect(bytes.requestedUris, [packageUri]);
   });
 
   test('SHA-256 mismatch is rejected before database activation', () async {
-    final packageBytes = _packageBytes(datasetVersion: 2);
+    final packageBytes = _packageBytes(datasetVersion: bundledCoreDatasetVersion + 1);
     final packageUri = Uri.parse('https://updates.example.org/core-v2.json');
     final source = _FixedManifestSource(
       CoreDatasetUpdateManifest.fromDecoded({
         'manifest_version': 1,
         'dataset_key': coreDatasetKey,
-        'dataset_version': 2,
+        'dataset_version': bundledCoreDatasetVersion + 1,
         'database_schema_version': DatabaseSchema.currentVersion,
         'published_at': '2026-09-05T07:00:00Z',
         'package_url': packageUri.toString(),
@@ -85,12 +85,12 @@ void main() {
   });
 
   test('package size mismatch is rejected before hash or activation', () async {
-    final packageBytes = _packageBytes(datasetVersion: 2);
+    final packageBytes = _packageBytes(datasetVersion: bundledCoreDatasetVersion + 1);
     final packageUri = Uri.parse('https://updates.example.org/core-v2.json');
     final manifest = CoreDatasetUpdateManifest.fromDecoded({
       'manifest_version': 1,
       'dataset_key': coreDatasetKey,
-      'dataset_version': 2,
+      'dataset_version': bundledCoreDatasetVersion + 1,
       'database_schema_version': DatabaseSchema.currentVersion,
       'published_at': '2026-09-05T07:00:00Z',
       'package_url': packageUri.toString(),
@@ -132,13 +132,13 @@ void main() {
 
   test('remote manifest source pins package to configured HTTPS origin', () async {
     final manifestUri = Uri.parse('https://updates.example.org/latest.json');
-    final packageBytes = _packageBytes(datasetVersion: 2);
+    final packageBytes = _packageBytes(datasetVersion: bundledCoreDatasetVersion + 1);
     final packageUri = Uri.parse('https://cdn.example.net/core-v2.json');
     final manifestBytes = Uint8List.fromList(
       utf8.encode(
         jsonEncode(
           _manifestDecoded(
-            datasetVersion: 2,
+            datasetVersion: bundledCoreDatasetVersion + 1,
             packageUri: packageUri,
             packageBytes: packageBytes,
           ),

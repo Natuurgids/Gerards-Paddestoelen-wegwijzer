@@ -36,14 +36,14 @@ void main() {
     });
 
     final manifest = _manifest(
-      datasetVersion: 2,
+      datasetVersion: bundledCoreDatasetVersion + 1,
       components: const ['species_catalog', 'training_content'],
     );
     await CoreDatasetPackageApplier.apply(
       db,
       manifest,
       _package(
-        datasetVersion: 2,
+        datasetVersion: bundledCoreDatasetVersion + 1,
         components: {
           'species_catalog': _catalogue(),
           'training_content': _training(),
@@ -70,17 +70,17 @@ void main() {
       where: 'content_key=?',
       whereArgs: const [coreDatasetKey],
     );
-    expect(state.single['revision'], 2);
+    expect(state.single['revision'], bundledCoreDatasetVersion + 1);
     expect(state.single['synced_at'], '2026-09-05T04:00:00.000Z');
 
     final installed = await CoreDatasetInstalledState.load(db);
-    expect(installed.datasetVersion, 2);
+    expect(installed.datasetVersion, bundledCoreDatasetVersion + 1);
     expect(installed.databaseSchemaVersion, DatabaseSchema.currentVersion);
   });
 
   test('later component failure rolls back earlier component writes and state', () async {
     final manifest = _manifest(
-      datasetVersion: 2,
+      datasetVersion: bundledCoreDatasetVersion + 1,
       components: const ['species_catalog', 'training_content'],
     );
 
@@ -89,7 +89,7 @@ void main() {
         db,
         manifest,
         _package(
-          datasetVersion: 2,
+          datasetVersion: bundledCoreDatasetVersion + 1,
           components: {
             'species_catalog': _catalogue(),
             'training_content': _training(includeGermanText: false),
@@ -114,14 +114,14 @@ void main() {
 
   test('package metadata and component set must exactly match manifest', () {
     final manifest = _manifest(
-      datasetVersion: 2,
+      datasetVersion: bundledCoreDatasetVersion + 1,
       components: const ['species_catalog'],
     );
 
     expect(
       () => CoreDatasetPackage.fromDecoded(
         _package(
-          datasetVersion: 3,
+          datasetVersion: bundledCoreDatasetVersion + 2,
           components: {'species_catalog': _catalogue()},
         ),
         manifest,
@@ -131,7 +131,7 @@ void main() {
     expect(
       () => CoreDatasetPackage.fromDecoded(
         _package(
-          datasetVersion: 2,
+          datasetVersion: bundledCoreDatasetVersion + 1,
           components: {
             'species_catalog': _catalogue(),
             'training_content': _training(),
@@ -145,14 +145,14 @@ void main() {
 
   test('trait base and supplemental data must move together', () {
     final manifest = _manifest(
-      datasetVersion: 2,
+      datasetVersion: bundledCoreDatasetVersion + 1,
       components: const ['identification_traits'],
     );
 
     expect(
       () => CoreDatasetPackage.fromDecoded(
         _package(
-          datasetVersion: 2,
+          datasetVersion: bundledCoreDatasetVersion + 1,
           components: {
             'identification_traits': const {
               'traits': <dynamic>[],
@@ -168,14 +168,14 @@ void main() {
 
   test('learning catalog waits for staged file activation layer', () {
     final manifest = _manifest(
-      datasetVersion: 2,
+      datasetVersion: bundledCoreDatasetVersion + 1,
       components: const ['learning_catalog'],
     );
 
     expect(
       () => CoreDatasetPackage.fromDecoded(
         _package(
-          datasetVersion: 2,
+          datasetVersion: bundledCoreDatasetVersion + 1,
           components: {
             'learning_catalog': const {
               'version': 1,
@@ -201,11 +201,11 @@ void main() {
   test('same or older dataset cannot be applied over installed remote data', () async {
     await db.insert('bundled_content_state', {
       'content_key': coreDatasetKey,
-      'revision': 3,
+      'revision': bundledCoreDatasetVersion + 2,
       'synced_at': '2026-09-05T04:00:00Z',
     });
     final manifest = _manifest(
-      datasetVersion: 3,
+      datasetVersion: bundledCoreDatasetVersion + 2,
       components: const ['species_catalog'],
     );
 
@@ -214,7 +214,7 @@ void main() {
         db,
         manifest,
         _package(
-          datasetVersion: 3,
+          datasetVersion: bundledCoreDatasetVersion + 2,
           components: {'species_catalog': _catalogue()},
         ),
       ),

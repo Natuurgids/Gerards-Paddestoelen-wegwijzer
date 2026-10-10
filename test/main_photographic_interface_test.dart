@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gerards_paddestoelen_wegwijzer/l10n/app_localizations.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/models.dart';
+import 'package:gerards_paddestoelen_wegwijzer/src/data/reference_asset_store.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/data/repositories.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/identify_screen.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/photographic_trait_wheel.dart';
@@ -19,6 +20,7 @@ Widget app() => MaterialApp(
 );
 void main() {
   setUpAll(() async {
+    await ReferenceAssetStore.instance.traitChoices('nl');
     await (FontLoader('Roboto')..addFont(rootBundle.load(
       'determination_wheel/assets/fonts/Roboto-Regular.ttf'))).load();
     await (FontLoader('MaterialIcons')..addFont(rootBundle.load(
