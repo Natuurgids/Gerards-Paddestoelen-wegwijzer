@@ -55,7 +55,7 @@ void main() {
     );
 
     final choices = await repo.choices('nl');
-    expect(choices, hasLength(139));
+    expect(choices, hasLength(341));
 
     final candidates = await repo.identify('nl', {1: 1});
     expect(candidates, isNotEmpty);

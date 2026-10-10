@@ -15,6 +15,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: IdentifyScreen(
+          initialWheel: false,
           locale: const Locale('en'),
           repository: _TraitRepository(),
           fieldDataRepository: _EmptyFieldDataRepository(),

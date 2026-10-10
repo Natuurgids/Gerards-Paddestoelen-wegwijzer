@@ -56,6 +56,8 @@ class TraitManifestImporter {
         'code': trait['code'] as String,
         'category': trait['category'] as String,
         'value_type': 'choice',
+        'is_active': trait['active'] == false ? 0 : 1,
+        'sort_order': trait['sort_order'] as int? ?? traitId,
       });
 
       final labels = trait['labels'] as Map<String, dynamic>;

@@ -150,7 +150,7 @@ class IdentificationRepository {
       '''SELECT tr.id trait_id, tr.code trait_code, COALESCE(tt.label, tr.category) trait_label,
       o.id option_id, txt.label option_label FROM trait tr JOIN trait_option o ON o.trait_id=tr.id
       JOIN trait_option_text txt ON txt.option_id=o.id AND txt.language_code=? LEFT JOIN trait_text tt ON tt.trait_id=tr.id AND tt.language_code=?
-      WHERE tr.value_type='choice' ORDER BY tr.id, o.sort_order''',
+      WHERE tr.value_type='choice' AND tr.is_active=1 ORDER BY tr.sort_order, tr.id, o.sort_order''',
       [languageCode, languageCode],
     );
     return rows
@@ -270,6 +270,7 @@ class IdentificationRepository {
         score: breakdown.combinedScore,
         matched: candidate.matched,
         requested: candidate.requested,
+        evaluated: candidate.evaluated,
         fieldScore: breakdown.fieldScore,
         fieldMatched: field.matched,
         fieldRequested: field.evaluated,
@@ -325,17 +326,20 @@ class IdentificationRepository {
       per_trait AS (
         SELECT s.id species_id, sel.trait_id,
           MAX(CASE WHEN st.option_id = sel.option_id THEN COALESCE(st.weight, 1.0) ELSE 0 END) matched_weight,
-          COALESCE(MAX(st.weight), 1.0) total_weight,
+          CASE WHEN covered.option_id IS NULL THEN 0.0 ELSE COALESCE(MAX(st.weight), 0.0) END total_weight,
+          MAX(CASE WHEN covered.option_id IS NOT NULL AND st.option_id IS NOT NULL THEN 1 ELSE 0 END) evaluated,
           MAX(CASE WHEN st.option_id = sel.option_id THEN 1 ELSE 0 END) matched
-        FROM species s CROSS JOIN selected sel LEFT JOIN species_trait st ON st.species_id=s.id AND st.trait_id=sel.trait_id
+        FROM species s CROSS JOIN selected sel
+        LEFT JOIN (SELECT DISTINCT option_id FROM species_trait) covered ON covered.option_id=sel.option_id
+        LEFT JOIN species_trait st ON st.species_id=s.id AND st.trait_id=sel.trait_id
         GROUP BY s.id, sel.trait_id
       ), scores AS (
-        SELECT species_id, SUM(matched_weight) matched_weight, SUM(total_weight) total_weight, SUM(matched) matched_count
+        SELECT species_id, SUM(matched_weight) matched_weight, SUM(total_weight) total_weight, SUM(matched) matched_count, SUM(evaluated) evaluated_count
         FROM per_trait GROUP BY species_id
       )
       SELECT s.id, t.scientific_name, txt.common_name, txt.summary,
         (SELECT asset_path FROM species_image si WHERE si.species_id=s.id ORDER BY si.is_primary DESC, si.sort_order LIMIT 1) image_path,
-        scores.matched_weight / NULLIF(scores.total_weight, 0) score, scores.matched_count
+        COALESCE(scores.matched_weight / NULLIF(scores.total_weight, 0), 0) score, scores.matched_count, scores.evaluated_count
       FROM scores JOIN species s ON s.id=scores.species_id JOIN taxon t ON t.id=s.taxon_id JOIN species_text txt ON txt.species_id=s.id AND txt.language_code=?
       $matchFilter ORDER BY score DESC, scores.matched_count DESC, txt.common_name COLLATE NOCASE LIMIT 50''',
       args,
@@ -353,6 +357,7 @@ class IdentificationRepository {
             score: (r['score'] as num).toDouble(),
             matched: (r['matched_count'] as num).toInt(),
             requested: selected.length,
+            evaluated: (r['evaluated_count'] as num).toInt(),
           ),
         )
         .toList();

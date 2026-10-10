@@ -210,8 +210,13 @@ class ReferenceAssetStore {
   Future<List<TraitChoice>> traitChoices(String languageCode) async {
     final manifest = await traits;
     final result = <TraitChoice>[];
-    for (final raw in manifest['traits'] as List<dynamic>? ?? const []) {
-      final trait = raw as Map<String, dynamic>;
+    final ordered = (manifest['traits'] as List<dynamic>? ?? const [])
+        .cast<Map<String, dynamic>>().toList()
+      ..sort((a, b) => (a['sort_order'] as int? ?? a['id'] as int)
+          .compareTo(b['sort_order'] as int? ?? b['id'] as int));
+    for (final raw in ordered) {
+      final trait = raw;
+      if (trait['active'] == false) continue;
       final traitId = trait['id'] as int;
       final traitCode = trait['code'] as String;
       final traitLabel = _localized(

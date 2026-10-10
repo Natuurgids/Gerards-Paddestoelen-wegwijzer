@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 import 'models.dart';
+import 'dutch_identification_scope.dart';
 import 'reference_asset_store.dart';
 import 'repositories.dart';
 
@@ -39,6 +40,7 @@ class ResilientIdentificationRepository extends IdentificationRepository {
     double? stemHeightCm,
     double? stemDiameterCm,
   }) async {
+    selected = await _knownSelections(selected);
     final hasFieldEvidence =
         (observationMonth != null && seasonRegionCode != null) ||
             capDiameterCm != null ||
@@ -46,11 +48,11 @@ class ResilientIdentificationRepository extends IdentificationRepository {
             stemDiameterCm != null;
 
     if (!_preferDatabase && !hasFieldEvidence) {
-      return _identifyFromAssets(languageCode, selected);
+      return _inNetherlands(await _identifyFromAssets(languageCode, selected));
     }
 
     try {
-      return await super
+      final results = await super
           .identify(
             languageCode,
             selected,
@@ -61,9 +63,66 @@ class ResilientIdentificationRepository extends IdentificationRepository {
             stemDiameterCm: stemDiameterCm,
           )
           .timeout(_databaseBudget);
+      return _inNetherlands(results);
     } on Object {
-      return _identifyFromAssets(languageCode, selected);
+      return _inNetherlands(await _identifyFromAssets(languageCode, selected));
     }
+  }
+
+  Future<Map<int, int>> _knownSelections(Map<int, int> selected) async {
+    final manifest = await ReferenceAssetStore.instance.traits;
+    final valid = <int, Set<int>>{};
+    for (final raw in manifest['traits'] as List<dynamic>) {
+      final trait = raw as Map<String, dynamic>;
+      valid[trait['id'] as int] = {
+        for (final rawOption in trait['options'] as List<dynamic>)
+          if ((rawOption as Map<String, dynamic>)['code'] != 'uncertain')
+            rawOption['id'] as int,
+      };
+    }
+    return {for (final entry in selected.entries)
+      if (valid[entry.key]?.contains(entry.value) ?? false)
+        entry.key: entry.value};
+  }
+
+  Future<List<IdentificationCandidate>> _inNetherlands(
+    List<IdentificationCandidate> candidates,
+  ) async {
+    final links = await DutchIdentificationScope.instance.links;
+    final seen = <int>{};
+    return [for (final candidate in candidates)
+      if (links.containsKey(candidate.species.id) &&
+          seen.add(links[candidate.species.id]!.speciesId))
+        IdentificationCandidate(
+          species: candidate.species, score: candidate.score,
+          matched: candidate.matched, requested: candidate.requested,
+          evaluated: candidate.evaluated,
+          fieldScore: candidate.fieldScore, fieldMatched: candidate.fieldMatched,
+          fieldRequested: candidate.fieldRequested,
+          dutchRecordId: links[candidate.species.id]!.recordId,
+          dutchSpeciesId: links[candidate.species.id]!.speciesId,
+        ),
+    ];
+  }
+
+  Future<IdentificationCoverage> coverage(Map<int, int> selected) async {
+    final known = await _knownSelections(selected);
+    final links = await DutchIdentificationScope.instance.links;
+    final mapped = <int>{}, assessable = <int>{};
+    final relations = await _assetRelations();
+    final recordedOptions = relations.map((r) => r['option_id'] as int).toSet();
+    for (final relation in relations) {
+      final link = links[relation['species_id'] as int];
+      if (link == null) continue;
+      mapped.add(link.speciesId);
+      if (known.containsKey(relation['trait_id']) &&
+          recordedOptions.contains(known[relation['trait_id']])) assessable.add(link.speciesId);
+    }
+    return IdentificationCoverage(
+      total: links.values.map((link) => link.speciesId).toSet().length,
+      assessable: assessable.length, mapped: mapped.length,
+      selected: known.length,
+    );
   }
 
   Future<List<Map<String, dynamic>>> _assetRelations() async {
@@ -104,6 +163,7 @@ class ResilientIdentificationRepository extends IdentificationRepository {
     }
 
     final relations = await _assetRelations();
+    final recordedOptions = relations.map((r) => r['option_id'] as int).toSet();
     final bySpecies = <int, Map<int, List<Map<String, dynamic>>>>{};
     for (final relation in relations) {
       final speciesId = relation['species_id'] as int;
@@ -119,12 +179,16 @@ class ResilientIdentificationRepository extends IdentificationRepository {
       var matched = 0;
       var matchedWeight = 0.0;
       var totalWeight = 0.0;
+      var evaluated = 0;
       final Map<int, List<Map<String, dynamic>>> relationsByTrait =
           bySpecies[item.id] ?? const {};
       for (final selectedEntry in selected.entries) {
+        if (!recordedOptions.contains(selectedEntry.value)) continue;
         final traitRelations =
             relationsByTrait[selectedEntry.key] ?? const <Map<String, dynamic>>[];
-        var traitMaxWeight = 1.0;
+        if (traitRelations.isEmpty) continue;
+        evaluated++;
+        var traitMaxWeight = 0.0;
         var traitMatchedWeight = 0.0;
         for (final relation in traitRelations) {
           final weight = (relation['weight'] as num?)?.toDouble() ?? 1.0;
@@ -147,6 +211,7 @@ class ResilientIdentificationRepository extends IdentificationRepository {
           score: totalWeight == 0 ? 0 : matchedWeight / totalWeight,
           matched: matched,
           requested: selected.length,
+          evaluated: evaluated,
         ),
       );
     }

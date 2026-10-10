@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../data/models.dart';
+import '../../data/dutch_identification_scope.dart';
 import '../../data/repositories.dart';
 import '../../data/resilient_identification_repository.dart';
 import '../../theme/app_theme.dart';
@@ -10,6 +11,7 @@ import '../../widgets/safety_notice.dart';
 import '../species/species_screen.dart';
 import 'determination_option_visual.dart';
 import 'measurement_input.dart';
+import 'photographic_trait_wheel.dart';
 
 class IdentifyScreen extends StatefulWidget {
   const IdentifyScreen({
@@ -17,11 +19,13 @@ class IdentifyScreen extends StatefulWidget {
     required this.locale,
     this.repository,
     this.fieldDataRepository,
+    this.initialWheel = true,
   });
 
   final Locale locale;
   final IdentificationRepository? repository;
   final FieldDataRepository? fieldDataRepository;
+  final bool initialWheel;
 
   @override
   State<IdentifyScreen> createState() => _IdentifyScreenState();
@@ -43,10 +47,16 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
   MeasurementInputStatus? _stemError;
   MeasurementInputStatus? _stemDiameterError;
   bool _seasonMonthMissing = false;
+  late bool _rotary;
+  int _wheelRevision = 0;
+  IdentificationCoverage? _coverage;
+  String _text(String nl, String en, String de) =>
+      widget.locale.languageCode == 'nl' ? nl : widget.locale.languageCode == 'de' ? de : en;
 
   @override
   void initState() {
     super.initState();
+    _rotary = widget.initialWheel;
     _repo = widget.repository ?? ResilientIdentificationRepository();
     _fieldRepo = widget.fieldDataRepository ?? FieldDataRepository();
     _choices = _repo.choices(widget.locale.languageCode);
@@ -97,7 +107,11 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
       stemHeightCm: stem.value,
       stemDiameterCm: diameter.value,
     );
-    if (mounted) setState(() => _results = results);
+    IdentificationCoverage? coverage;
+    if (_repo is ResilientIdentificationRepository) {
+      coverage = await (_repo as ResilientIdentificationRepository).coverage(_selected);
+    }
+    if (mounted) setState(() { _results = results; _coverage = coverage; });
   }
 
   String _monthName(AppLocalizations l, int month) => [
@@ -474,6 +488,7 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
   List<Widget> _resultWidgets(AppLocalizations l) {
     if (_results == null) return const [];
     return [
+      if (_coverage != null) _coveragePanel(),
       const SizedBox(height: 20),
       Row(
         children: [
@@ -502,7 +517,9 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
       ..._results!.map((result) {
         final morphology = result.requested == 0
             ? l.identifyNoMorphology
-            : '${result.matched}/${result.requested} ${l.identifyTraits}';
+            : '${result.matched}/${result.evaluated} ${l.identifyTraits}'
+                ' · ${result.unknown} ${_text('onbekend', 'unknown', 'unbekannt')}'
+                ' · ${result.contradicted} ${_text('afwijkend', 'disagree', 'abweichend')}';
         final field = result.fieldRequested == 0
             ? ''
             : ' · ${result.fieldMatched}/${result.fieldRequested} ${l.identifyField}';
@@ -556,6 +573,11 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                           '${result.species.scientificName} · ${l.identifyMatchScore} ${(result.score * 100).round()}% · $morphology$field',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
+                        if (result.dutchRecordId != null) ...[
+                          const SizedBox(height: 5),
+                          Text('NL · Nederlands Soortenregister · ${result.dutchRecordId}',
+                            style: Theme.of(context).textTheme.bodySmall),
+                        ],
                         const SizedBox(height: 8),
                         ConservationWarning(
                           speciesId: result.species.id,
@@ -577,11 +599,59 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
     ];
   }
 
+  Widget _coveragePanel() {
+    final coverage = _coverage!;
+    return Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(_text('Nederland · GBIF-checklist', 'Netherlands · GBIF checklist',
+          'Niederlande · GBIF-Checkliste'),
+          style: Theme.of(context).textTheme.titleMedium),
+        Text(_text(
+          '${coverage.total} checklistsoorten. ${coverage.assessable} hebben gegevens voor ten minste één gekozen kenmerk; ${coverage.unassessed} zijn niet beoordeeld.',
+          '${coverage.total} checklist species. ${coverage.assessable} have data for at least one selected trait; ${coverage.unassessed} are unassessed.',
+          '${coverage.total} Checklistenarten. ${coverage.assessable} haben Daten für mindestens ein gewähltes Merkmal; ${coverage.unassessed} sind nicht bewertet.')),
+        const SizedBox(height: 6),
+        Text(_text('Ontbrekende kenmerken gelden als onbekend. Scores zijn overeenkomst met bekende kenmerken, geen kans op een juiste determinatie.',
+          'Missing traits are unknown. Scores measure agreement with recorded traits, not the probability of a correct identification.',
+          'Fehlende Merkmale sind unbekannt. Werte zeigen die Übereinstimmung mit erfassten Merkmalen, keine Bestimmungswahrscheinlichkeit.')),
+        const SizedBox(height: 6),
+        const SelectableText(DutchIdentificationScope.datasetUrl,
+          style: TextStyle(fontSize: 11)),
+      ])));
+  }
+
+  Future<void> _openResults() async {
+    await _identify();
+    if (!mounted) return;
+    await showModalBottomSheet<void>(context: context, isScrollControlled: true,
+      showDragHandle: true, builder: (context) => StatefulBuilder(
+        builder: (context, refresh) => SafeArea(child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * .82,
+          child: SingleChildScrollView(padding: const EdgeInsets.all(16),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _fieldDataCard(AppLocalizations.of(context)),
+                FilledButton(onPressed: () async {
+                  await _identify();
+                  if (context.mounted) refresh(() {});
+                }, child: Text(AppLocalizations.of(context).identifyShowCandidates)),
+                ..._resultWidgets(AppLocalizations.of(context)),
+              ]))))));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l.identifyTitle)),
+      appBar: AppBar(title: Text(l.identifyTitle), actions: [
+        IconButton(tooltip: _text('Wis observaties', 'Clear observations', 'Beobachtungen löschen'),
+          onPressed: () => setState(() { _selected.clear(); _results = null; _coverage = null; _wheelRevision++; }),
+          icon: const Icon(Icons.restart_alt)),
+        IconButton(key: const ValueKey('toggle-trait-view'),
+          tooltip: _text('Wiel / overzicht', 'Wheel / overview', 'Rad / Übersicht'),
+          onPressed: () => setState(() => _rotary = !_rotary),
+          icon: Icon(_rotary ? Icons.view_list : Icons.rotate_right)),
+      ]),
       body: SafeArea(
         child: Column(
           children: [
@@ -607,6 +677,18 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
                     groups.putIfAbsent(choice.traitId, () => []).add(choice);
                   }
                   final list = groups.values.toList(growable: false);
+                  if (_rotary && list.isNotEmpty) {
+                    return PhotographicTraitWheel(
+                      key: ValueKey(_wheelRevision),
+                      groups: list, selected: _selected,
+                      language: widget.locale.languageCode,
+                      onChoose: (choice) => setState(() {
+                        _selected[choice.traitId] = choice.optionId;
+                        _results = null;
+                      }),
+                      onResults: _openResults,
+                    );
+                  }
                   return LayoutBuilder(
                     builder: (context, constraints) {
                       final horizontalPadding = constraints.maxWidth >= 900

@@ -45,7 +45,8 @@ class DeterminationOptionVisual extends StatelessWidget {
         final id = option['id'];
         final code = option['code']?.toString();
         if (id is int && code != null && code.isNotEmpty) {
-          result['$traitCode:$id'] = code;
+          result['$traitCode:$id'] = option['image']?.toString() ??
+              'assets/images/traits/$traitCode/$code.png';
         }
       }
     }
@@ -68,8 +69,7 @@ class DeterminationOptionVisual extends StatelessWidget {
         final optionCode = snapshot.data?['$traitCode:$optionId'];
         if (optionCode == null) return _fallback();
 
-        final assetPath =
-            'assets/images/traits/$traitCode/$optionCode.png';
+        final assetPath = optionCode;
         final scheme = Theme.of(context).colorScheme;
 
         return Semantics(

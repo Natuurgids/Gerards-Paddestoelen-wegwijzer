@@ -34,6 +34,16 @@ void main() {
     expect(candidates.first.score, closeTo(1.0, 0.0001));
   });
 
+  test('unrecorded morphology is unknown in SQLite scoring', () async {
+    final candidates = await repository.identify('en', {1: 101, 2: 999});
+    final result = candidates.single;
+    expect(result.score, 1);
+    expect(result.matched, 1);
+    expect(result.evaluated, 1);
+    expect(result.unknown, 1);
+    expect(result.contradicted, 0);
+  });
+
   test('field evidence can retain a zero-morphology candidate', () async {
     final candidates = await repository.identify(
       'en',

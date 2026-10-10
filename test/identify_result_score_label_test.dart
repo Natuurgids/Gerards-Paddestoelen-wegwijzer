@@ -12,6 +12,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: IdentifyScreen(
+          initialWheel: false,
           locale: locale,
           repository: _ResultIdentificationRepository(),
           fieldDataRepository: _EmptyFieldDataRepository(),

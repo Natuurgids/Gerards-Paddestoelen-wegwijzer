@@ -65,15 +65,23 @@ class IdentificationCandidate {
     required this.score,
     required this.matched,
     required this.requested,
+    int? evaluated,
+    this.dutchRecordId,
+    this.dutchSpeciesId,
     this.fieldScore = 0,
     this.fieldMatched = 0,
     this.fieldRequested = 0,
-  });
+  }) : evaluated = evaluated ?? requested;
 
   final SpeciesSummary species;
   final double score;
   final int matched;
   final int requested;
+  final int evaluated;
+  int get unknown => requested - evaluated;
+  int get contradicted => evaluated - matched;
+  final String? dutchRecordId;
+  final int? dutchSpeciesId;
   final double fieldScore;
   final int fieldMatched;
   final int fieldRequested;

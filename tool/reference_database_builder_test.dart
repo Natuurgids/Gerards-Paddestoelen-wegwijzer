@@ -82,7 +82,7 @@ void main() {
       );
       expect(
         (await db.rawQuery('SELECT COUNT(*) n FROM trait_option')).single['n'],
-        139,
+        350,
       );
       expect(
         (await db.rawQuery('SELECT COUNT(*) n FROM species_trait')).single['n'],

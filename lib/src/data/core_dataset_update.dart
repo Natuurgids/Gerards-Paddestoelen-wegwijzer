@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'database_schema.dart';
 
 const coreDatasetKey = 'core-reference-content';
-const bundledCoreDatasetVersion = 1;
+const bundledCoreDatasetVersion = 2;
 
 const coreDatasetComponents = <String>{
   'species_catalog',

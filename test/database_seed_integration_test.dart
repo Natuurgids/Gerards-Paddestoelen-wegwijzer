@@ -57,11 +57,11 @@ void main() {
     expect(speciesTextCount, greaterThanOrEqualTo(speciesCount));
 
     const expectedCounts = <String, int>{
-      'trait': 20,
-      'trait_text': 60,
-      'trait_option': 139,
-      'trait_option_text': 417,
-      'species_trait': 127,
+      'trait': 25,
+      'trait_text': 75,
+      'trait_option': 350,
+      'trait_option_text': 1050,
+      'species_trait': 231,
       'species_measurement': 7,
       'season_region': 1,
       'season_region_text': 3,

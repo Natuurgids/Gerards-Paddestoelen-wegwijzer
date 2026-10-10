@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 class DatabaseSchema {
   const DatabaseSchema._();
 
-  static const currentVersion = 9;
+  static const currentVersion = 10;
 
   static Future<void> create(DatabaseExecutor db) async {
     for (final statement in statements) {
@@ -124,6 +124,10 @@ class DatabaseSchema {
       await _addColumnIfMissing(db, 'species_image', 'creator', 'TEXT');
       await _addColumnIfMissing(db, 'species_image', 'license_url', 'TEXT');
     }
+    if (oldVersion < 10) {
+      await _addColumnIfMissing(db, 'trait', 'is_active', 'INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1))');
+      await _addColumnIfMissing(db, 'trait', 'sort_order', 'INTEGER NOT NULL DEFAULT 0');
+    }
     if (oldVersion < 9) {
       await db.execute(_conservationStatusTableSql);
       await db.execute(
@@ -206,6 +210,8 @@ class DatabaseSchema {
       id INTEGER PRIMARY KEY,
       code TEXT NOT NULL UNIQUE,
       category TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+      sort_order INTEGER NOT NULL DEFAULT 0,
       value_type TEXT NOT NULL CHECK(value_type IN ('choice','boolean','number','text'))
     )''',
     '''CREATE TABLE trait_text (

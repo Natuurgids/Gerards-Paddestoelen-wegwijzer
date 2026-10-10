@@ -17,6 +17,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: IdentifyScreen(
+          initialWheel: false,
           locale: locale,
           repository: repository,
           fieldDataRepository: fieldDataRepository,

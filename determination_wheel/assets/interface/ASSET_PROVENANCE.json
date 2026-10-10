@@ -93,5 +93,10 @@
     "origin": "AI-generated illustrative production asset",
     "purpose": "Interface illustration; never determination evidence",
     "prompt": "Square photographic Amanita muscaria instrument, broad red cap above a short pale thick stem, golden woodland moss and leaves, no UI or lettering."
+  },
+  "spore-microscope.png": {
+    "origin": "AI-generated illustrative production asset",
+    "purpose": "Microscopy observation context; never simulated microscopic evidence",
+    "prompt": "Optical microscope on a wooden field station desk with a glass slide, mushroom and field notebook; natural woodland light; no text or simulated microscopic data."
   }
 }
