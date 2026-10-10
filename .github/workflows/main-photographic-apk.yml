@@ -66,3 +66,23 @@ jobs:
             build/app/outputs/flutter-apk/COMMIT.txt
           if-no-files-found: error
           retention-days: 14
+      - name: Split APK for downloadable delivery
+        run: split -b 200M -d build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/main-apk.part-
+      - name: Upload APK delivery part 0
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-apk-delivery-part-0
+          path: build/app/outputs/flutter-apk/main-apk.part-00
+          compression-level: 0
+      - name: Upload APK delivery part 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-apk-delivery-part-1
+          path: build/app/outputs/flutter-apk/main-apk.part-01
+          compression-level: 0
+      - name: Upload APK delivery part 2
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-apk-delivery-part-2
+          path: build/app/outputs/flutter-apk/main-apk.part-02
+          compression-level: 0
