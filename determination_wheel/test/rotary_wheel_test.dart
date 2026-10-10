@@ -45,9 +45,9 @@ void main() {
     await open(tester);await pick(tester,'Hoed + steel');await pick(tester,'Plaatjes');
     expect(wheel(tester).reached,[1,4,5]);
     // Accessible decrement rotates the inner ring independently.
-    final semantics=tester.getSemantics(find.byKey(const ValueKey('observation-dial')));
-    expect(semantics, isNotNull);
     final dial=find.descendant(of:find.byKey(const ValueKey('observation-dial')),matching:find.byType(Semantics)).first;
+    expect(tester.widget<Semantics>(dial).properties.value,'Hoedoppervlak');
+    expect(tester.widget<Semantics>(dial).properties.decreasedValue,'Sporenvormende onderzijde');
     tester.widget<Semantics>(dial).properties.onDecrease!();await tester.pumpAndSettle();
     tester.widget<Semantics>(dial).properties.onDecrease!();await tester.pumpAndSettle();
     expect(wheel(tester).reached,[1,4,5]);

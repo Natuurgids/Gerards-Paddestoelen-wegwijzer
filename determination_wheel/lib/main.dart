@@ -205,7 +205,7 @@ void _showObservationHelp()=>showModalBottomSheet<void>(
     const SizedBox(height:12),
     const Text('De beelden zijn illustratieve voorbeelden. Kies op basis van wat je werkelijk waarneemt. Kies bij twijfel Onzeker of Niet beoordeeld; dat sluit geen mogelijkheden uit.'),
     const SizedBox(height:12),
-    const Text('Tik op een bereikbare ring of veeg erover. Veeg in de selector naar een observatie en bevestig deze expliciet. Een eerdere observatie wijzigen verwijdert de latere antwoorden.'),
+    const Text('Draai de buitenste cirkel: de keuze bij de bovenste pijl staat klaar. Bevestig met het vinkje. De binnenste cirkel bevat alleen bereikte observaties; draai deze en tik in het midden om een eerdere observatie te openen. Een eerdere observatie wijzigen verwijdert de latere antwoorden. Via Routeoverzicht kun je ook de bereikbare ringen en de volledige route bekijken.'),
     const SizedBox(height:12),
     const Text(determinationSafetyWarning),
     const SizedBox(height:16),

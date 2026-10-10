@@ -8,7 +8,7 @@ const notebookAsset='assets/interface/field-notebook.png';
 // Exhaustive labels from the observation wheel and source-backed detail keys.
 // Images illustrate an observation, never provide evidence about a user's find.
 const observationPhotographs=<String,String>{
-  'Hoed + steel':'assets/photographs/fruitbody_form_cap_stem.png',
+  'Hoed + steel':mushroomInstrumentAsset,
   'Bol-/buikvormig':'assets/interface/form-puffball.png',
   'Hout-/korstvormig':'assets/interface/form-bracket.png',
   'Andere vorm':'assets/photographs/fruitbody_form_coral.png',
@@ -55,7 +55,7 @@ const observationPhotographs=<String,String>{
   'Levend hout':'assets/photographs/growth_position_on_wood.png',
   'Gras / mos':'assets/photographs/substrate_moss.png',
   'Mest / rijk organisch materiaal':'assets/photographs/substrate_dung.png',
-  'Afzonderlijk':'assets/photographs/fruitbody_form_cap_stem.png',
+  'Afzonderlijk':mushroomInstrumentAsset,
   'Groepjes':'assets/interface/growth-group.png',
   'Bundels / vergroeid':'assets/interface/growth-cluster.png',
   'Heksenkring / rij':'assets/interface/growth-ring.png',
