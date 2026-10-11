@@ -1,0 +1,49 @@
+{
+  "generator": "built-in image_gen",
+  "purpose": "photographic UI observation textures; not named-species evidence",
+  "transparent_background": true,
+  "assets": [
+    {
+      "name": "cap",
+      "subject": "One detached mushroom cap viewed from a slightly elevated side angle. Fully visible dome, subtle organic surface texture, entire object neutral WHITE to very light grey, no stem, no colored edge.",
+      "prompt": "Use case: photorealistic-natural. Production PNG texture for the mushroom determination Flutter app, NOT a concept or interface mockup. Subject: One detached mushroom cap viewed from a slightly elevated side angle. Fully visible dome, subtle organic surface texture, entire object neutral WHITE to very light grey, no stem, no colored edge. Isolated genuine transparent background. Soft neutral diffuse light, detailed realistic macro photograph, monochrome white/grayscale material only; no colored lighting or warm tint. Center entire subject within the central 80% of a square image so no part touches any edge. No text, labels, props, montage, border, watermark, or shadow outside the object. The app will apply accurate observation colors to this neutral texture.",
+      "file": "cap.png",
+      "sha256": "7d78742ceee0192603bd8cd0783a931399ddc1d4811970252fc4d6d0b6c059f2"
+    },
+    {
+      "name": "gills",
+      "subject": "Underside of one detached round mushroom cap, facing camera straight on; radial lamellae and tiny central stem scar fully visible. Entire underside neutral WHITE to light grey, no colored cap rim.",
+      "prompt": "Use case: photorealistic-natural. Production PNG texture for the mushroom determination Flutter app, NOT a concept or interface mockup. Subject: Underside of one detached round mushroom cap, facing camera straight on; radial lamellae and tiny central stem scar fully visible. Entire underside neutral WHITE to light grey, no colored cap rim. Isolated genuine transparent background. Soft neutral diffuse light, detailed realistic macro photograph, monochrome white/grayscale material only; no colored lighting or warm tint. Center entire subject within the central 80% of a square image so no part touches any edge. No text, labels, props, montage, border, watermark, or shadow outside the object. The app will apply accurate observation colors to this neutral texture.",
+      "file": "gills.png",
+      "sha256": "8f05f502bf0c2dd79163fe814bcbffcfb0496b5929f9e59e20bd681b07f451ff"
+    },
+    {
+      "name": "stem",
+      "subject": "One isolated complete short mushroom stem, upright, slightly tapering with delicate natural longitudinal fibers. Neutral WHITE to very light grey throughout. No cap, no ring, no earth.",
+      "prompt": "Use case: photorealistic-natural. Production PNG texture for the mushroom determination Flutter app, NOT a concept or interface mockup. Subject: One isolated complete short mushroom stem, upright, slightly tapering with delicate natural longitudinal fibers. Neutral WHITE to very light grey throughout. No cap, no ring, no earth. Isolated genuine transparent background. Soft neutral diffuse light, detailed realistic macro photograph, monochrome white/grayscale material only; no colored lighting or warm tint. Center entire subject within the central 80% of a square image so no part touches any edge. No text, labels, props, montage, border, watermark, or shadow outside the object. The app will apply accurate observation colors to this neutral texture.",
+      "file": "stem.png",
+      "sha256": "15744f37d65df1f3fe7c9e4ad0b4d2e8a7649507b1cd2d7222f682b1abc14fa9"
+    },
+    {
+      "name": "flesh",
+      "subject": "One oval fresh cross-section of white mushroom tissue, facing camera directly, fine fibrous texture. Entire cut face WHITE to very light grey and a very thin light-grey edge. No bruising, no blood, no brown crust, no gills.",
+      "prompt": "Use case: photorealistic-natural. Production PNG texture for the mushroom determination Flutter app, NOT a concept or interface mockup. Subject: One oval fresh cross-section of white mushroom tissue, facing camera directly, fine fibrous texture. Entire cut face WHITE to very light grey and a very thin light-grey edge. No bruising, no blood, no brown crust, no gills. Isolated genuine transparent background. Soft neutral diffuse light, detailed realistic macro photograph, monochrome white/grayscale material only; no colored lighting or warm tint. Center entire subject within the central 80% of a square image so no part touches any edge. No text, labels, props, montage, border, watermark, or shadow outside the object. The app will apply accurate observation colors to this neutral texture.",
+      "file": "flesh.png",
+      "sha256": "0eb57f4659e184cf21ea648a115fb9f67e305dded6cb26bd760d64373d9f059a"
+    },
+    {
+      "name": "spores",
+      "subject": "A round mushroom SPORE PRINT deposit alone, delicate white powder deposited in clear radial gill-trace pattern. The deposited powder WHITE to light grey. No mushroom or paper. Transparent negative spaces between powder traces.",
+      "prompt": "Use case: photorealistic-natural. Production PNG texture for the mushroom determination Flutter app, NOT a concept or interface mockup. Subject: A round mushroom SPORE PRINT deposit alone, delicate white powder deposited in clear radial gill-trace pattern. The deposited powder WHITE to light grey. No mushroom or paper. Transparent negative spaces between powder traces. Isolated genuine transparent background. Soft neutral diffuse light, detailed realistic macro photograph, monochrome white/grayscale material only; no colored lighting or warm tint. Center entire subject within the central 80% of a square image so no part touches any edge. No text, labels, props, montage, border, watermark, or shadow outside the object. The app will apply accurate observation colors to this neutral texture.",
+      "file": "spores.png",
+      "sha256": "6ec4f12abf359b3db40b56fa91ecc50a82de15a190eb497536d1ab1fadabea7d"
+    },
+    {
+      "name": "bruise",
+      "subject": "One irregular roughly oval patch of pale WHITE to light grey fibrous mushroom tissue texture, intended as a colored bruising overlay sprite. Feathery irregular transparent edges. It is a flat surface patch, not a mushroom, not a cut hole, no red, no blue, no black.",
+      "prompt": "Use case: photorealistic-natural. Production PNG texture for the mushroom determination Flutter app, NOT a concept or interface mockup. Subject: One irregular roughly oval patch of pale WHITE to light grey fibrous mushroom tissue texture, intended as a colored bruising overlay sprite. Feathery irregular transparent edges. It is a flat surface patch, not a mushroom, not a cut hole, no red, no blue, no black. Isolated genuine transparent background. Soft neutral diffuse light, detailed realistic macro photograph, monochrome white/grayscale material only; no colored lighting or warm tint. Center entire subject within the central 80% of a square image so no part touches any edge. No text, labels, props, montage, border, watermark, or shadow outside the object. The app will apply accurate observation colors to this neutral texture.",
+      "file": "bruise.png",
+      "sha256": "1237a5d8b057e9aa84daa8996e3b7719ab18b39099cc23cc9e33dc2855950665"
+    }
+  ]
+}

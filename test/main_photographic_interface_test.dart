@@ -14,12 +14,12 @@ import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/photographi
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/trait_visual.dart';
 
 late List<TraitChoice> _realChoices;
-Widget app() => MaterialApp(
+Widget app({String? firstTrait, int? firstOption}) => MaterialApp(
   locale: const Locale('nl'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: IdentifyScreen(locale: const Locale('nl'),
-    repository: _PreloadedRepository(),
+    repository: _PreloadedRepository(firstTrait, firstOption),
     fieldDataRepository: _EmptyFieldRepository()),
 );
 void main() {
@@ -63,6 +63,18 @@ void main() {
         const ValueKey('trait-choice-dial'))).count, greaterThan(2));
       expect(tester.widget<PhotographicChoiceDial>(find.byKey(
         const ValueKey('trait-group-dial'))).count, 23);
+      final outer = find.byKey(const ValueKey('trait-choice-dial'));
+      final dial = tester.getRect(outer);
+      final photo = tester.getRect(find.descendant(of: outer,
+        matching: find.byKey(const ValueKey('dial-photo-0'))));
+      final inner = tester.widget<PhotographicChoiceDial>(outer).inner;
+      for (final corner in [photo.topLeft, photo.topRight, photo.bottomLeft, photo.bottomRight]) {
+        expect((corner - dial.center).distance, lessThan(dial.width / 2));
+        expect((corner - dial.center).distance, greaterThan(dial.width / 2 * inner));
+      }
+      for (final image in tester.widgetList<Image>(find.descendant(of: outer, matching: find.byType(Image)))) {
+        expect(image.fit, BoxFit.contain);
+      }
       expect(find.byType(TraitVisual), findsNothing,
         reason: 'All visible choices must use their real photographs.');
       expect(find.textContaining('0/23 · 341'), findsOneWidget);
@@ -105,6 +117,39 @@ void main() {
     expect(find.byType(PhotographicTraitWheel), findsNothing);
     expect(find.byKey(const ValueKey('trait-grid-20')), findsOneWidget);
   });
+  for (final sample in <(String, int, String)>[
+    ('bruising', 226, 'green-bruising'),
+    ('gill_colour', 279, 'purple-gills'),
+    ('stem_colour', 308, 'blue-stem'),
+  ]) {
+    testWidgets('colour photograph matches ${sample.$3} and stays inside the wheel', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final boundary = GlobalKey();
+      await tester.pumpWidget(RepaintBoundary(key: boundary,
+        child: app(firstTrait: sample.$1, firstOption: sample.$2)));
+      await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        for (final image in tester.widgetList<Image>(find.byType(Image))) {
+          await precacheImage(image.image, boundary.currentContext!);
+        }
+      });
+      await tester.pumpAndSettle();
+      expect(tester.widget<PhotographicChoiceDial>(find.byKey(
+        const ValueKey('trait-choice-dial'))).selected, 0);
+      expect(tester.takeException(), isNull);
+      await tester.runAsync(() async {
+        final render = boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+        final image = await render.toImage();
+        final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+        Directory('build/main-interface-verification').createSync(recursive: true);
+        File('build/main-interface-verification/${sample.$3}.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+        image.dispose();
+      });
+    });
+  }
   testWidgets('outer dial actually responds to angular dragging without recording', (tester) async {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
@@ -127,6 +172,15 @@ class _EmptyFieldRepository extends FieldDataRepository {
 
 // Real bundled catalogue with synchronous delivery inside the widget-test clock.
 class _PreloadedRepository extends IdentificationRepository {
+  _PreloadedRepository(this.firstTrait, this.firstOption);
+  final String? firstTrait;
+  final int? firstOption;
   @override
-  Future<List<TraitChoice>> choices(String languageCode) => SynchronousFuture(_realChoices);
+  Future<List<TraitChoice>> choices(String languageCode) => SynchronousFuture([
+    if (firstTrait != null) ...[
+      ..._realChoices.where((c) => c.traitCode == firstTrait && c.optionId == firstOption),
+      ..._realChoices.where((c) => c.traitCode == firstTrait && c.optionId != firstOption),
+    ],
+    ..._realChoices.where((c) => c.traitCode != firstTrait),
+  ]);
 }

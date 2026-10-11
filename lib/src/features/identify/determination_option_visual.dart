@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'trait_visual.dart';
+import 'colour_observation_visual.dart';
 
 /// Displays the generated field-guide image for a determination option.
 ///
@@ -19,6 +20,8 @@ class DeterminationOptionVisual extends StatelessWidget {
     required this.optionLabel,
     this.size = 72,
     this.imagePath,
+    this.fit = BoxFit.cover,
+    this.framed = true,
   });
 
   final String traitCode;
@@ -26,6 +29,8 @@ class DeterminationOptionVisual extends StatelessWidget {
   final String optionLabel;
   final double size;
   final String? imagePath;
+  final BoxFit fit;
+  final bool framed;
 
   static final Future<Map<String, String>> _optionCodes = _loadOptionCodes();
 
@@ -64,6 +69,12 @@ class DeterminationOptionVisual extends StatelessWidget {
       );
 
   Widget _photograph(BuildContext context, String assetPath) {
+    if (!framed) {
+      return Semantics(label: optionLabel, image: true, child: SizedBox.square(
+        dimension: size, child: Image.asset(assetPath, fit: fit, cacheWidth: 512,
+          filterQuality: FilterQuality.medium,
+          errorBuilder: (context, error, stackTrace) => _fallback())));
+    }
     final scheme = Theme.of(context).colorScheme;
     return Semantics(label: optionLabel, image: true,
       child: SizedBox.square(dimension: size,
@@ -73,13 +84,17 @@ class DeterminationOptionVisual extends StatelessWidget {
             border: Border.all(color: scheme.outlineVariant),
             borderRadius: BorderRadius.circular(10)),
             child: Image.asset(assetPath, width: size, height: size,
-              fit: BoxFit.cover, cacheWidth: 512,
+              fit: fit, cacheWidth: 512,
               filterQuality: FilterQuality.medium,
               errorBuilder: (context, error, stackTrace) => _fallback())))));
   }
 
   @override
   Widget build(BuildContext context) {
+    if (ColourObservationVisual.supports(traitCode, optionId)) {
+      return ColourObservationVisual(traitCode: traitCode, optionId: optionId,
+        optionLabel: optionLabel, size: size);
+    }
     if (imagePath != null) return _photograph(context, imagePath!);
     return FutureBuilder<Map<String, String>>(
       future: _optionCodes,

@@ -1,0 +1,722 @@
+{
+  "1": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "b9534e",
+    "kind": "single"
+  },
+  "2": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "64935c",
+    "kind": "single"
+  },
+  "3": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "8a684c",
+    "kind": "single"
+  },
+  "29": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "ca803c",
+    "kind": "single"
+  },
+  "30": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "d8bd3b",
+    "kind": "single"
+  },
+  "31": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "92904f",
+    "kind": "single"
+  },
+  "32": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "a3a6a3",
+    "kind": "single"
+  },
+  "33": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "efefea",
+    "kind": "single"
+  },
+  "34": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "393636",
+    "kind": "single"
+  },
+  "35": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "9477a8",
+    "kind": "single"
+  },
+  "36": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "d591a2",
+    "kind": "single"
+  },
+  "37": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "dbca9e",
+    "kind": "single"
+  },
+  "140": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "e4d9b4",
+    "kind": "single"
+  },
+  "141": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "c7ac80",
+    "kind": "single"
+  },
+  "142": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "b48b39",
+    "kind": "single"
+  },
+  "143": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "a1673d",
+    "kind": "single"
+  },
+  "144": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "aa7954",
+    "kind": "single"
+  },
+  "145": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "7b503d",
+    "kind": "single"
+  },
+  "146": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "5a4034",
+    "kind": "single"
+  },
+  "147": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "783846",
+    "kind": "single"
+  },
+  "148": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "a85e48",
+    "kind": "single"
+  },
+  "149": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "d78f78",
+    "kind": "single"
+  },
+  "150": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "b5a1c2",
+    "kind": "single"
+  },
+  "151": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "8660a0",
+    "kind": "single"
+  },
+  "152": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "6997bd",
+    "kind": "single"
+  },
+  "153": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "5b9b95",
+    "kind": "single"
+  },
+  "154": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "dedf47",
+    "kind": "single"
+  },
+  "155": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": "c8a137",
+    "kind": "single"
+  },
+  "156": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": null,
+    "kind": "multicoloured"
+  },
+  "157": {
+    "trait": "cap_color",
+    "asset": "determination_wheel/assets/colour_photographs/cap.png",
+    "tint": null,
+    "kind": "uncertain"
+  },
+  "19": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": null,
+    "kind": "none"
+  },
+  "20": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "d0b437",
+    "kind": "single"
+  },
+  "21": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "5385ac",
+    "kind": "single"
+  },
+  "66": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "ac5855",
+    "kind": "single"
+  },
+  "67": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "856548",
+    "kind": "single"
+  },
+  "68": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "393637",
+    "kind": "single"
+  },
+  "226": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "568b50",
+    "kind": "single"
+  },
+  "227": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "8a649e",
+    "kind": "single"
+  },
+  "228": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "cb8243",
+    "kind": "single"
+  },
+  "229": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "919698",
+    "kind": "single"
+  },
+  "230": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "a65150",
+    "kind": "red_then_black"
+  },
+  "231": {
+    "trait": "bruising",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": null,
+    "kind": "uncertain"
+  },
+  "24": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "efefea",
+    "kind": "single"
+  },
+  "75": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "e4d9b4",
+    "kind": "single"
+  },
+  "76": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "d8bd3b",
+    "kind": "single"
+  },
+  "77": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "d591a2",
+    "kind": "single"
+  },
+  "78": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "b48b39",
+    "kind": "single"
+  },
+  "79": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "a1673d",
+    "kind": "single"
+  },
+  "80": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "8a684c",
+    "kind": "single"
+  },
+  "81": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "534338",
+    "kind": "single"
+  },
+  "82": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "725568",
+    "kind": "single"
+  },
+  "83": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "393636",
+    "kind": "single"
+  },
+  "25": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "857345",
+    "kind": "single"
+  },
+  "84": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "809354",
+    "kind": "single"
+  },
+  "232": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "d78f78",
+    "kind": "single"
+  },
+  "233": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "b5a1c2",
+    "kind": "single"
+  },
+  "234": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "aa7954",
+    "kind": "single"
+  },
+  "235": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "b3a087",
+    "kind": "single"
+  },
+  "236": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "ca803c",
+    "kind": "single"
+  },
+  "237": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "895047",
+    "kind": "single"
+  },
+  "238": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": "453a50",
+    "kind": "single"
+  },
+  "239": {
+    "trait": "spore_print",
+    "asset": "determination_wheel/assets/colour_photographs/spores.png",
+    "tint": null,
+    "kind": "uncertain"
+  },
+  "124": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "efefea",
+    "kind": "single"
+  },
+  "125": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "e4d9b4",
+    "kind": "single"
+  },
+  "126": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "d8bd3b",
+    "kind": "single"
+  },
+  "127": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "ca803c",
+    "kind": "single"
+  },
+  "128": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "b9534e",
+    "kind": "single"
+  },
+  "129": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "d591a2",
+    "kind": "single"
+  },
+  "130": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "8a684c",
+    "kind": "single"
+  },
+  "131": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "a3a6a3",
+    "kind": "single"
+  },
+  "218": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "c7ac80",
+    "kind": "single"
+  },
+  "219": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "b48b39",
+    "kind": "single"
+  },
+  "220": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "92904f",
+    "kind": "single"
+  },
+  "221": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "64935c",
+    "kind": "single"
+  },
+  "222": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "6997bd",
+    "kind": "single"
+  },
+  "223": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "9477a8",
+    "kind": "single"
+  },
+  "224": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": "393636",
+    "kind": "single"
+  },
+  "225": {
+    "trait": "flesh_colour",
+    "asset": "determination_wheel/assets/colour_photographs/flesh.png",
+    "tint": null,
+    "kind": "uncertain"
+  },
+  "271": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "efefea",
+    "kind": "single"
+  },
+  "272": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "e4d9b4",
+    "kind": "single"
+  },
+  "273": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "d8bd3b",
+    "kind": "single"
+  },
+  "274": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "b48b39",
+    "kind": "single"
+  },
+  "275": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "ca803c",
+    "kind": "single"
+  },
+  "276": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "d591a2",
+    "kind": "single"
+  },
+  "277": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "d78f78",
+    "kind": "single"
+  },
+  "278": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "b9534e",
+    "kind": "single"
+  },
+  "279": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "9477a8",
+    "kind": "single"
+  },
+  "280": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "b5a1c2",
+    "kind": "single"
+  },
+  "281": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "8a684c",
+    "kind": "single"
+  },
+  "282": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "a1673d",
+    "kind": "single"
+  },
+  "283": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "5a4034",
+    "kind": "single"
+  },
+  "284": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "a3a6a3",
+    "kind": "single"
+  },
+  "285": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "393636",
+    "kind": "single"
+  },
+  "286": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": "92904f",
+    "kind": "single"
+  },
+  "287": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": null,
+    "kind": "not_applicable"
+  },
+  "288": {
+    "trait": "gill_colour",
+    "asset": "determination_wheel/assets/colour_photographs/gills.png",
+    "tint": null,
+    "kind": "uncertain"
+  },
+  "289": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "efefea",
+    "kind": "single"
+  },
+  "290": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "e4d9b4",
+    "kind": "single"
+  },
+  "291": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "c7ac80",
+    "kind": "single"
+  },
+  "292": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "d8bd3b",
+    "kind": "single"
+  },
+  "293": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "dedf47",
+    "kind": "single"
+  },
+  "294": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "b48b39",
+    "kind": "single"
+  },
+  "295": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "ca803c",
+    "kind": "single"
+  },
+  "296": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "d591a2",
+    "kind": "single"
+  },
+  "297": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "d78f78",
+    "kind": "single"
+  },
+  "298": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "b9534e",
+    "kind": "single"
+  },
+  "299": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "783846",
+    "kind": "single"
+  },
+  "300": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "8a684c",
+    "kind": "single"
+  },
+  "301": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "a1673d",
+    "kind": "single"
+  },
+  "302": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "7b503d",
+    "kind": "single"
+  },
+  "303": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "534338",
+    "kind": "single"
+  },
+  "304": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "a3a6a3",
+    "kind": "single"
+  },
+  "305": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "393636",
+    "kind": "single"
+  },
+  "306": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "64935c",
+    "kind": "single"
+  },
+  "307": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "92904f",
+    "kind": "single"
+  },
+  "308": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "6997bd",
+    "kind": "single"
+  },
+  "309": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "b5a1c2",
+    "kind": "single"
+  },
+  "310": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": "9477a8",
+    "kind": "single"
+  },
+  "311": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": null,
+    "kind": "not_applicable"
+  },
+  "312": {
+    "trait": "stem_colour",
+    "asset": "determination_wheel/assets/colour_photographs/stem.png",
+    "tint": null,
+    "kind": "uncertain"
+  }
+}

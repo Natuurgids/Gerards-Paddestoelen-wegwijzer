@@ -8,7 +8,7 @@ const _forestPhoto =
 const _gold = Color(0xfff2d6a0);
 
 /// Independent observations: rotation previews, confirmation records a value.
-/// A seven-sector window keeps long choice lists readable on small screens.
+/// Every available choice owns one segment; the centre previews the full photo.
 class PhotographicTraitWheel extends StatefulWidget {
   const PhotographicTraitWheel({super.key, required this.groups,
     required this.selected, required this.onChoose, required this.onResults,
@@ -41,7 +41,8 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
   }
   Widget visual(TraitChoice item, double size) => DeterminationOptionVisual(
     traitCode: item.traitCode, optionId: item.optionId,
-    optionLabel: item.optionLabel, imagePath: item.imagePath, size: size);
+    optionLabel: item.optionLabel, imagePath: item.imagePath, size: size,
+    fit: BoxFit.contain, framed: false);
   Widget heading() => Column(mainAxisSize: MainAxisSize.min, children: [
     Text('${widget.selected.length}/${widget.groups.length} · '
       '${widget.groups.fold<int>(0, (n, g) => n + g.length)} '
@@ -93,32 +94,40 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
     return Center(child: SizedBox.square(dimension: size,
       child: Stack(alignment: Alignment.center, children: [
         PhotographicChoiceDial(key: const ValueKey('trait-choice-dial'),
-          count: choices.length, selected: choice, inner: .56,
+          count: choices.length, selected: choice, inner: .48, showLabel: false,
           label: text('Keuzeschijf', 'Choice dial', 'Optionsscheibe'),
           labels: choices.map((item) => item.optionLabel).toList(),
           imageBuilder: (index) => visual(choices[index], size),
           onChanged: (index) => setState(() => choice = index)),
-        SizedBox.square(dimension: size * .54,
+        SizedBox.square(dimension: size * .46,
           child: PhotographicChoiceDial(key: const ValueKey('trait-group-dial'),
-            count: widget.groups.length, selected: groupPreview, inner: .55,
+            count: widget.groups.length, selected: groupPreview, inner: .70, showLabel: false,
             label: text('Observatieschijf', 'Observation dial', 'Beobachtungsscheibe'),
             labels: widget.groups.map((g) => g.first.traitLabel).toList(),
-            imageBuilder: (index) => visual(widget.groups[index].first, size * .54),
+            imageBuilder: (index) => visual(widget.groups[index].first, size * .46),
             onChanged: (index) => setState(() => groupPreview = index))),
-        SizedBox.square(dimension: size * .28,
+        SizedBox.square(dimension: size * .30,
           child: ClipOval(child: Material(color: const Color(0xff203b29),
-            child: InkWell(key: const ValueKey('open-trait-group'),
-              onTap: () => open(groupPreview),
-              child: Center(child: Padding(padding: const EdgeInsets.all(6),
-                child: FittedBox(fit: BoxFit.scaleDown, child: Text('${text('Open', 'Open', 'Öffnen')}\n${groupPreview + 1}/${widget.groups.length}',
-                  maxLines: 3, textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _gold, fontSize: 11,
-                    fontWeight: FontWeight.bold))))))))),
+            child: Tooltip(message: widget.groups[groupPreview].first.traitLabel,
+              child: InkWell(key: const ValueKey('open-trait-group'),
+                onTap: () => open(groupPreview),
+                child: Stack(children: [
+                  Positioned(top: size * .04, left: size * .05,
+                    width: size * .20, height: size * .20,
+                    child: IgnorePointer(child: visual(groupPreview == group
+                      ? choices[choice] : widget.groups[groupPreview].first,
+                      size * .20))),
+                  Positioned(bottom: size * .013, left: size * .045,
+                    right: size * .045,
+                    child: FittedBox(fit: BoxFit.scaleDown, child: Text(
+                      '${text('Open', 'Open', 'Öffnen')} ${groupPreview + 1}/${widget.groups.length}',
+                      maxLines: 1, style: const TextStyle(color: _gold,
+                        fontSize: 11, fontWeight: FontWeight.bold)))),
+                ])))))),
         Positioned(top: 0, child: IgnorePointer(child:
-          Icon(Icons.arrow_drop_down, color: _gold, size: size * .1))),
-        Positioned(top: size * .22, child: const IgnorePointer(child:
-          Icon(Icons.arrow_drop_down, color: _gold, size: 22))),
+          Icon(Icons.arrow_drop_down, color: _gold, size: size * .05))),
+        Positioned(top: size * .27, child: const IgnorePointer(child:
+          Icon(Icons.arrow_drop_down, color: _gold, size: 12))),
       ])));
   });
   @override
@@ -141,13 +150,15 @@ class _PhotographicTraitWheelState extends State<PhotographicTraitWheel> {
 class PhotographicChoiceDial extends StatefulWidget {
   const PhotographicChoiceDial({super.key, required this.count,
     required this.selected, required this.labels, required this.imageBuilder,
-    required this.onChanged, required this.label, required this.inner});
+    required this.onChanged, required this.label, required this.inner,
+    this.showLabel = true});
   final int count, selected;
   final List<String> labels;
   final Widget Function(int) imageBuilder;
   final ValueChanged<int> onChanged;
   final String label;
   final double inner;
+  final bool showLabel;
   @override
   State<PhotographicChoiceDial> createState() => _PhotographicChoiceDialState();
 }
@@ -155,7 +166,7 @@ class _PhotographicChoiceDialState extends State<PhotographicChoiceDial> {
   double rotation = 0;
   double? previous;
   int origin = 0;
-  int get slots => math.min(7, widget.count);
+  int get slots => widget.count;
   double get slice => 2 * math.pi / slots;
   void move(Offset position, double size) {
     final angle = math.atan2(position.dy - size / 2, position.dx - size / 2);
@@ -175,6 +186,13 @@ class _PhotographicChoiceDialState extends State<PhotographicChoiceDial> {
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, bounds) {
     final size = bounds.maxWidth, radius = size / 2;
+    // A square rotated into the radial direction fits inside the annulus.
+    // The extra margin keeps all four photo corners within the gold rings.
+    final photoExtent = size * (1 - widget.inner) * .42;
+    final photoRadius = radius * (1 + widget.inner) / 2;
+    // Narrow groups use a tangential width that stays inside the wedge's sides.
+    final photoWidth = slots <= 2 ? photoExtent : math.min(photoExtent,
+      2 * (photoRadius - photoExtent / 2) * math.tan(slice / 2) * .84);
     final shift = previous == null ? 0 : (rotation / slice).round();
     final top = previous == null ? widget.selected : (origin - shift) % widget.count;
     final fraction = previous == null ? 0.0 : rotation - shift * slice;
@@ -193,17 +211,20 @@ class _PhotographicChoiceDialState extends State<PhotographicChoiceDial> {
               -math.pi / 2 + slot * slice + fraction - slice / 2, slice, widget.inner),
               child: GestureDetector(onTap: () => widget.onChanged((top + (slot <= slots ~/ 2 ? slot : slot - slots)) % widget.count),
                 child: Stack(fit: StackFit.expand, children: [
-                  if (slots <= 2)
+                  ColoredBox(color: slot == 0
+                    ? const Color(0xffd9c9a4) : const Color(0xff344833)),
+                  if (widget.showLabel && slots <= 2)
                     Positioned.fill(child: widget.imageBuilder(
-                      (top + (slot <= slots ~/ 2 ? slot : slot - slots)) % widget.count))
-                  else
-                  Positioned(left: radius + math.cos(-math.pi / 2 + slot * slice + fraction) * radius * .77 - size * .3,
-                    top: radius + math.sin(-math.pi / 2 + slot * slice + fraction) * radius * .77 - size * .3,
-                    width: size * .6, height: size * .6,
-                    child: widget.imageBuilder((top + (slot <= slots ~/ 2 ? slot : slot - slots)) % widget.count)),
-                  ColoredBox(color: slot == 0 ? const Color(0x18233b29) : const Color(0x55233b29)),
+                      (top + slot) % widget.count))
+                  else Positioned(
+                    key: ValueKey('dial-photo-$slot'),
+                    left: radius + math.cos(-math.pi / 2 + slot * slice + fraction) * photoRadius - photoWidth / 2,
+                    top: radius + math.sin(-math.pi / 2 + slot * slice + fraction) * photoRadius - photoExtent / 2,
+                    width: photoWidth, height: photoExtent,
+                    child: Transform.rotate(angle: slot * slice + fraction,
+                      child: widget.imageBuilder((top + (slot <= slots ~/ 2 ? slot : slot - slots)) % widget.count))),
                 ])))),
-            if (slot == 0) Positioned(top: size * .10, left: size * .30,
+            if (slot == 0 && widget.showLabel) Positioned(top: size * .10, left: size * .30,
               width: size * .40,
               child: IgnorePointer(child: Container(
                 decoration: BoxDecoration(color: const Color(0xe6233b29),
@@ -215,7 +236,7 @@ class _PhotographicChoiceDialState extends State<PhotographicChoiceDial> {
                   style: TextStyle(color: _gold, fontSize: size > 240 ? 12 : 8))))),
           ],
           Positioned.fill(child: IgnorePointer(child: CustomPaint(
-            painter: _Rings(widget.inner)))),
+            painter: _Rings(widget.inner, slots, fraction)))),
         ])));
   });
 }
@@ -240,15 +261,27 @@ class _Wedge extends CustomClipper<Path> {
   bool shouldReclip(_Wedge old) => old.angle != angle || old.sweep != sweep || old.inner != inner;
 }
 class _Rings extends CustomPainter {
-  const _Rings(this.inner);
+  const _Rings(this.inner, this.divisions, this.rotation);
   final double inner;
+  final int divisions;
+  final double rotation;
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()..color = _gold..style = PaintingStyle.stroke..strokeWidth = 2;
     canvas.drawCircle(center, size.width / 2 - 2, paint);
     canvas.drawCircle(center, size.width / 2 * inner, paint);
+    paint
+      ..strokeWidth = .8
+      ..color = _gold.withValues(alpha: .45);
+    for (var index = 0; index < divisions; index++) {
+      final angle = -math.pi / 2 + (index - .5) * 2 * math.pi / divisions + rotation;
+      final direction = Offset(math.cos(angle), math.sin(angle));
+      canvas.drawLine(center + direction * size.width / 2 * inner,
+        center + direction * (size.width / 2 - 2), paint);
+    }
   }
   @override
-  bool shouldRepaint(_Rings old) => old.inner != inner;
+  bool shouldRepaint(_Rings old) => old.inner != inner ||
+    old.divisions != divisions || old.rotation != rotation;
 }
