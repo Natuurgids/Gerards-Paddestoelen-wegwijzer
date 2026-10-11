@@ -58,7 +58,7 @@ void main() {
     );
 
     expect(find.byType(Image), findsOneWidget);
-    expect((tester.widget<Image>(find.byType(Image)).image as ResizeImage).image,
+    expect((tester.widget<Image>(find.byType(Image)).image as ResizeImage).imageProvider,
       const AssetImage('assets/images/traits/cap_shape/conical.png'));
     expect(tester.takeException(), isNull);
   });

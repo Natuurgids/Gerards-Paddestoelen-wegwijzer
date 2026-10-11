@@ -19,7 +19,7 @@ void main() {
       traitCode: 'habitat_tree_group', optionId: 252, optionLabel: 'Els',
       imagePath: 'determination_wheel/assets/traits/habitat_tree_group/birch_conifers.png')));
     final provider = tester.widget<Image>(find.byType(Image)).image as ResizeImage;
-    expect(provider.image, AssetImage(observationImages[252]!.asset));
+    expect(provider.imageProvider, AssetImage(observationImages[252]!.asset));
     expect(tester.takeException(), isNull);
   });
   testWidgets('unknown trees and inapplicable caps show states without a misleading photo', (tester) async {
