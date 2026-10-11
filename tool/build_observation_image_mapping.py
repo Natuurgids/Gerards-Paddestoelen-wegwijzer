@@ -17,7 +17,7 @@ def build(check=False):
         assert path.read_text() == output, 'Observation image mapping is stale.'
     else:
         path.write_text(output)
-    print('PASS: 341 observation choices use the current packaged image mapping.')
+    print('PASS: 350 packaged image mappings cover all 341 active observation choices.')
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')

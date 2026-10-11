@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/determination_option_visual.dart';
@@ -6,7 +8,15 @@ import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/observation
 
 void main() {
   test('all 341 choices have a current image mapping, with distinct tree and form states', () {
-    expect(observationImages.length, 341);
+    final catalogue = jsonDecode(File('assets/data/identification_traits.json').readAsStringSync()) as Map<String, dynamic>;
+    final activeIds = <int>[
+      for (final trait in catalogue['traits'] as List<dynamic>)
+        if (trait['active'] != false)
+          for (final option in trait['options'] as List<dynamic>) option['id'] as int,
+    ];
+    expect(activeIds.length, 341);
+    expect(observationImages.keys, containsAll(activeIds));
+    expect(observationImages.length, 350, reason: 'Nine retired records retain their image mappings.');
     for (final ids in [[252,253,254,255,256,257], [259,260,261,262,263,264,265,266,267,268,269], [313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331]]) {
       expect(ids.map((id) => observationImages[id]!.asset).toSet().length, ids.length);
     }
