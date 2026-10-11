@@ -18,7 +18,7 @@ Widget app() => MaterialApp(
   locale: const Locale('nl'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
-  home: IdentifyScreen(initialKey: false, locale: const Locale('nl'),
+  home: IdentifyScreen(locale: const Locale('nl'),
     repository: _PreloadedRepository(),
     fieldDataRepository: _EmptyFieldRepository()),
 );
@@ -59,6 +59,10 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byKey(const ValueKey('trait-choice-dial')), findsOneWidget);
       expect(find.byKey(const ValueKey('trait-group-dial')), findsOneWidget);
+      expect(tester.widget<PhotographicChoiceDial>(find.byKey(
+        const ValueKey('trait-choice-dial'))).count, greaterThan(2));
+      expect(tester.widget<PhotographicChoiceDial>(find.byKey(
+        const ValueKey('trait-group-dial'))).count, 23);
       expect(find.byType(TraitVisual), findsNothing,
         reason: 'All visible choices must use their real photographs.');
       expect(find.textContaining('0/23 · 341'), findsOneWidget);

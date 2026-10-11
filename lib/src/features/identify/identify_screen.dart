@@ -23,7 +23,7 @@ class IdentifyScreen extends StatefulWidget {
     this.repository,
     this.fieldDataRepository,
     this.initialWheel = true,
-    this.initialKey = true,
+    this.initialKey = false,
     this.keyBook,
   });
 
@@ -661,7 +661,9 @@ class _IdentifyScreenState extends State<IdentifyScreen> {
           onPressed: () => setState(() { _selected.clear(); _results = null; _coverage = null; _wheelRevision++; _keySession?.reset(); }),
           icon: const Icon(Icons.restart_alt)),
         IconButton(key: const ValueKey('toggle-key-mode'),
-          tooltip: _text('Determinatiesleutel / observaties', 'Key / observations', 'Schlüssel / Beobachtungen'),
+          tooltip: _keyMode
+            ? _text('Fotografische meerkeuzeschijf', 'Photographic multiple-choice wheel', 'Fotografisches Mehrfachauswahlrad')
+            : _text('Veldgids: tweekeuzesleutel', 'Field guide: two-choice key', 'Feldführer: Zweifachschlüssel'),
           onPressed: () => setState(() => _keyMode = !_keyMode),
           icon: Icon(_keyMode ? Icons.edit_note : Icons.alt_route)),
         IconButton(key: const ValueKey('toggle-trait-view'),

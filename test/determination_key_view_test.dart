@@ -19,7 +19,7 @@ final book = DeterminationKeyBook(
 Widget app() => MaterialApp(locale: const Locale('nl'),
  localizationsDelegates: AppLocalizations.localizationsDelegates,
  supportedLocales: AppLocalizations.supportedLocales,
- home: IdentifyScreen(locale: const Locale('nl'), keyBook: book,
+ home: IdentifyScreen(initialKey: true, locale: const Locale('nl'), keyBook: book,
   repository: _EmptyRepository(), fieldDataRepository: _EmptyFields()));
 void main() {
  setUpAll(() async {
@@ -31,7 +31,7 @@ void main() {
   ('key-phone',const Size(390,844),1),('key-small-phone',const Size(320,568),1),
   ('key-large-text',const Size(390,844),2),('key-landscape',const Size(844,390),1),
   ('key-tablet',const Size(1200,900),1)]) {
-  testWidgets('source key is the main app default and fits ${spec.$1}', (tester) async {
+  testWidgets('optional source key fits ${spec.$1}', (tester) async {
    tester.view.physicalSize=spec.$2;tester.view.devicePixelRatio=1;
    addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
    tester.platformDispatcher.textScaleFactorTestValue=spec.$3;

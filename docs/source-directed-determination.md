@@ -1,7 +1,9 @@
 # Source-directed determination in the main app
 
-The main Identify screen now follows decision keys. It does not rank trait
-profiles or require a species to have a `species_trait` record. A confirmed
+The main Identify screen opens the photographic 23-group / 341-choice
+observation wheel. Its multiple choices remain available within each group.
+The separately labelled field-guide mode follows decision keys. That mode
+does not rank trait profiles or require a `species_trait` record. A confirmed
 alternative follows the exact next couplet, another key, or the source's named
 endpoint. Rotation only previews. The inner circle reviews the recorded path;
 opening an earlier step discards its later answers and result. Switching to the
