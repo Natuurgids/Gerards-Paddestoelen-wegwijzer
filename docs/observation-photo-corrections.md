@@ -1,0 +1,9 @@
+# Observation image corrections
+
+The earlier catalogue mapped 73 concrete choices to another choice's photograph. These substitutions are now replaced by separate production observation images, including six tree groups, eleven fruitbody forms, and the missing cap, stem, pore, gill, ring, volva and substrate examples. Nineteen scent descriptors have individual photographic reference cues; these are reminders of a scent, not visible evidence of mushroom chemistry. Existing taste observations remain labelled field-note context. Unknown and inapplicable states use explicit symbols. Spore shapes use marked mathematical diagrams rather than an unrelated microscope photograph.
+
+The generated `observation_image_data.dart` mapping takes precedence over cached database image paths, so an installed app receives these corrections on upgrade. This changes presentation only: all 23 groups, 341 option identifiers, determination relations, wheel counts, rotation and confirmation behavior remain intact.
+
+`tool/validate_determination_catalogue.py` rejects unrelated first-choice substitutions for concrete visual states. `tool/build_observation_image_mapping.py --check` detects stale compiled mappings. Widget checks cover the cached birch-to-alder failure, tree/form/reference uniqueness, explicit unknown states, and schematic spore presentation. Actual Flutter screenshots cover alder, truffle, pitted cap, woodchips and anise, alongside the existing viewport and colour checks.
+
+Production assets live in `determination_wheel/assets/observation_photographs/`. Built-in image generation creates photographic feature illustrations rather than species evidence. The accompanying provenance file records the complete prompts, output hashes and image preparation. Source output is resized to 512 pixels and encoded as JPEG for app delivery without changing its depicted subject.

@@ -1,16 +1,14 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'trait_visual.dart';
 import 'colour_observation_visual.dart';
+import 'observation_image_data.dart';
+import 'observation_context_visual.dart';
 
 /// Displays the generated field-guide image for a determination option.
 ///
-/// The mapping from numeric option id to asset filename is read from the
-/// bundled identification trait manifest, so the UI stays in sync with
-/// assets/data/identification_traits.json. If a mapping or image is missing,
+/// The mapping is compiled from the bundled catalogue and takes precedence
+/// over outdated paths in installed databases. If a mapping or image is missing,
 /// the existing schematic [TraitVisual] is used as a safe fallback.
 class DeterminationOptionVisual extends StatelessWidget {
   const DeterminationOptionVisual({
@@ -31,35 +29,6 @@ class DeterminationOptionVisual extends StatelessWidget {
   final String? imagePath;
   final BoxFit fit;
   final bool framed;
-
-  static final Future<Map<String, String>> _optionCodes = _loadOptionCodes();
-
-  static Future<Map<String, String>> _loadOptionCodes() async {
-    final raw = await rootBundle.loadString(
-      'assets/data/identification_traits.json',
-    );
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    final traits = decoded['traits'] as List<dynamic>? ?? const [];
-    final result = <String, String>{};
-
-    for (final rawTrait in traits) {
-      final trait = rawTrait as Map<String, dynamic>;
-      final traitCode = trait['code']?.toString();
-      if (traitCode == null || traitCode.isEmpty) continue;
-      final options = trait['options'] as List<dynamic>? ?? const [];
-      for (final rawOption in options) {
-        final option = rawOption as Map<String, dynamic>;
-        final id = option['id'];
-        final code = option['code']?.toString();
-        if (id is int && code != null && code.isNotEmpty) {
-          result['$traitCode:$id'] = option['image']?.toString() ??
-              'assets/images/traits/$traitCode/$code.png';
-        }
-      }
-    }
-
-    return result;
-  }
 
   Widget _fallback() => TraitVisual(
         traitCode: traitCode,
@@ -95,12 +64,14 @@ class DeterminationOptionVisual extends StatelessWidget {
       return ColourObservationVisual(traitCode: traitCode, optionId: optionId,
         optionLabel: optionLabel, size: size);
     }
-    if (imagePath != null) return _photograph(context, imagePath!);
-    return FutureBuilder<Map<String, String>>(
-      future: _optionCodes,
-      builder: (context, snapshot) {
-        final path = snapshot.data?['$traitCode:$optionId'];
-        return path == null ? _fallback() : _photograph(context, path);
-      });
+    final current = observationImages[optionId];
+    if (current != null && current.trait == traitCode) {
+      if (ObservationContextVisual.supports(traitCode, current.code)) {
+        return ObservationContextVisual(trait: traitCode, code: current.code,
+          label: optionLabel, size: size, asset: current.asset);
+      }
+      return _photograph(context, current.asset);
+    }
+    return imagePath == null ? _fallback() : _photograph(context, imagePath!);
   }
 }

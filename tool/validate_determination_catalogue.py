@@ -23,8 +23,13 @@ def validate():
             assert all(option['labels'].get(l, '').strip() for l in ['nl','en','de'])
             image = ROOT / option['image']
             assert image.is_file(), image
-            assert image.read_bytes()[:8] == b'\x89PNG\r\n\x1a\n', image
+            assert image.read_bytes()[:8] == b'\x89PNG\r\n\x1a\n' or image.read_bytes()[:3] == b'\xff\xd8\xff', image
             assert option['image_scope'] in ['state_example', 'group_example', 'context_only']
+            # A concrete visual state must never borrow the group's first photo.
+            context = trait['code'] in ['odour', 'taste', 'spore_shape'] or option['code'] in ['uncertain', 'not_applicable', 'mixed_unknown']
+            if not context and not option.get('colour_visual'):
+                assert image.stem in [option['code'], trait['code'] + '_' + option['code']], (trait['code'], option['code'], image)
+                assert option['image_scope'] == 'state_example', (trait['code'], option['code'])
     supplement = json.loads((ROOT / 'assets/data/species_traits_europe.json').read_text())
     for relation in data['species_traits'] + supplement['species_traits']:
         assert owners[relation['option_id']] == relation['trait_id']

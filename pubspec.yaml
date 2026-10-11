@@ -63,5 +63,6 @@ flutter:
     - assets/images/traits/volva_form/
     - assets/data/
     - determination_wheel/assets/colour_photographs/
+    - determination_wheel/assets/observation_photographs/
     - determination_wheel/assets/interface/
     - determination_wheel/assets/fonts/

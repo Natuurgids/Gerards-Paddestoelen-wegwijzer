@@ -33,6 +33,7 @@ flutter:
     - assets/interface/
     - assets/photographs/
     - assets/colour_photographs/
+    - assets/observation_photographs/
     - assets/data/
   fonts:
     - family: FieldSans

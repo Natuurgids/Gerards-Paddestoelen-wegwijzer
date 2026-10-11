@@ -121,6 +121,11 @@ void main() {
     ('bruising', 226, 'green-bruising'),
     ('gill_colour', 279, 'purple-gills'),
     ('stem_colour', 308, 'blue-stem'),
+    ('habitat_tree_group', 252, 'alder-tree'),
+    ('fruitbody_form', 262, 'truffle-form'),
+    ('cap_surface', 179, 'pitted-cap'),
+    ('substrate', 245, 'woodchips-substrate'),
+    ('odour', 317, 'anise-reference'),
   ]) {
     testWidgets('colour photograph matches ${sample.$3} and stays inside the wheel', (tester) async {
       tester.view.physicalSize = const Size(390, 844);

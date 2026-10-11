@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/determination_option_visual.dart';
-import 'package:gerards_paddestoelen_wegwijzer/src/features/identify/trait_visual.dart';
+
 
 void main() {
   testWidgets('explicit determination schematics render without exceptions',
@@ -43,7 +43,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('other traits keep using the established TraitVisual path',
+  testWidgets('mapped choices immediately use their photographic assets',
       (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -57,7 +57,9 @@ void main() {
       ),
     );
 
-    expect(find.byType(TraitVisual), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
+    expect((tester.widget<Image>(find.byType(Image)).image as ResizeImage).image,
+      const AssetImage('assets/images/traits/cap_shape/conical.png'));
     expect(tester.takeException(), isNull);
   });
 }
